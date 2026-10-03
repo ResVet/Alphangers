@@ -22,6 +22,18 @@ BOX = (v(-5.4, -5.6, -6.6), v(5.0, 10.0, 4.6))
 OUT = os.path.join(HERE, 'out')
 
 
+EXCLUDE = {
+    'rv': ['lv', 'aorta'], 'rvot': ['lv', 'aorta'], 'ra': ['la', 'aorta'], 'ra_aur': ['aorta'],
+    'la': ['aorta'], 'la_aur': ['pt'],
+}
+
+KEEP_APART = [
+    ('ra', 'o_av', 0.25), ('ra', 'o_mv', 0.25), ('ra', 'lv', 0.3), ('rv', 'o_av', 0.25), ('rv', 'o_mv', 0.3),
+    ('rvot', 'o_av', 0.3), ('o_tv', 'o_av', 0.2), ('o_tv', 'o_mv', 0.25), ('o_tv', 'lv', 0.3),
+    ('ra_aur', 'o_av', 0.25), ('la', 'o_av', 0.2),
+]
+
+
 def ramp_k(u, k, until=0.12):
     """Blend radius that is k at the vessel root and fades out along it, so vessels
     merge into the chamber they leave but pass their neighbours with a clean edge."""
@@ -39,7 +51,7 @@ def fields(Pts, P, L, O):
             D[k], U[k] = f.eval_full(Pts)
         else:
             D[k] = f(Pts)
-    ven = smin(D['lv'], D['rv'], 0.55)
+    ven = smin(D['lv'], D['rv'], 0.3)
     ven = smin(ven, D['rvot'], 0.45)
     atr = smin(D['ra'], D['la'], 0.35)
     atr = smin(atr, D['ra_aur'], 0.3)
@@ -63,6 +75,18 @@ def fields(Pts, P, L, O):
     C = {}
     for k, f in list(L.items()) + [('o_' + k, f) for k, f in O.items()]:
         C[k] = f(Pts)
+    # cavities stop at their neighbours' outer surfaces. The septa come out of this: the
+    # right-side chambers end where the left-side walls begin, so each septum is as thick as
+    # the left wall it borrows, and nothing ever opens into the aortic root by accident.
+    for k, others in EXCLUDE.items():
+        for o in others:
+            C[k] = np.maximum(C[k], -D[o])
+    # valve openings never break through the outside wall where the grooves pinch in
+    for k in ('o_mv', 'o_tv', 'o_av'):
+        C[k] = np.maximum(C[k], solid + 0.25)
+    # cavities that must stay apart keep at least a wall's width between them
+    for a, b, wall in KEEP_APART:
+        C[a] = np.maximum(C[a], wall - C[b])
     cav = np.min(np.stack(list(C.values())), axis=0)
     final = smax(solid, -cav, 0.06)
     return final, D, C, U

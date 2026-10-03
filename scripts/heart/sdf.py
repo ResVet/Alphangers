@@ -69,14 +69,20 @@ class Ellipsoid:
 
 
 def catmull(points, step=0.03):
-    """Centripetal Catmull-Rom through the points, resampled at roughly `step` spacing."""
+    """Centripetal Catmull-Rom through the points, resampled at roughly `step` spacing.
+
+    Returns the samples, their arc-length parameter (0..1) and the parameter of
+    each control point, so per-point values can be interpolated along the curve.
+    """
     P = np.asarray(points, float)
     if len(P) == 2:
         n = max(2, int(np.linalg.norm(P[1] - P[0]) / step) + 1)
         t = np.linspace(0, 1, n)[:, None]
-        return P[0] * (1 - t) + P[1] * t, np.linspace(0, 1, n)
+        u = np.linspace(0, 1, n)
+        return P[0] * (1 - t) + P[1] * t, u, np.array([0.0, 1.0])
     ext = np.vstack([2 * P[0] - P[1], P, 2 * P[-1] - P[-2]])
     out = []
+    knot_idx = []
     for i in range(1, len(ext) - 2):
         p0, p1, p2, p3 = ext[i - 1], ext[i], ext[i + 1], ext[i + 2]
         def tj(ti, a, b):
@@ -84,6 +90,7 @@ def catmull(points, step=0.03):
         t0 = 0.0; t1 = tj(t0, p0, p1); t2 = tj(t1, p1, p2); t3 = tj(t2, p2, p3)
         seg = np.linalg.norm(p2 - p1)
         n = max(2, int(seg / step))
+        knot_idx.append(len(out))
         for t in np.linspace(t1, t2, n, endpoint=False):
             a1 = (t1 - t) / (t1 - t0) * p0 + (t - t0) / (t1 - t0) * p1
             a2 = (t2 - t) / (t2 - t1) * p1 + (t - t1) / (t2 - t1) * p2
@@ -91,11 +98,12 @@ def catmull(points, step=0.03):
             b1 = (t2 - t) / (t2 - t0) * a1 + (t - t0) / (t2 - t0) * a2
             b2 = (t3 - t) / (t3 - t1) * a2 + (t - t1) / (t3 - t1) * a3
             out.append((t2 - t) / (t2 - t1) * b1 + (t - t1) / (t2 - t1) * b2)
+    knot_idx.append(len(out))
     out.append(P[-1])
     C = np.array(out)
-    # arc-length parameter 0..1
     L = np.concatenate([[0], np.cumsum(np.linalg.norm(np.diff(C, axis=0), axis=1))])
-    return C, L / max(L[-1], 1e-9)
+    u = L / max(L[-1], 1e-9)
+    return C, u, u[knot_idx]
 
 
 class Tube:
@@ -106,11 +114,13 @@ class Tube:
     """
 
     def __init__(self, points, radii, step=0.03, squash=None):
-        self.C, self.u = catmull(points, step)
+        self.C, self.u, knots = catmull(points, step)
         r = np.asarray(radii, float)
         if r.ndim == 0:
             r = np.full(2, float(r))
-        self.R = np.interp(self.u, np.linspace(0, 1, len(r)), r)
+        # radii given per control point follow the curve; any other count is spread evenly
+        at = knots if len(r) == len(knots) else np.linspace(0, 1, len(r))
+        self.R = np.interp(self.u, at, r)
         self.tree = cKDTree(self.C)
         pad = self.R.max() + 0.6
         self.lo = self.C.min(0) - pad
@@ -168,3 +178,17 @@ class Tube:
         else:
             r = self.radii
         return Tube(pts, np.maximum(r - wall, 0.05))
+
+
+class Blend:
+    """Smooth union of shapes, so a chamber can be built from more than one lobe."""
+
+    def __init__(self, k, *shapes):
+        self.k = k
+        self.shapes = shapes
+
+    def __call__(self, P):
+        d = self.shapes[0](P)
+        for s in self.shapes[1:]:
+            d = smin(d, s(P), self.k)
+        return d
