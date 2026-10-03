@@ -1,0 +1,14 @@
+node_modules/
+dist/
+.vite/
+__pycache__/
+*.pyc
+scripts/heart/out/
+.env
+.env.*
+!.env.example
+.DS_Store
+Thumbs.db
+*.log
+test-results/
+playwright-report/

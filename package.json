@@ -1,0 +1,31 @@
+{
+  "name": "alphangers",
+  "private": true,
+  "version": "4.0.0",
+  "description": "Class portal for Class Alpha, PSPD FK Universitas Sriwijaya 2026.",
+  "type": "module",
+  "license": "UNLICENSED",
+  "author": "Khalid (Resvet)",
+  "scripts": {
+    "dev": "vite",
+    "build": "vite build",
+    "preview": "vite preview --port 4173 --strictPort",
+    "data": "python3 scripts/build_data.py",
+    "heart": "python3 scripts/heart/build_heart.py && node scripts/heart/pack.mjs",
+    "test": "node tests/run.mjs"
+  },
+  "engines": {
+    "node": ">=20"
+  },
+  "devDependencies": {
+    "@gltf-transform/cli": "^4.5.1",
+    "@playwright/test": "^1.55.1",
+    "axe-core": "^4.13.0",
+    "vite": "^8.3.2"
+  },
+  "dependencies": {
+    "firebase": "^12.19.0",
+    "gsap": "^3.15.0",
+    "three": "^0.186.1"
+  }
+}

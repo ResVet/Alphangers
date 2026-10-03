@@ -1,0 +1,84 @@
+# Jadwal Kuliah Blok 2, Kelas Alpha, Angkatan 2026
+# Sumber: JADWAL BLOK 2 TH 2026 (PSPD FK Unsri). Format: jam | materi | kode dosen | catatan
+@blok b2
+@nama Blok 2
+@judul Kimia dan Fisika Kehidupan
+@ketua FAT
+@lokasi Kampus FK Unsri KM.6
+
+= 2026-09-07
+08.00-08.50 | Pendahuluan Blok 2 (Kimia dan Fisika Kehidupan) | FAT
+09.00-10.40 | Mikro dan Makro Mineral + Kimia Karbohidrat | FAT
+10.50-12.30 | Teknologi Informasi dalam Kedokteran Mutakhir | ABL
+13.30-15.10 | Kimia Lipida | JP
+
+= 2026-09-08
+08.00-15.30 | PK-1 Analisa Anion-Kation dan PK-3 Analisa Kimia Karbohidrat | TIM | Praktikum kimia satu hari dalam tiga sesi (08.00-10.30, 10.30-12.30, 13.00-15.30). Ikuti sesi kelompokmu.
+
+= 2026-09-09
+08.00-09.40 | Penggolongan dan Reaksi Senyawa Organik | FAT
+09.50-11.30 | Reaksi Proteolitik dan Asam Basa | SUB
+12.50-14.30 | Sistem Koloid + Ekstraksi, Distribusi, Kromatografi | JP
+14.40-16.00 | Sifat Larutan | SDK
+
+= 2026-09-10
+08.00-15.30 | PK-2 Analisa Senyawa Organik dan Senyawa Obat | TIM | Praktikum kimia satu hari dalam tiga sesi (08.00-10.30, 10.30-12.30, 13.00-15.30). Ikuti sesi kelompokmu.
+
+= 2026-09-11
+08.00-09.40 | Kimia Lingkungan + Termodinamika | RHK
+09.50-11.30 | Volumetri + Spektrofotometri | FAT
+13.00-16.30 | MKDU | -
+
+= 2026-09-14
+08.00-10.30 | Tutorial 01 Skenario A | TIM
+10.40-12.20 | Biolistrik | EKA
+13.30-15.10 | Bioakustik dan USG | AH
+
+= 2026-09-15
+08.00-15.30 | PK-4 Analisa Kimia Lipida + PK-6 Kromatografi dan Spektrofotometri | TIM | Praktikum kimia satu hari dalam tiga sesi (08.00-10.30, 10.30-12.30, 13.00-15.30). Ikuti sesi kelompokmu.
+
+= 2026-09-16
+08.00-10.30 | Tutorial 02 Skenario A | TIM
+10.40-12.20 | Kimia Asam Amino dan Protein | SDK
+13.30-15.30 | PF-7 Biolistrik Jaringan Saraf (animasi) | PJ:SSD
+
+= 2026-09-17
+08.00-15.30 | PK-5 Analisa Kimia Protein | TIM | Praktikum kimia satu hari dalam tiga sesi (08.00-10.30, 10.30-12.30, 13.00-15.30). Ikuti sesi kelompokmu.
+
+= 2026-09-18
+08.00-10.30 | Pleno Skenario A | TIM
+10.40-12.20 | Biomekanika dan Fungsi Otot | ITT
+13.00-16.30 | MKDU | -
+
+= 2026-09-21
+08.00-09.40 | Pengaruh Lingkungan Fisik pada Tubuh Manusia | CAT
+09.50-11.30 | Teknologi Pencitraan dan Radiologi dalam Kedokteran | AH
+13.00-15.30 | PF-8 Instrumentasi Medis | PJ:ITT
+
+= 2026-09-22
+08.00-09.40 | Biooptik dan Fungsi Mata | SSD
+10.00-11.40 | Pola Hidup Sehat | SHP
+
+= 2026-09-23
+08.00-selesai | Ujian OSPE Blok 2 | TIM
+
+= 2026-09-24
+07.30-selesai | Ujian CBT Blok 2 | -
+
+= 2026-09-25
+07.30-12.00 | Her Dini Blok 2 | -
+13.00-16.30 | MKDU | -
+
+[dosen]
+FAT | Fatmawati, S.Si, M.Si | 082179048470
+SUB | Dr. dr. Subandrate, M.Biomed | 085218379597
+SDK | Drs. Sadakata Sinulingga, Apt, M.Kes | 08127827901
+JP | Juliana Palungan, S.Farm., M.Si | 082271690520
+RHK | dr. Rona Hawa Kamila, M.Biomed | 081273872205
+EKA | dr. Eka Febri Zulissetiana, M.Bmd | 081927711216
+ABL | Arwan Bin Laeto, S.Pd., M.Kes | 082345138148
+AH | dr. Alfian Hasbi, SpRad | 081373712450
+SSD | Dr. dr. Siti Sarah Deaz, M.Biomed | 081373939396
+CAT | Catherine Dwi Augusthi Putri, SKM., M.KM | 081271553399
+ITT | M. Iman Tarmizi Thaher, S.Kep., M.Bmd | 0895619813555
+SHP | dr. Syarif Husin, MS | 082186226868

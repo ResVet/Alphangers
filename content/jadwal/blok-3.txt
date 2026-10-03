@@ -1,0 +1,121 @@
+# Jadwal Kuliah Blok 3, Kelas Alpha, Angkatan 2026
+# Sumber: JADWAL BLOK 3 2026 (PSPD FK Unsri). Format: jam | materi | kode dosen | catatan
+@blok b3
+@nama Blok 3
+@judul Karakter Biologi Tubuh Manusia
+@ketua ZM
+@lokasi Kampus FK Unsri KM.6
+
+= 2026-09-28
+08.00-08.30 | Pendahuluan Blok 3 (Karakter Biologi Tubuh Manusia) | ZM
+08.30-10.10 | The Principles of Human Biology | JM
+10.10-11.50 | Cell Concepts | NM
+13.00-14.40 | Cell Structures, Functions, and Division | SP
+14.40-16.20 | Stem Cells and Its Current Appliances in Medicine | RMH
+
+= 2026-09-29
+08.00-09.40 | Cell Communications | LH
+09.40-11.20 | Immunobiology (Basic and Molecular) | SP
+13.00-14.40 | Pattern of Inheritance | ZM
+14.40-16.20 | DNA and Genes (Structures and Functions) | RI
+
+= 2026-09-30
+08.00-09.40 | Cell Adaptation and Reactions towards Cell Damages | LH
+09.40-11.20 | Chromosomal Abnormalities and Cytogenetics | ZM
+13.00-14.40 | Sex Determination and Differentiation | NM
+14.40-16.20 | Procaryote and Eucaryote Gene | IP
+
+= 2026-10-01
+08.00-09.40 | Central Dogma (DNA Replication, Transcription, and Translation) | RI
+09.40-11.20 | DNA Mutations and Repair Mechanism | RMH
+13.00-14.40 | Medical Genetics and Genomics | ZM
+14.40-16.20 | Epigenetics | AY
+
+= 2026-10-02
+08.00-09.40 | Basic Andrology | EK
+09.40-11.20 | Embriology and Teratology | SP
+13.00-16.30 | MKDU | -
+
+= 2026-10-05
+08.00-10.30 | Tutorial 1 Skenario A | TIM
+10.30-12.10 | Mekanisme Kontrol Molekuler Siklus Sel | RI
+13.00-14.40 | DNA Mitokondria dan Mitochondrial Inheritance | TRW
+
+= 2026-10-06
+08.00-09.40 | Single Genes and Multifactorial Diseases | ZM
+09.40-11.20 | Congenital Anomalies, Prenatal and Newborn Screening | AY
+13.00-14.40 | Genotype-Phenotype Correlation | JM
+14.40-16.20 | Reproductive Biology | EK
+
+= 2026-10-07
+08.00-10.30 | Tutorial 2 Skenario A | TIM
+10.30-12.10 | Overview of Genetic Testing Technologies and Clinical Indications | RMH
+13.00-14.40 | Environmental Biology | IP
+
+= 2026-10-08
+08.00-09.40 | Biological Agent in Therapeutic Appliances | RMH
+09.40-11.20 | Genetic and Genomic Counselling | ZM
+
+= 2026-10-09
+08.00-10.30 | Pleno Skenario A | TIM
+10.30-12.10 | Pengantar Praktikum | JM | Di kelas Aula.
+13.00-16.30 | MKDU | -
+
+= 2026-10-12
+08.00-10.30 | Tutorial 1 Skenario B | TIM
+10.30-13.00 | PB-1 Pedigree | PJ:TRW,JM | Praktikum paralel.
+
+= 2026-10-13
+08.00-15.30 | PB-2 Morfologi Sel | PJ:NM | Praktikum satu hari dalam tiga sesi (08.00-10.30, 10.30-13.00, 13.00-15.30). Ikuti sesi kelompokmu.
+
+= 2026-10-14
+08.00-10.30 | Tutorial 2 Skenario B | TIM
+10.30-13.00 | PB-3 Dermatoglifi | PJ:JM | Praktikum paralel.
+
+= 2026-10-15
+08.00-15.30 | PB-4 Mitosis Akar Bawang | PJ:SP | Praktikum satu hari dalam tiga sesi (08.00-10.30, 10.30-13.00, 13.00-15.30). Ikuti sesi kelompokmu.
+
+= 2026-10-16
+08.00-10.30 | Pleno Skenario B | TIM
+10.30-12.10 | PB-5 Kariotyping | PJ:ZM,EK | Praktikum paralel.
+13.00-16.30 | MKDU | -
+
+= 2026-10-19
+08.00-15.30 | PB-6 Oogenesis | PJ:AY | Praktikum satu hari dalam tiga sesi (08.00-10.30, 10.30-13.00, 13.00-15.30). Ikuti sesi kelompokmu.
+
+= 2026-10-20
+08.00-15.30 | PB-7 Spermatogenesis | PJ:EK | Praktikum satu hari dalam tiga sesi (08.00-10.30, 10.30-13.00, 13.00-15.30). Ikuti sesi kelompokmu.
+
+= 2026-10-21
+08.00-15.30 | PB-8 Embrio Ayam | PJ:JM | Praktikum satu hari dalam tiga sesi (08.00-10.30, 10.30-13.00, 13.00-15.30). Ikuti sesi kelompokmu.
+
+= 2026-10-22
+08.00-15.30 | PB-9 Seks Kromatin | PJ:RI | Praktikum satu hari dalam tiga sesi (08.00-10.30, 10.30-13.00, 13.00-15.30). Ikuti sesi kelompokmu.
+
+= 2026-10-23
+13.00-16.30 | MKDU | -
+
+= 2026-10-26
+08.00-selesai | Ujian OSPE Blok 3 | TIM
+
+= 2026-10-27
+08.00-selesai | Ujian CBT Blok 3 | -
+
+= 2026-10-28
+08.00-selesai | Her Dini Blok 3 | -
+
+= 2026-10-30
+13.00-16.30 | MKDU | -
+
+[dosen]
+ZM | dr. Ziske Maritska, M.Si.Med | 081224801100
+RMH | dr. Rachmat Hidayat, M.Sc | 088225053819
+JM | Drs. Djoko Marwoto, MS | 08164810394
+LH | Dra. Lusia Hayati, M.Sc | 08127124497
+TRW | dr. Triwani, M.Kes | 08153851170
+AY | Dr. dr. Aryani Azis, Sp.OG, Subsp.K.Fm., MARS | 08127847167
+EK | dr. Eka Handayani, Sp.OG | 082120989803
+SP | Septi Purnamasari, S.S.T., M.Biomed | 085292186652
+RI | Rara Inggarsih, S.S.T., M.Kes | 083178580581
+NM | Naency Mayren, S.Tr.Keb., M.KM | 082149420053
+IP | Indri Paradillah, S.KM., M.KM | 081367631500

@@ -1,0 +1,89 @@
+# Jadwal Kuliah Blok 1, Kelas Alpha, Angkatan 2026
+# Sumber: JADWAL BLOK 1 - 2026 (PSPD FK Unsri). Format: jam | materi | kode dosen | catatan
+@blok b1
+@nama Blok 1
+@judul Keterampilan Belajar, Komunikasi, dan Dasar Ilmiah
+@ketua SDK
+@lokasi Kampus FK Unsri KM.6
+
+= 2026-08-18
+08.00-08.50 | Block Introduction | SDK
+09.00-09.50 | Dinamika dalam Tutorial | SDK
+09.50-10.40 | Dinamika dalam Tutorial | SDK
+13.00-14.40 | Belajar berdasarkan Masalah-1 | IBM
+14.40-15.30 | Belajar berdasarkan Masalah-2 | IBM
+
+= 2026-08-19
+07.30-09.10 | Penelitian dalam Bidang Kedokteran dan Kesehatan | TEO
+09.20-11.10 | Dasar-Dasar Komunikasi (Komunikasi Interpersonal, Komunikasi Untuk Mengubah Perilaku) | DS
+11.20-12.10 | Pengantar Modul Character Development | DYZ
+13.30-15.10 | Teknik Komunikasi, Mencari, dan Menyaring Informasi | DM
+
+= 2026-08-20
+08.00-10.30 | Skill Lab 1. Dinamika Kelompok (Proses Tutorial I) | PJ:SDK
+13.30-16.00 | Skill Lab 2. Dinamika Kelompok (Proses Tutorial II) | PJ:SDK
+
+= 2026-08-21
+08.00-09.40 | Mengambil Kesimpulan Jurnal | MIS
+10.40-12.10 | Dasar-Dasar Filsafat dan Penerapan Ilmu sebagai Landasan Pengembangan Profesi | SUB
+13.30-15.10 | Metode Ilmiah (Deduksi-Induksi) | SHP
+
+= 2026-08-24
+08.00-10.30 | Tutorial 01 Skenario A | PJ:SDK
+10.40-12.20 | Sumber Literatur dalam Bidang Kedokteran | LEG
+13.30-15.10 | Perilaku Ilmiah dan Disiplin Medik | AAR
+
+= 2026-08-25
+LIBUR | Maulid Nabi Muhammad SAW
+
+= 2026-08-26
+08.00-10.30 | Tutorial 02 Skenario A | PJ:SDK
+10.40-12.20 | EBM: Introduction and How to Practice dan Validitas Laporan | IAL
+13.30-15.10 | Skill Lab 3. Wawancara | PJ:DM,DS
+
+= 2026-08-27
+08.00-10.30 | Skill Lab 4. Membuat File Presentasi | PJ:CDA
+10.10-11.50 | Pelanggaran Akademik | EKA | Jam tertulis begini di jadwal resmi (bertumpuk dengan skill lab), konfirmasi ke koorta.
+13.00-15.30 | Skill Lab 5. Teknik Presentasi | PJ:RSP
+
+= 2026-08-28
+08.00-10.30 | Pleno Skenario A | PJ:SDK
+13.30-16.30 | MKDU | -
+
+= 2026-08-31
+08.00-10.30 | Skill Lab 6. Team Based Learning | PJ:BS
+13.30-15.10 | Critical Thinking dan Penalaran Klinis (Clinical Reasoning) | EA
+
+= 2026-09-01
+08.00-10.30 | Skill Lab 7. Menelusuri Media Elektronik Kedokteran sebagai Sumber Ilmiah | PJ:SUB
+10.40-12.30 | Adult Learning and Learning Behavior | SUS
+13.30-15.10 | Etika Komunikasi dan Kedokteran | RSP
+
+= 2026-09-02
+08.00-10.00 | Skill Lab 8. Menelaah Artikel/Jurnal Kedokteran | PJ:SDK
+
+= 2026-09-03
+08.00-12.30 | Ujian CBT Blok 1 | -
+
+= 2026-09-04
+08.00-12.00 | Her Dini Blok 1 | -
+
+[dosen]
+SDK | Drs. Sadakata Sinulingga, Apt., M.Kes | 08127827901
+RSP | dr. Riana Sari Puspita, M.Biomed | 081367627916
+IBM | Prof. DR. dr. Irfanuddin, SpKO, AIF, M.Pd.Ked | 081367673749
+IAL | Dr. Iche Andriyani Liberty, SKM, M.Kes | 081215461615
+TEO | dr. Theodorus, M.MedSc | 08127809075
+MIS | Prof. Dr. dr. Mgs. Irsan Saleh, M.Biomed | 081219191635
+LEG | Dr. dr. Legiran, M.Kes | 08127811705
+EKA | dr. Eka Febri Zulissetiana, M.Bmd | 081927711216
+EA | dr. Erwin Azmar, SpPD-KKV | 08159983241
+SHP | dr. Syarif Husin, MS | 08127849798
+BS | dr. Budi Santoso, M.Kes | 082178000760
+DM | Depita Meriyani, S.KM., M.KM | 081532624384
+DS | Deri Sentosa, S.KM., MHPM | 081271327262
+SUB | Dr. dr. Subandrate, M.Biomed | 085832434722
+SUS | Dr. dr. Susilawati, M.Kes | 082279212268
+AAR | dr. Ayeshah Augusta Rosdah, MBiomedSc, PhD | 085664378425
+CDA | Catherine Dwi Augusthi Putri, SKM., M.KM | 081271553399
+DYZ | dr. Diyaz Syauki Ikhsan, SpKJ | 0819685695
