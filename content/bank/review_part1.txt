@@ -1,0 +1,889 @@
+[a1] (bio, mc) Jenis karbohidrat yang berperan sebagai antikoagulan, yaitu heteropolisakarida yang mengikat antitrombin III sehingga memblokir pembekuan darah secara efisien, adalah…
+    A. Alginat
+    B. Fruktan
+    C* Heparin
+    D. Glikosida
+    E. Pati
+    PEMBAHASAN: Heparin adalah glikosaminoglikan (heteropolisakarida bersulfat). Ikatannya dengan antitrombin III mempercepat inaktivasi trombin dan faktor Xa, jadi pembekuan darah terhambat.
+    CATATAN: Di file asli tertulis "koagulan", padahal fungsinya antikoagulan.
+
+[a10] (bio, mc) Komponen membran yang berfungsi menjaga fluiditas membran adalah…
+    A. Glikolipid
+    B. Fosfolipid
+    C* Kolesterol
+    D. Lipoprotein
+    E. Trigliserida
+    PEMBAHASAN: Kolesterol menyisip di antara fosfolipid dan menahan fluiditas tetap stabil. Pada suhu tinggi ia membatasi gerak rantai asam lemak, pada suhu rendah ia mencegah rantai itu merapat sampai membeku.
+
+[a15] (bio, mc) Mengapa PUFA dapat menyebabkan membran lebih cair?
+    A. PUFA memiliki banyak ikatan rantai karbon sehingga ikatan menjadi lurus
+    B* PUFA memiliki banyak ikatan rangkap karbon sehingga rantainya berlekuk
+    C. Rantai karbon PUFA lurus karena tidak memiliki ikatan rangkap
+    D. PUFA memiliki satu ikatan rangkap sehingga rantainya lurus
+    E. Tidak ada pilihan lain yang sesuai
+    PEMBAHASAN: Setiap ikatan rangkap cis membuat rantai asam lemak menekuk. Rantai yang bengkok tidak bisa tersusun rapat, interaksi antarrantai melemah, dan membran jadi lebih cair.
+
+[a21] (bio, mc) Senyawa yang dapat membantu mengatasi penggumpalan darah adalah…
+    A. Tirosin
+    B. Glikosidin
+    C* Heparin
+    D. Triptofan
+    E. Fibrinogen
+    PEMBAHASAN: Heparin adalah antikoagulan. Ia mengikat antitrombin III dan mempercepat kerjanya menonaktifkan trombin dan faktor Xa, sehingga bekuan tidak terbentuk. Fibrinogen justru bahan baku bekuan.
+
+[a26] (bio, mc) Lipid ini memiliki kepala gliserol dan tiga ekor asam lemak. Termasuk senyawa lipid apakah ini?
+    A. Lipid kompleks - trigliserida
+    B* Lipid sederhana - trigliserida
+    C. Lipid kompleks - fosfolipid
+    D. Lipid sederhana - fosfolipid
+    E. Tidak ada pilihan lain yang sesuai
+    PEMBAHASAN: Trigliserida adalah ester gliserol dengan tiga asam lemak. Karena penyusunnya hanya asam lemak dan alkohol, ia masuk lipid sederhana. Fosfolipid termasuk lipid kompleks karena punya gugus fosfat dan basa nitrogen.
+
+[a55] (bio, mc) Glikoprotein, proteoglikan, dan glikolipid berikatan kovalen pada permukaan membran sel, bertindak sebagai reseptor sinyal, penanda respon imun, dan situs pengikatan toksin mikroba disebut…
+    A. Polisakarida konjugat
+    B. Homopolisakarida
+    C* Glikokonjugat
+    D. Glukokonjugat
+    E. Heteropolisakarida
+    PEMBAHASAN: Glikokonjugat adalah karbohidrat yang terikat kovalen ke protein atau lipid: glikoprotein, proteoglikan, dan glikolipid. Di permukaan sel molekul ini menjadi reseptor sinyal, penanda imun (misalnya antigen golongan darah), dan tempat menempelnya toksin mikroba.
+
+[a56] (bio, mc) Nanopartikel berbasis polisakarida yang berfungsi untuk penargetan reseptor dan pengiriman obat tertarget adalah…
+    A. Heparin
+    B* Dekstran
+    C. Kitosan
+    D. Alginat
+    E. Pati
+    PEMBAHASAN: Dekstran adalah polisakarida glukosa bercabang yang mudah dimodifikasi dan dipasangi ligan, sehingga dipakai sebagai nanopartikel yang menargetkan reseptor dan mengantar obat ke sel sasaran. Kitosan juga dipakai untuk penghantaran obat, tapi kunci untuk penargetan reseptor di soal ini dekstran.
+
+[a57] (bio, mc) Polisakarida yang dimanfaatkan dalam sistem penghantaran obat adalah…
+    A. Dekstran
+    B* Kitosan
+    C. Heparin
+    D. Pati
+    E. Glukosa
+    PEMBAHASAN: Kitosan, polisakarida hasil deasetilasi kitin, bersifat biokompatibel, bisa terurai di tubuh, dan bermuatan positif sehingga mudah menempel di mukosa. Karena itu kitosan banyak dipakai sebagai pembawa obat, misalnya dalam bentuk nanopartikel.
+
+[a61] (bio, mc) Amilase memecah pati menjadi produk antara, yaitu…
+    A. Glukosa
+    B. Fruktosa
+    C* Maltosa
+    D. Sukrosa
+    E. Galaktosa
+    PEMBAHASAN: Amilase dari ludah dan pankreas memotong ikatan α-1,4 glikosidik pati menjadi maltosa, maltotriosa, dan dekstrin. Maltosa lalu dipecah maltase menjadi glukosa.
+
+[a74] (bio, mc) Dalam pemeriksaan hiperlipidemia, terdapat partikel lipoprotein terbesar yang membawa trigliserida dari makanan menuju jaringan perifer. Jenis lipoprotein apakah itu?
+    A. HDL
+    B. LDL
+    C. VLDL
+    D* Kilomikron
+    PEMBAHASAN: Kilomikron dibentuk di sel usus dari lemak makanan. Ukurannya paling besar dan densitasnya paling rendah, lalu ia membawa trigliserida eksogen lewat pembuluh limfe ke jaringan perifer. VLDL membawa trigliserida buatan hati, LDL membawa kolesterol ke jaringan, dan HDL mengangkut kolesterol kembali ke hati.
+    CATATAN: Teks soal di file asli terpotong dan sebagian masuk ke pilihan A. Kalimatnya dilengkapi, pilihan jawabannya tetap.
+
+[anew] (bio, mc) Saat terjadi distrofi otot, proses apa yang terganggu di dalam tubuh?
+    A* Glikolisis glukosa
+    B. Glikogenesis
+    C. Glukoneogenesis
+    D. Beta-oksidasi
+    E. Siklus Krebs
+    PEMBAHASAN: Distrofi otot berawal dari kelainan protein struktural serat otot, misalnya distrofin pada distrofi Duchenne. Serat otot yang terus rusak ikut terganggu metabolisme energinya, dan jalur yang disorot soal ini adalah glikolisis glukosa.
+    CATATAN: Kunci mengikuti batu. Soal ini tidak menjelaskan konteksnya, jadi pakai sebagai hafalan kunci.
+
+[b004] (bio, tf) Peran biologis utama karbohidrat adalah sebagai spesifikasi biologis.
+    A. Benar
+    B* Salah
+    PEMBAHASAN: Peran utama karbohidrat adalah sumber energi dan komponen struktural. Karbohidrat di permukaan sel memang ikut berperan dalam pengenalan sel, tapi itu bukan peran utamanya.
+
+[b005] (bio, tf) Laktosa adalah gula utama dalam susu mamalia.
+    A* Benar
+    B. Salah
+    PEMBAHASAN: Laktosa merupakan disakarida utama pada susu mamalia.
+
+[b006] (bio, tf) Pati dengan enzim amilase akan terpecah menjadi maltosa, laktosa, dan sukrosa.
+    A. Benar
+    B* Salah
+    PEMBAHASAN: Amilase memecah pati terutama menjadi maltosa dan dekstrin; laktosa dan sukrosa bukan hasil hidrolisis pati oleh amilase.
+
+[b007] (bio, tf) Glukosa dalam darah jika tidak digunakan sebagai energi akan disimpan dalam bentuk glikogen.
+    A* Benar
+    B. Salah
+    PEMBAHASAN: Glukosa dapat disimpan sebagai glikogen, terutama di hati dan otot.
+
+[b008] (bio, tf) Polisakarida alami seperti kitosan berbentuk nanopartikel yang digunakan dalam sistem penghantaran obat.
+    A* Benar
+    B. Salah
+    PEMBAHASAN: Kitosan memang polisakarida alami yang bisa dibuat menjadi nanopartikel pembawa obat.
+
+[b010] (bio, mc) Asam lemak jenuh ditandai dengan…
+    A. Adanya ikatan rangkap
+    B* Tidak memiliki ikatan rangkap
+    C. Penamaan akhiran -enoat
+    D. Terdiri dari satu molekul gliserol
+    PEMBAHASAN: Asam lemak jenuh tidak memiliki ikatan rangkap C=C.
+
+[b011] (bio, mc) Lipoprotein yang disebut "kolesterol jahat" adalah…
+    A. HDL
+    B* LDL
+    C. IDL
+    D. VLDL
+    PEMBAHASAN: LDL membawa kolesterol ke jaringan dan bila berlebih berkaitan dengan aterosklerosis.
+
+[b012] (bio, mc) Molekul nonpolar kecil seperti O₂ dan CO₂ dapat menembus membran karena sifatnya…
+    A. Hidrofilik
+    B* Hidrofobik
+    C. Amfifilik
+    D. Bermuatan listrik
+    PEMBAHASAN: Molekul kecil nonpolar dapat berdifusi melalui inti hidrofobik bilayer.
+
+[b013] (bio, mc) Kelarutan asam lemak dalam air semakin rendah jika…
+    A. Rantai karbon makin pendek
+    B. Jumlah ikatan rangkap makin sedikit
+    C* Rantai karbon makin panjang
+    D. Gugus hidrogen menurun
+    PEMBAHASAN: Rantai hidrokarbon yang lebih panjang meningkatkan sifat hidrofobik.
+
+[b014] (bio, mc) Glikolipid merupakan klasifikasi lipid…
+    A. Lipid sederhana
+    B. Derivat lipid
+    C* Lipid terkonjugasi
+    D* Lipid kompleks
+    PEMBAHASAN: Glikolipid tersusun dari lipid dan karbohidrat, jadi termasuk lipid kompleks. Di banyak buku kelompok ini juga disebut lipid terkonjugasi atau lipid majemuk.
+    CATATAN: Lipid kompleks dan lipid terkonjugasi adalah sebutan untuk kelompok yang sama, jadi keduanya dihitung benar. Kunci file asli: lipid kompleks.
+
+[b015] (bio, mc) Kelas lipoprotein dengan densitas paling rendah adalah…
+    A. HDL
+    B. IDL
+    C* Kilomikron
+    D. VLDL
+    PEMBAHASAN: Kilomikron memiliki densitas paling rendah.
+
+[b016] (bio, mc) Penumpukan kolesterol, terutama LDL teroksidasi, di dinding arteri disebut…
+    A. Hiperkolesterolemia
+    B* Aterosklerosis
+    C. Azoospermia
+    D. Hiperlipidemia
+    PEMBAHASAN: Aterosklerosis melibatkan akumulasi lipid pada dinding arteri.
+
+[b017] (bio, mc) Komponen utama membran sel yang menyusun lapisan bilayer semipermeabel adalah…
+    A. Kolesterol
+    B* Fosfolipid
+    C. Glikolipid
+    D. Trigliserida
+    PEMBAHASAN: Fosfolipid membentuk bilayer membran.
+
+[b063] (bio, tf) Karbohidrat memiliki atom karbon asimetris yang mengikat empat atom/gugus berbeda.
+    A* Benar
+    B. Salah
+    PEMBAHASAN: Karbon kiral memiliki empat substituen berbeda.
+
+[b129] (bio, mc) Polisakarida struktural dinding sel tumbuhan yang tidak dapat dicerna manusia adalah…
+    A. Glikogen
+    B. Laktosa
+    C* Selulosa
+    D. Amilosa
+    PEMBAHASAN: Selulosa merupakan polisakarida struktural tumbuhan.
+
+[b130] (bio, mc) Mengapa PUFA lebih cair daripada MUFA dan lemak jenuh pada suhu ruang?
+    A* Banyak ikatan rangkap cis menyebabkan tekukan struktur
+    B. Rantai karbon sangat pendek dan hidrofilik
+    C. Tidak memiliki ikatan rangkap
+    D. Hanya memiliki satu ikatan rangkap
+    PEMBAHASAN: Ikatan rangkap cis membuat rantai bengkok sehingga packing lebih longgar.
+
+[b131] (bio, mc) Lipid sederhana yang terdiri dari gliserol terikat tiga asam lemak melalui ikatan ester adalah…
+    A. Fosfolipid
+    B. Kolesterol
+    C* Trigliserida
+    D. Kilomikron
+    PEMBAHASAN: Trigliserida terdiri dari gliserol dan tiga asam lemak.
+
+[b132] (bio, mc) Kegagalan transport trigliserida makanan dari usus ke jaringan perifer paling berkaitan dengan gangguan…
+    A* Kilomikron
+    B. LDL
+    C. HDL
+    D. VLDL
+    PEMBAHASAN: Kilomikron mengangkut trigliserida makanan dari usus.
+
+[b134] (bio, mc) Monomer DNA tersusun atas…
+    A. Ribosa, asam amino, sulfat
+    B* Deoksiribosa, fosfat, basa nitrogen
+    C. Gliserol, asam lemak, purin
+    D. Asam karboksilat, amina, cincin furan
+    PEMBAHASAN: Nukleotida DNA mengandung deoksiribosa, fosfat, dan basa nitrogen.
+
+[b174] (bio, mc) Karbohidrat yang memiliki struktur furanosa adalah…
+    A* Fruktosa
+    B. Glukosa
+    C. Manosa
+    D. Sukrosa
+    PEMBAHASAN: Fruktosa (ketoheksosa) membentuk cincin lima anggota atau furanosa, karena gugus keton di C2 bereaksi dengan gugus OH di C5. Glukosa dan manosa umumnya membentuk cincin piranosa. Sukrosa memang mengandung unit fruktofuranosa, tapi monosakarida yang dimaksud soal ini fruktosa.
+
+[b177] (bio, mc) Sifat dari fosfolipid adalah…
+    A. Hidrofobik
+    B. Hidrofilik
+    C* Amfipatik
+    D. Larut dalam air
+    E. Struktur steroid
+    PEMBAHASAN: Fosfolipid memiliki bagian hidrofilik dan hidrofobik sehingga bersifat amfipatik.
+
+[a24] (prot, mc) Anemia sel sabit terjadi ketika asam amino nomor 6 pada struktur primer rantai β-globin diganti menjadi…
+    A. Glutamat
+    B. Leusin
+    C* Valin
+    D. Glisin
+    E. Alanin
+    PEMBAHASAN: Pada HbS, asam glutamat (bermuatan, hidrofilik) di posisi 6 rantai β-globin diganti valin (hidrofobik). Saat deoksigenasi valin ini membuat molekul hemoglobin saling menempel dan berpolimer, sehingga eritrosit berubah bentuk jadi sabit.
+
+[a29] (prot, mc) Alzheimer disebabkan oleh…
+    A* Protein misfolding (pelipatan)
+    B. Denaturasi protein
+    C. Oksidasi lipid
+    D. Gangguan glikogen
+    E. Kerusakan kolagen
+    PEMBAHASAN: Pada Alzheimer, protein β-amiloid dan tau salah melipat (misfolding) lalu menggumpal menjadi plak amiloid dan neurofibrillary tangle yang merusak neuron.
+
+[a41] (prot, mc) Asam amino yang menjadi prekursor pembentukan NO adalah…
+    A* Arginin
+    B. Leusin
+    C. Tirosin
+    D. Triptofan
+    E. Histidin
+    PEMBAHASAN: Enzim NO sintase mengubah L-arginin menjadi oksida nitrat (NO) dan sitrulin. NO bekerja sebagai vasodilator dan molekul sinyal.
+
+[a42] (prot, mc) Asam amino yang memiliki kapasitas buffer terbaik di sekitar pH 7,4 adalah…
+    A. Arginin
+    B. Leusin
+    C. Serin
+    D* Histidin
+    E. Valin
+    PEMBAHASAN: Gugus imidazol histidin punya pKa sekitar 6,0, paling dekat dengan pH fisiologis dibanding rantai samping asam amino lain. Itu sebabnya histidin jadi buffer terbaik di sekitar pH 7,4, contohnya residu histidin di hemoglobin.
+
+[a43] (prot, mc) Asam amino yang bersifat sebagai pemecah heliks (helix breaker) adalah…
+    A. Glisin
+    B* Prolin
+    C. Valin
+    D. Leusin
+    E. Alanin
+    PEMBAHASAN: Rantai samping prolin membentuk cincin dengan nitrogen aminonya, sehingga sudut ikatannya kaku dan tidak ada H di nitrogen untuk ikatan hidrogen heliks. Akibatnya prolin memutus α-heliks. Glisin juga bisa mengganggu heliks, tapi alasannya karena terlalu fleksibel.
+
+[a44] (prot, mc) Protein dilarutkan dalam buffer dengan pH di atas titik isoelektriknya (pH > pI), lalu dialiri arus listrik (elektroforesis). Apa yang terjadi pada protein tersebut?
+    A. Terjadi denaturasi
+    B* Protein bergerak ke anoda
+    C. Protein bergerak ke katoda
+    D. Tidak mengalami apapun
+    E. Protein mengendap
+    PEMBAHASAN: Di atas pI, gugus karboksil protein terdeprotonasi sehingga muatan bersihnya negatif, dan protein bergerak ke anoda (kutub positif). Di bawah pI protein bermuatan positif dan bergerak ke katoda, sedangkan tepat di pI protein diam.
+    CATATAN: Teks soal ini tidak tercatat di batu ("lupa detail soal"). Soalnya disusun ulang supaya cocok dengan pilihan dan kunci aslinya.
+
+[a50] (prot, mc) Prekursor atau bahan dasar bagi tubuh untuk menyintesis hormon tiroid T3 dan T4 serta hormon katekolamin seperti epinefrin adalah…
+    A. Triptofan
+    B* Tirosin
+    C. Histidin
+    D. Arginin
+    E. Metionin
+    PEMBAHASAN: Tirosin menjadi hormon tiroid lewat iodinasi di tiroglobulin, dan menjadi katekolamin (dopamin, norepinefrin, epinefrin) lewat L-DOPA. Triptofan adalah prekursor serotonin dan melatonin, histidin prekursor histamin, dan arginin prekursor NO.
+
+[a53] (prot, mc) Seseorang yang kurang tidur pergi ke dokter dan diberi asam amino prekursor serotonin dan melatonin, yaitu…
+    A. Tirosin
+    B* Triptofan
+    C. Histidin
+    D. Valin
+    E. Leusin
+    PEMBAHASAN: Triptofan diubah menjadi 5-hidroksitriptofan lalu serotonin. Di kelenjar pineal, serotonin diubah lagi menjadi melatonin yang mengatur siklus tidur.
+
+[a64] (prot, mc) Asam amino pembentuk rantai awal yang dikode oleh AUG adalah…
+    A. Serin
+    B. Alanin
+    C. Glutamin
+    D* Metionin
+    E. Valin
+    PEMBAHASAN: AUG adalah kodon awal (start codon) sekaligus kode metionin, jadi sintesis polipeptida selalu dimulai dari metionin (pada bakteri N-formilmetionin).
+
+[a80] (prot, mc) Larutan asam amino yang berada pada titik isoelektriknya (pI) dialiri listrik. Asam amino tersebut akan…
+    A. Bergerak cepat ke katoda
+    B. Bergerak cepat ke anoda
+    C* Diam/tidak terjadi apa-apa
+    D. Terdenaturasi asam aminonya
+    E. Mengendap
+    PEMBAHASAN: Tepat di pI, asam amino berbentuk zwitterion dengan muatan bersih nol, jadi tidak tertarik ke anoda maupun katoda.
+
+[a93] (prot, mc) Ikatan yang terbentuk antara gugus -SH dari dua residu sistein adalah…
+    A* Ikatan disulfida
+    B. Ikatan peptida
+    C. Ikatan hidrogen
+    D. Ikatan ionik
+    E. Ikatan ester
+    PEMBAHASAN: Oksidasi dua gugus tiol (-SH) sistein membentuk ikatan disulfida (-S-S-), jembatan kovalen yang menstabilkan struktur tersier dan kuaterner protein, misalnya pada insulin dan keratin.
+
+[b088] (prot, tf) Reaksi proteolitik secara non-enzimatis terjadi secara cepat.
+    A. Benar
+    B* Salah
+    PEMBAHASAN: Tanpa enzim, hidrolisis ikatan peptida berlangsung sangat lambat. Enzim protease yang membuatnya cepat.
+
+[b089] (prot, tf) Endopeptidase menghidrolisis protein pada bagian terminal.
+    A. Benar
+    B* Salah
+    PEMBAHASAN: Endopeptidase memotong di bagian dalam rantai.
+
+[b090] (prot, tf) Proteasom merupakan kompleks riboprotein dari reaksi proteolisis.
+    A. Benar
+    B* Salah
+    PEMBAHASAN: Proteasom adalah kompleks protein besar (protease multisubunit) yang memecah protein berlabel ubikuitin. Ia tidak mengandung RNA, jadi bukan riboprotein.
+
+[b091] (prot, tf) Enzim protease dikeluarkan dalam bentuk aktif.
+    A. Benar
+    B* Salah
+    PEMBAHASAN: Banyak protease disekresikan sebagai zimogen (bentuk inaktif), misalnya pepsinogen dan tripsinogen, supaya tidak mencerna sel yang membuatnya.
+
+[b092] (prot, tf) Reaksi proteolitik menyebabkan hambatan proses pencernaan protein di lambung.
+    A. Benar
+    B* Salah
+    PEMBAHASAN: Proteolisis merupakan inti proses pencernaan protein.
+
+[b118] (prot, tf) Pada titik isoelektrik, asam amino berbentuk zwitterion dengan muatan bersih nol dan tidak bergerak menuju anoda maupun katoda.
+    A* Benar
+    B. Salah
+    PEMBAHASAN: Pada pI, muatan bersih rata-rata nol.
+
+[b119] (prot, tf) Sebagian besar protein manusia disintesis menggunakan asam amino konfigurasi D.
+    A. Benar
+    B* Salah
+    PEMBAHASAN: Protein manusia disusun dari asam amino konfigurasi L.
+
+[b120] (prot, tf) Tirosin merupakan prekursor hormon tiroid dan katekolamin.
+    A* Benar
+    B. Salah
+    PEMBAHASAN: Tirosin merupakan prekursor biosintesis T3/T4 dan katekolamin.
+
+[b121] (prot, tf) Ikatan peptida dapat berotasi sangat bebas karena merupakan ikatan kovalen tunggal tanpa resonansi.
+    A. Benar
+    B* Salah
+    PEMBAHASAN: Resonansi memberi karakter ikatan rangkap parsial dan membatasi rotasi.
+
+[b122] (prot, tf) Prolin dapat menjadi helix breaker karena struktur cincinnya membatasi geometri rantai.
+    A* Benar
+    B. Salah
+    PEMBAHASAN: Struktur prolin dapat mengganggu α-heliks.
+
+[b123] (prot, tf) Pada anemia sel sabit, valin digantikan glutamat pada rantai hemoglobin.
+    A. Benar
+    B* Salah
+    PEMBAHASAN: Mutasi klasik HbS adalah glutamat digantikan valin.
+
+[b124] (prot, tf) Autoklaf membunuh bakteri antara lain dengan denaturasi protein/enzim akibat panas.
+    A* Benar
+    B. Salah
+    PEMBAHASAN: Panas bertekanan menyebabkan denaturasi dan kerusakan komponen sel.
+
+[b125] (prot, tf) Kooperativitas hemoglobin sangat bergantung pada struktur kuaterner.
+    A* Benar
+    B. Salah
+    PEMBAHASAN: Interaksi antarsubunit mendasari perubahan afinitas O2.
+
+[b126] (prot, tf) Alzheimer dan penyakit prion sama-sama dapat berkaitan dengan misfolding/agregasi protein.
+    A* Benar
+    B. Salah
+    PEMBAHASAN: Keduanya melibatkan protein abnormal, meski mekanismenya berbeda.
+
+[b127] (prot, tf) Histidin adalah buffer fisiologis yang buruk karena pKa rantai sampingnya jauh dari pH fisiologis.
+    A. Benar
+    B* Salah
+    PEMBAHASAN: pKa gugus imidazol histidin sekitar 6,0, cukup dekat dengan pH fisiologis. Jadi histidin justru buffer fisiologis yang baik, contohnya di hemoglobin.
+
+[b140] (prot, mc) Pepsinogen diaktifkan menjadi pepsin terutama oleh…
+    A. K+
+    B. Enteropeptidase
+    C* HCl lambung
+    D. Insulin
+    PEMBAHASAN: Lingkungan asam lambung mengaktifkan pepsinogen.
+
+[b141] (prot, mc) Organel tempat translasi RNA menjadi rantai polipeptida adalah…
+    A. Badan Golgi
+    B. Sentrosom
+    C. Mitokondria
+    D* Ribosom
+    PEMBAHASAN: Ribosom merupakan tempat sintesis protein.
+
+[a47] (min, mc) Mineral ini penting untuk gigi dan tulang, berfungsi memperkuat gigi dan menjaga kepadatan tulang. Mineral apakah ini?
+    A. P
+    B* F
+    C. S
+    D. Fe
+    E. Co
+    PEMBAHASAN: Fluor (F) masuk ke kristal hidroksiapatit dan membentuk fluorapatit yang lebih tahan asam, jadi enamel gigi lebih kuat. Fluor juga ikut menjaga kepadatan mineral tulang. Fosfor memang penyusun tulang, tapi fungsi memperkuat gigi paling khas milik fluor.
+
+[a6] (min, mc) Mineral yang berfungsi untuk antioksidan glutation serta jaringan ikat (kuku, kulit, rambut) adalah…
+    A. Fe
+    B* S
+    C. I
+    D. Mo
+    E. Cu
+    PEMBAHASAN: Sulfur (S) terdapat di asam amino sistein dan metionin, menjadi bagian antioksidan glutation, dan membentuk ikatan disulfida di keratin kuku, kulit, dan rambut.
+
+[a7] (min, mc) Mineral yang berfungsi dalam jantung dan pembuluh darah serta dalam kerja enzim xantin oksidase dan aldehida oksidase, yang jika berlebih akan mengakibatkan hiperurisemia, adalah…
+    A. Fe
+    B* Mo
+    C. Cr
+    D. Cu
+    E. Na
+    PEMBAHASAN: Molibdenum (Mo) adalah kofaktor xantin oksidase, aldehida oksidase, dan sulfit oksidase. Xantin oksidase mengubah hipoksantin dan xantin menjadi asam urat, sehingga Mo berlebih dikaitkan dengan kadar asam urat tinggi (hiperurisemia).
+
+[a77] (min, mc) Mineral ini termasuk ke dalam vitamin B12, dengan fungsi membentuk sel darah merah dan merawat saraf. Mineral apakah ini?
+    A. I
+    B. Fe
+    C* Co
+    D. F
+    E. Ca
+    PEMBAHASAN: Kobalt (Co) adalah atom pusat kobalamin (vitamin B12). Vitamin B12 dibutuhkan untuk pembentukan eritrosit dan pemeliharaan mielin, jadi kekurangannya bisa menyebabkan anemia megaloblastik dan gangguan saraf.
+    CATATAN: Di file asli tertulis "protein B12". Yang dimaksud vitamin B12.
+
+[a8] (min, mc) Mineral yang berkontribusi dalam kerja insulin serta metabolisme lemak, glukosa, dan protein adalah…
+    A. Cu
+    B* Cr
+    C. Fe
+    D. Mo
+    E. I
+    PEMBAHASAN: Kromium (Cr) membantu kerja insulin dengan meningkatkan sensitivitas reseptornya, sehingga terlibat dalam metabolisme glukosa, lemak, dan protein.
+
+[a81] (min, mc) Mineral untuk jantung dan limpa adalah…
+    A* Se
+    B. Fe
+    C. I
+    D. Cu
+    E. Zn
+    PEMBAHASAN: Selenium (Se) adalah komponen enzim antioksidan glutation peroksidase. Kekurangannya dikaitkan dengan kardiomiopati (penyakit Keshan) dan menurunnya fungsi sistem imun.
+
+[a82] (min, mc) Mineral untuk pembentukan darah adalah…
+    A* Fe
+    B. Ca
+    C. Mg
+    D. Na
+    E. K
+    PEMBAHASAN: Besi (Fe) adalah atom pusat heme pada hemoglobin, jadi mutlak dibutuhkan untuk membentuk eritrosit. Kekurangannya menyebabkan anemia defisiensi besi.
+
+[a86] (min, mc) Mineral yang membantu perkembangan otak, tubuh, dan sistem saraf, serta berperan penting untuk kelenjar tiroid adalah…
+    A* I
+    B. Cu
+    C. Mo
+    D. Fe
+    E. Se
+    PEMBAHASAN: Iodium (I) adalah bahan pembentuk hormon tiroid T3 dan T4, yang mengatur metabolisme serta tumbuh kembang otak dan saraf. Kekurangannya menyebabkan gondok, dan pada janin bisa menyebabkan kretinisme.
+
+[a95] (min, mc) Suatu kation yang jika kekurangan menyebabkan kelelahan, kram atau kelemahan otot, sembelit dan kelumpuhan otot, sementara jika kelebihan akan menyebabkan diare, muntah, dan penyakit ginjal adalah…
+    A* K+
+    B. Na+
+    C. Ca2+
+    D. Cl-
+    E. Fe2+
+    PEMBAHASAN: Kalium (K⁺) menjaga potensial membran otot dan saraf. Hipokalemia menyebabkan lemas, kram, konstipasi karena otot polos usus melemah, sampai kelumpuhan. Kelebihan kalium berbahaya bagi irama jantung dan erat kaitannya dengan gangguan ginjal, karena ginjal adalah jalur utama pembuangan kalium.
+
+[b000] (min, tf) Mineral yang merupakan bagian dari molekul protein adalah sulfur.
+    A* Benar
+    B. Salah
+    PEMBAHASAN: Sulfur merupakan unsur penyusun beberapa asam amino, seperti sistein dan metionin.
+
+[b001] (min, tf) Keseimbangan mineral fosfor diatur tubuh bersama dengan kalsium dan vitamin D.
+    A* Benar
+    B. Salah
+    PEMBAHASAN: Fosfor berinteraksi erat dengan kalsium dan vitamin D dalam homeostasis mineral.
+
+[b002] (min, tf) Mineral yang berfungsi sebagai remineralisasi pada enamel gigi adalah fluor.
+    A* Benar
+    B. Salah
+    PEMBAHASAN: Fluor membantu pembentukan mineral enamel yang lebih tahan terhadap asam.
+
+[b003] (min, tf) Mineral krom berfungsi pada metabolisme glukosa, protein, dan lemak.
+    A* Benar
+    B. Salah
+    PEMBAHASAN: Krom dikaitkan dengan metabolisme makronutrien dan kerja insulin.
+
+[b009] (min, tf) Mineral Mo (molibdat) berperan dalam metabolisme purin untuk menghasilkan asam urat.
+    A* Benar
+    B. Salah
+    PEMBAHASAN: Molibdenum merupakan kofaktor enzim yang terlibat dalam metabolisme purin.
+
+[b128] (min, mc) Elektrolit utama yang jika kekurangan dapat mengganggu keseimbangan asam-basa dan jika berlebihan meningkatkan produksi asam lambung adalah…
+    A. Kalsium
+    B. Kalium
+    C. Magnesium
+    D* Klorida
+    PEMBAHASAN: Klorida (Cl⁻) adalah bahan pembentuk HCl oleh sel parietal lambung dan ikut mengatur keseimbangan asam-basa lewat pertukaran klorida-bikarbonat. Karena itu gangguan kadarnya berkaitan dengan dua hal yang disebut di soal.
+
+[b173] (min, mc) Salah satu contoh trace mineral adalah…
+    A* Besi
+    B. Magnesium
+    C. Sulfur
+    D. Kalsium
+    E. Fosfor
+    PEMBAHASAN: Trace mineral (mineral mikro) dibutuhkan kurang dari 100 mg per hari, contohnya besi, seng, iodium, dan selenium. Magnesium, sulfur, kalsium, dan fosfor termasuk mineral makro.
+
+[a13] (ab, mc) Larutan CH3COOH memiliki pH 3. Jika larutan tersebut diencerkan dengan akuades hingga 100 kali lipat, berapa pH akhir larutan?
+    A* 4
+    B. 6
+    C. 5
+    D. 7
+    E. 8
+    PEMBAHASAN: CH3COOH asam lemah, jadi [H⁺] = √(Ka × M). Pengenceran 100 kali menurunkan M 100 kali, tapi [H⁺] hanya turun √100 = 10 kali: dari 10⁻³ menjadi 10⁻⁴. pH akhirnya 4.
+    CATATAN: Kunci di file asli 5. Angka itu berlaku untuk asam kuat, sedangkan asam asetat asam lemah, jadi kuncinya dikoreksi ke 4.
+
+[a16] (ab, mc) Bagaimana hubungan SID yang meningkat terhadap [H⁺] dan [OH⁻]?
+    A* H⁺ menurun, OH⁻ meningkat
+    B* H⁺ rendah, OH⁻ tinggi
+    C. H⁺ dan OH⁻ sama-sama tinggi
+    D. H⁺ dan OH⁻ sama-sama rendah
+    E. Tidak ada perubahan
+    PEMBAHASAN: Dalam pendekatan Stewart, SID (strong ion difference) yang naik membuat cairan lebih basa: [H⁺] turun dan [OH⁻] naik, seperti pada alkalosis metabolik. SID yang turun menyebabkan asidosis.
+    CATATAN: Pilihan A dan B menggambarkan perubahan yang sama, jadi keduanya dihitung benar. Kunci batu: A.
+
+[a17] (ab, mc) Indikator fenolftalein mempunyai trayek pH pada kisaran…
+    A* 8,3-10
+    B. 7,45-8
+    C. 6-7,35
+    D. 4-5
+    E. 3-5
+    PEMBAHASAN: Fenolftalein tidak berwarna di bawah pH sekitar 8,3 dan berubah merah muda sampai pH sekitar 10. Karena itu fenolftalein cocok untuk titrasi asam lemah dengan basa kuat, yang titik ekuivalennya di atas 7.
+    CATATAN: File 200 soal memakai kunci 7,5-8,8 untuk soal yang sama. Soalnya digabung dan memakai trayek standar di literatur, 8,3-10.
+
+[a18] (ab, mc) Ekuivalensi asam adalah banyaknya asam yang dapat bereaksi dengan 1 mol ion OH⁻. Berapa mol OH⁻ yang bereaksi dengan 1 mol H2SO4?
+    A. 3 mol OH⁻
+    B. 1/2 mol OH⁻
+    C. 4 mol OH⁻
+    D. 1 mol OH⁻
+    E* 2 mol OH⁻
+    PEMBAHASAN: H2SO4 asam diprotik: H2SO4 + 2OH⁻ → SO4²⁻ + 2H2O. Jadi 1 mol H2SO4 bereaksi dengan 2 mol OH⁻, atau setara 2 ekuivalen.
+    CATATAN: Kunci di file asli 1/2 mol, padahal itu jawaban untuk pertanyaan kebalikannya (berapa mol H2SO4 yang bereaksi dengan 1 mol OH⁻). Di file asli, pilihan "2 MOL OH-" juga satu-satunya yang ditulis kapital.
+
+[a34] (ab, mc) Apoteker meracik obat tetes mata antibiotik. Larutannya harus isotonis agar tidak menimbulkan iritasi. Apa yang harus dilakukan?
+    A. Menghitung berat molekul larutan
+    B* Menghitung ekivalensi NaCl (nilai E)
+    C. Mengurangi volume air
+    D. Menambahkan glukosa
+    E. Menggunakan larutan hipertonik
+    PEMBAHASAN: Supaya isotonis, jumlah NaCl yang perlu ditambahkan dihitung dengan metode ekivalensi NaCl (nilai E): jumlah NaCl yang efek osmotiknya setara dengan 1 g obat. Larutan hipertonik justru bikin iritasi.
+
+[a38] (ab, mc) Raya merupakan mahasiswa PSPD, dia mendapatkan sampel urine dari pasien dengan pH 5,0. Raya berniat menguji keasaman sampel tersebut dengan kertas lakmus merah dan biru. Pilihlah analisis dari pilihan berikut yang tepat!
+    A. Kertas lakmus merah berubah menjadi biru, kertas lakmus biru tetap biru
+    B* Kertas lakmus merah tetap merah, kertas lakmus biru menjadi merah
+    C. Tidak terjadi perubahan pada keduanya
+    D. Kertas lakmus merah berubah ungu, kertas lakmus biru berubah hijau
+    E. Tidak ada pilihan lain yang sesuai
+    PEMBAHASAN: Urin dengan pH 5,0 bersifat asam. Dalam suasana asam, lakmus merah tetap merah dan lakmus biru berubah menjadi merah.
+
+[a49] (ab, mc) Seseorang masuk IGD lalu diinfus aquades steril melalui vena dalam jumlah banyak. Apa dampaknya bagi sel eritrosit?
+    A. Tidak ada hubungan
+    B. Selnya menebal
+    C. Terjadi hemodialisis
+    D. Terjadi krenasi
+    E* Terjadi hemolisis
+    PEMBAHASAN: Aquades jauh lebih hipotonis daripada plasma. Air masuk ke eritrosit secara osmosis sampai sel membengkak dan pecah (hemolisis). Krenasi atau sel mengerut terjadi di larutan hipertonis.
+    CATATAN: Kunci di file asli krenasi. Dikoreksi ke hemolisis, sesuai soal hipotonis lain di bank ini.
+
+[a75] (ab, mc) 20 mL larutan NaOH 0,1 M direaksikan dengan 20 mL larutan CH3COOH 0,2 M (Ka = 2 × 10⁻⁵). Tentukan pH larutan setelah dicampurkan.
+    A* 5 - log 2
+    B. 5 + log 2
+    C. 9 + log 2
+    D. 9 - log 2
+    E. Tidak ada pilihan lain yang sesuai
+    PEMBAHASAN: NaOH 2 mmol bereaksi dengan CH3COOH 4 mmol, tersisa CH3COOH 2 mmol dan terbentuk CH3COONa 2 mmol. Ini buffer asam: [H⁺] = Ka × 2/2 = 2 × 10⁻⁵, jadi pH = 5 - log 2 (sekitar 4,7).
+    CATATAN: Kunci di file asli 9 - log 2 dan konstantanya ditulis Kb. Campuran asam asetat dan natrium asetat pasti bersifat asam, jadi kuncinya dikoreksi ke 5 - log 2.
+
+[a85] (ab, mc) 100 mL larutan HCl 0,2 M dicampurkan dengan 200 mL larutan NH4OH 0,2 M (Kb = 2 × 10⁻⁵). Berapakah pH akhir larutan tersebut?
+    A* 9 + log 2
+    B. 5 + log 2
+    C. 9 - log 2
+    D. 5 - log 2
+    E. 7
+    PEMBAHASAN: HCl 20 mmol bereaksi dengan NH4OH 40 mmol, tersisa NH4OH 20 mmol dan terbentuk NH4Cl 20 mmol. Campuran basa lemah dan garamnya adalah buffer basa: [OH⁻] = Kb × 20/20 = 2 × 10⁻⁵, pOH = 5 - log 2, jadi pH = 9 + log 2.
+
+[a9] (ab, mc) Seseorang mengalami pneumonia sehingga darahnya menjadi asidosis respiratorik. Kondisi yang terjadi di dalam darah adalah…
+    A* PCO2 meningkat
+    B. PCO2 menurun
+    C. HCO3⁻ meningkat
+    D. HCO3⁻ menurun
+    E. Kadar PCO2 tetap
+    PEMBAHASAN: Pada pneumonia, ventilasi alveolus terganggu sehingga CO2 tertahan dan PCO2 naik. Kesetimbangan CO2 + H2O ⇌ H2CO3 ⇌ H⁺ + HCO3⁻ bergeser ke kanan, H⁺ bertambah, dan pH turun.
+
+[b093] (ab, tf) Menurut konsep Lewis, asam adalah senyawa yang memberikan ion H+.
+    A. Benar
+    B* Salah
+    PEMBAHASAN: Menurut Lewis, asam adalah akseptor pasangan elektron.
+
+[b094] (ab, tf) Reaksi asam dengan basa menghasilkan gas nitrogen dan basa lemah.
+    A. Benar
+    B* Salah
+    PEMBAHASAN: Netralisasi asam-basa menghasilkan garam dan air.
+
+[b095] (ab, tf) Basa lemah terionisasi sempurna di dalam air.
+    A. Benar
+    B* Salah
+    PEMBAHASAN: Basa lemah hanya terionisasi sebagian.
+
+[b096] (ab, tf) pH darah normal adalah 7.
+    A. Benar
+    B* Salah
+    PEMBAHASAN: pH darah normal sedikit basa, yaitu 7,35-7,45.
+
+[b097] (ab, tf) Perubahan fraksi HCO3⁻ menunjukkan asidosis atau alkalosis respiratorik.
+    A. Benar
+    B* Salah
+    PEMBAHASAN: Perubahan HCO3⁻ terutama menandakan gangguan metabolik. Gangguan respiratorik ditandai perubahan PCO2.
+
+[b100] (ab, tf) 1 mol asam mungkin bereaksi dengan 1, 2, atau 3 mol basa.
+    A* Benar
+    B. Salah
+    PEMBAHASAN: Jumlah ekuivalen bergantung pada jumlah proton asam yang dapat bereaksi.
+
+[b108] (ab, tf) Sifat koligatif seperti penurunan titik beku dan tekanan osmotik terutama bergantung pada jumlah partikel zat terlarut.
+    A* Benar
+    B. Salah
+    PEMBAHASAN: Sifat koligatif ditentukan terutama oleh jumlah partikel, bukan identitas kimianya.
+
+[b109] (ab, tf) Pemberian cairan hipotonis IV dapat menyebabkan eritrosit menyerap air berlebih hingga lisis.
+    A* Benar
+    B. Salah
+    PEMBAHASAN: Air bergerak ke sel pada kondisi hipotonis.
+
+[b110] (ab, tf) NaCl 0,9% sering digunakan sebagai cairan resusitasi karena bersifat isotonis terhadap plasma.
+    A* Benar
+    B. Salah
+    PEMBAHASAN: NaCl 0,9% adalah kristaloid yang secara umum dianggap isotonis terhadap plasma.
+
+[b133] (ab, mc) Jika eritrosit berada dalam larutan hipertonis, sel akan mengalami…
+    A. Pembelahan
+    B. Tidak berubah
+    C. Hemolisis
+    D* Krenasi
+    PEMBAHASAN: Air keluar dari eritrosit sehingga sel mengkerut/krenasi.
+
+[b142] (ab, mc) Untuk membuat 500 mL larutan glukosa 9% b/v, massa glukosa yang dibutuhkan adalah…
+    A. 4,5 g
+    B. 90 g
+    C. 9 g
+    D* 45 g
+    PEMBAHASAN: 9% b/v = 9 g/100 mL; untuk 500 mL diperlukan 45 g.
+
+[b147] (ab, tf) NaCl 0,9% merupakan cairan hipertonik yang menarik cairan dari sel ke pembuluh darah.
+    A. Benar
+    B* Salah
+    PEMBAHASAN: NaCl 0,9% isotonis terhadap plasma, jadi tidak menarik cairan dari sel ke pembuluh darah.
+
+[b148] (ab, tf) Molaritas menunjukkan jumlah mol zat terlarut per liter larutan.
+    A* Benar
+    B. Salah
+    PEMBAHASAN: Definisi molaritas adalah mol zat terlarut per liter larutan.
+
+[b149] (ab, tf) Osmolaritas mengukur jumlah partikel osmotik dalam 1 kg air.
+    A. Benar
+    B* Salah
+    PEMBAHASAN: Per kg pelarut adalah osmolalitas; osmolaritas dinyatakan per liter larutan.
+
+[b150] (ab, tf) Cairan hipotonik dapat menyebabkan sel membengkak dan lisis karena air masuk ke sel.
+    A* Benar
+    B. Salah
+    PEMBAHASAN: Air berpindah ke kompartemen dengan konsentrasi osmotik lebih tinggi.
+
+[b180] (ab, mc) Perbandingan [HCO3⁻] : [H2CO3] = 10 : 1 dan pKa H2CO3 = 6,1. Dengan pH = pKa + log([HCO3⁻]/[H2CO3]), berapakah pH-nya?
+    A. 6,1
+    B* 7,1
+    C. 8,1
+    D. 5,1
+    PEMBAHASAN: pH = 6,1 + log(10/1) = 6,1 + 1 = 7,1. Sebagai pembanding, darah normal punya rasio 20 : 1 sehingga pH-nya sekitar 7,4.
+    CATATAN: Rumus di file asli tertulis terbalik ([H2CO3]/[HCO3⁻]). Rumusnya dibetulkan, kuncinya tetap.
+
+[a12] (ana, mc) Pada spektrofotometri, bagaimana hubungan antara transmitansi (T) dan absorbansi (A)?
+    A. A = 2 - log T
+    B. A = 2 + log T
+    C. A = 1 - log T
+    D* A = -log T
+    E. A = 1 + log T
+    PEMBAHASAN: Absorbansi adalah negatif logaritma transmitansi: A = -log T, dengan T dalam bentuk desimal. Kalau T ditulis dalam persen, rumusnya menjadi A = 2 - log %T.
+
+[a20] (ana, mc) Rumus perhitungan kadar asam salisilat (sesuai penuntun praktikum) adalah…
+    A* 3,58 A2 - 3,49 A1
+    B. 2,58 A2 - 2,49 A1
+    C. 3,58 A1 - 3,49 A2
+    D. 3,58 A2 + 3,49 A1
+    E. 3,49 A2 - 3,58 A1
+    PEMBAHASAN: Rumus ini berasal dari penuntun praktikum penetapan kadar asam salisilat, dengan A1 dan A2 sebagai nilai absorbansi hasil pengukuran. Yang perlu dihafal: 3,58 dikalikan A2, dikurangi 3,49 dikalikan A1.
+
+[a40] (ana, mc) Yang termasuk baku primer untuk titrasi redoks adalah…
+    A. K Biftalat
+    B. Na2CO3
+    C* KIO3
+    D. NaCl
+    E* K2Cr2O7
+    PEMBAHASAN: K2Cr2O7 bisa diperoleh dalam keadaan sangat murni, stabil, dan tidak higroskopis, jadi larutannya langsung diketahui konsentrasinya tanpa perlu distandardisasi. K biftalat dan Na2CO3 adalah baku primer titrasi asam-basa, sedangkan NaCl dipakai di argentometri.
+    CATATAN: Kunci batu: K2Cr2O7. KIO3 juga baku primer redoks (dipakai di iodometri), jadi pilihan itu ikut dihitung benar.
+
+[a51] (ana, mc) Panjang plat silika KLT adalah 13 cm, dengan batas atas dan batas bawah masing-masing 1,5 cm. Totolan bergerak sejauh 5 cm dari garis bawah. Berapakah nilai Rf-nya?
+    A* 0,50
+    B. 0,38
+    C. 0,30
+    D. 0,25
+    E. Tidak ada pilihan lain yang sesuai
+    PEMBAHASAN: Jarak tempuh eluen = 13 - 1,5 - 1,5 = 10 cm. Rf = jarak totolan / jarak eluen = 5/10 = 0,50.
+
+[a54] (ana, mc) Diketahui persamaan kurva baku y = 0,001x - 0,32. Nilai absorbansi sampel sebesar 0,15. Nilai C terukurnya adalah…
+    A. 320 mg
+    B* 470 mg
+    C. 280 mg
+    D. 450 mg
+    E. 170 mg
+    PEMBAHASAN: Masukkan absorbansi sebagai y: 0,15 = 0,001x - 0,32, jadi 0,001x = 0,47 dan x = 470.
+
+[a67] (ana, mc) Pada spektrofotometri diketahui absorbansi baku 0,8, konsentrasi baku 100 ppm, absorbansi sampel 0,2, dan faktor pengenceran 10 kali. Berapakah kadar sampel tersebut?
+    A* 250 ppm
+    B. 25 ppm
+    C. 100 ppm
+    D. 500 ppm
+    E. 1000 ppm
+    PEMBAHASAN: Bandingkan dengan larutan baku: C sampel = (A sampel / A baku) × C baku = (0,2 / 0,8) × 100 ppm = 25 ppm. Sampel tadi sudah diencerkan 10 kali, jadi kadar awalnya 25 × 10 = 250 ppm.
+
+[a68] (ana, mc) Uji sederhana untuk memeriksa keberadaan NAPZA melalui tes urin adalah…
+    A. Spektrofotometri
+    B* KLT (Kromatografi Lapis Tipis)
+    C. Titrimetri
+    D. Gravimetri
+    E. Elektroforesis
+    PEMBAHASAN: KLT murah dan cepat, dan bisa memisahkan serta mengenali obat atau metabolitnya di urin dari nilai Rf. Karena itu KLT sering dipakai untuk skrining NAPZA. Titrimetri dan gravimetri adalah metode kuantitatif, bukan skrining.
+
+[a69] (ana, mc) Kadar alkohol dalam darah (Blood Alcohol Content, BAC) diukur dari etanol, yang mudah menguap pada suhu ruang. Kromatografi apa yang menjadi baku emas untuk kasus forensik ini?
+    A. KLT
+    B. HPLC
+    C* Kromatografi gas
+    D. Spektrofotometri
+    E. Elektroforesis
+    PEMBAHASAN: Etanol mudah menguap, jadi paling cocok dianalisis dengan kromatografi gas (biasanya teknik headspace). Metode ini jadi standar pemeriksaan kadar alkohol darah untuk keperluan forensik.
+
+[a73] (ana, mc) 100 mg sampel asetosal (Mr = 180) dititrasi dengan NaOH 0,1 M dan membutuhkan 5 mL. Berapa kadar asetosal dalam sampel?
+    A. 95%
+    B. 80%
+    C. 85%
+    D* 90%
+    E. 97,2%
+    PEMBAHASAN: Asetosal asam monoprotik, jadi bereaksi 1 : 1 dengan NaOH. Mol NaOH = 0,1 M × 5 mL = 0,5 mmol, setara 0,5 mmol asetosal = 0,5 × 180 = 90 mg. Kadarnya 90/100 × 100% = 90%.
+
+[a97] (ana, mc) Spektrofotometer digunakan untuk mendeteksi kadar kreatinin dan ureum untuk menilai fungsi ginjal. Manfaat ini termasuk bidang apa?
+    A* Kimia medik
+    B. Hematologi
+    C. Diagnostik molekuler
+    D. Mikrobiologi
+    E. Imunologi
+    PEMBAHASAN: Pengukuran kadar zat dalam darah seperti ureum dan kreatinin untuk menilai fungsi ginjal termasuk pemeriksaan kimia klinik (kimia medik), dan sebagian besar dikerjakan dengan spektrofotometer.
+    CATATAN: Di file asli tertulis "kadar blablabla dan ureum". Diisi kreatinin, pasangan ureum yang lazim untuk fungsi ginjal.
+
+[a98] (ana, mc) Analisis kimia kuantitatif yang menghitung kadar suatu senyawa atau obat dalam satuan gram disebut…
+    A. Iodometri
+    B. Titrimetri
+    C* Gravimetri
+    D. Volumetri
+    E. Instrumental
+    PEMBAHASAN: Gravimetri menentukan kadar dari massa. Zatnya biasanya diendapkan, dikeringkan, lalu ditimbang. Titrimetri atau volumetri mengukur volume titran, dan iodometri adalah salah satu jenis titrasi redoks.
+
+[b018] (ana, mc) Hukum distribusi Nernst berlaku pada…
+    A. Dua pelarut yang saling bercampur
+    B* Dua pelarut yang tidak saling bercampur
+    C. Suspensi
+    D. Larutan sejati
+    PEMBAHASAN: Hukum distribusi berlaku untuk distribusi zat terlarut di antara dua pelarut yang tidak saling bercampur.
+
+[b020] (ana, mc) Dekokta menggunakan suhu…
+    A. 20-30°C
+    B. 60-70°C
+    C* 90-95°C
+    D. 120°C
+    PEMBAHASAN: Dekokta dibuat dengan memanaskan simplisia dalam air mendekati titik didih, sekitar 90-95°C.
+
+[b021] (ana, mc) Metode ekstraksi yang biasanya digunakan untuk mengekstraksi minyak atsiri adalah…
+    A. Maserasi
+    B* Destilasi
+    C. Perkolasi
+    D. Dekokta
+    PEMBAHASAN: Minyak atsiri yang volatil umumnya diekstraksi dengan destilasi.
+
+[b022] (ana, mc) Jika K = 1, maka zat terdistribusi…
+    A. Hanya dalam pelarut organik
+    B. Hanya dalam air
+    C* Sama banyak pada kedua pelarut
+    D. Tidak terlarut
+    PEMBAHASAN: K = 1 menunjukkan konsentrasi relatif sama pada kedua fase sesuai definisi koefisien distribusi.
+
+[b025] (ana, mc) Jika suatu zat nonpolar dilarutkan dalam air, hasil ekstraksinya…
+    A. Sangat baik
+    B* Buruk
+    C. Netral
+    D. Larut
+    PEMBAHASAN: Zat nonpolar kurang larut dalam air yang polar.
+
+[b026] (ana, mc) Kromatografi lapis tipis (KLT) menggunakan fase diam…
+    A. Air
+    B* Gel silika/alumina
+    C. Eter
+    D. Ekstrak
+    PEMBAHASAN: Silika gel atau alumina lazim digunakan sebagai fase diam KLT.
+
+[b098] (ana, tf) Analisis kualitatif adalah analisis untuk menentukan kadar suatu zat.
+    A. Benar
+    B* Salah
+    PEMBAHASAN: Penentuan kadar merupakan analisis kuantitatif.
+
+[b099] (ana, tf) Volumetri adalah jenis analisis kualitatif.
+    A. Benar
+    B* Salah
+    PEMBAHASAN: Volumetri termasuk analisis kuantitatif.
+
+[b101] (ana, tf) Titik akhir titrasi adalah titik ketika indikator berubah warna.
+    A* Benar
+    B. Salah
+    PEMBAHASAN: Titik akhir ditandai perubahan indikator pada metode titrasi tertentu.
+
+[b102] (ana, tf) Larutan baku sekunder adalah larutan yang konsentrasinya diketahui pasti sejak dibuat tanpa standardisasi.
+    A. Benar
+    B* Salah
+    PEMBAHASAN: Larutan baku primer memiliki kemurnian tinggi; baku sekunder perlu standardisasi.
+
+[b103] (ana, tf) Prinsip dasar spektrofotometri menggunakan Hukum Lambert-Beer.
+    A* Benar
+    B. Salah
+    PEMBAHASAN: Absorbansi berhubungan dengan konsentrasi menurut Lambert-Beer pada kondisi berlaku.
+
+[b104] (ana, tf) Terdapat hanya dua jenis spektrofotometri, yaitu UV dan UV-Vis.
+    A. Benar
+    B* Salah
+    PEMBAHASAN: Jenis spektrofotometri lebih dari dua, antara lain UV, visibel, UV-Vis, inframerah (IR), serapan atom (AAS), dan fluoresensi.
+
+[b105] (ana, tf) Panjang gelombang UV adalah 190-380 nm.
+    A* Benar
+    B. Salah
+    PEMBAHASAN: Rentang UV pada spektrofotometri sekitar 190-380 nm. Di atasnya adalah cahaya tampak, sekitar 380-780 nm.
+
+[b106] (ana, tf) Panjang gelombang spektrofotometri dinyatakan dalam nanometer.
+    A* Benar
+    B. Salah
+    PEMBAHASAN: Nanometer lazim digunakan untuk panjang gelombang spektrofotometri.
+
+[b107] (ana, tf) Jika A = 2 − log T (%) dan T = 100%, maka A = 1.
+    A. Benar
+    B* Salah
+    PEMBAHASAN: A = 2 − log(100) = 0.
+
+[b115] (ana, tf) Koefisien partisi K tinggi menunjukkan obat lebih lipofilik dan cenderung lebih mudah menembus membran.
+    A* Benar
+    B. Salah
+    PEMBAHASAN: Lipofilisitas mendukung partisi ke fase lipid membran.
+
+[b116] (ana, tf) HPLC menggunakan gas helium sebagai fase gerak untuk sampel volatil.
+    A. Benar
+    B* Salah
+    PEMBAHASAN: Gas sebagai fase gerak merupakan prinsip kromatografi gas; HPLC menggunakan fase gerak cair.
+
+[b117] (ana, tf) TDM untuk obat berindeks terapi sempit sering menggunakan HPLC karena sensitivitas/akurasi.
+    A* Benar
+    B. Salah
+    PEMBAHASAN: HPLC dapat digunakan untuk mengukur kadar obat secara analitik.
+
+[b179] (ana, mc) Serbuk teh dididihkan dengan air, lalu dipindahkan ke corong pisah dan ditambahkan kloroform. Setelah dikocok dan didiamkan terbentuk 2 lapisan, dan sebagian besar kafein berpindah ke lapisan kloroform. Hal ini disebabkan…
+    A* Kafein lebih mudah larut dalam pelarut organik
+    B. Kafein lebih larut dalam air karena nonpolar
+    C. Kafein bersifat hidrofilik
+    D. Kloroform bersifat sangat polar
+    PEMBAHASAN: Kafein lebih mudah larut dalam kloroform daripada dalam air, jadi koefisien distribusinya mendorong kafein pindah ke lapisan kloroform.

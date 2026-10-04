@@ -1,0 +1,165 @@
+/* Dosen directory. Scoped under .dz; resets use :where() so component rules always win. */
+.dz{
+  --dz-max:1320px;
+  --dz-pad-x:max(var(--gut,16px),env(safe-area-inset-left),env(safe-area-inset-right));
+  --dz-pad-y:clamp(64px,10vh,120px);
+  --dz-top:var(--alpha-sticky-top,calc(var(--barh,58px) + env(safe-area-inset-top)));
+  --dz-bg:var(--bg,#070d08);
+  container:dz/inline-size;
+  position:relative;color:var(--ink);font-family:var(--body);font-size:16px;line-height:1.55;
+}
+:where(.dz) *,:where(.dz) *::before,:where(.dz) *::after{box-sizing:border-box}
+:where(.dz) :where(h2,h3,h4,p,ol,ul){margin:0;padding:0}
+:where(.dz) :where(ol,ul){list-style:none}
+:where(.dz) :where(button){font:inherit;color:inherit;background:none;border:0;padding:0;margin:0;cursor:pointer;
+  -webkit-appearance:none;appearance:none;-webkit-tap-highlight-color:transparent;touch-action:manipulation;text-align:inherit}
+:where(.dz) :where(button:disabled){cursor:default}
+:where(.dz) svg{display:block;fill:none;stroke:currentColor;stroke-width:1.6;stroke-linecap:round;stroke-linejoin:round}
+.dz :focus-visible{outline:2px solid var(--grx);outline-offset:3px}
+.dz :focus:not(:focus-visible){outline:none}
+.dz-sr{position:absolute!important;width:1px;height:1px;margin:-1px;padding:0;overflow:hidden;clip:rect(0 0 0 0);clip-path:inset(50%);white-space:nowrap;border:0}
+
+.dz-in{max-width:var(--dz-max);margin:0 auto;padding:var(--dz-pad-y) var(--dz-pad-x)}
+.dz-head{display:flex;flex-wrap:wrap;align-items:flex-end;justify-content:space-between;gap:10px 24px}
+.dz-h{font-family:var(--disp);font-weight:800;font-size:clamp(34px,7cqi,84px);line-height:1.02;letter-spacing:-.03em;padding-bottom:.06em;text-wrap:balance}
+.dz-h em{font-family:var(--ser);font-style:italic;font-weight:400;color:var(--grx);letter-spacing:0}
+.dz-count{font-family:var(--mono);font-size:10.5px;letter-spacing:.24em;text-transform:uppercase;color:var(--mut);padding-bottom:.9em}
+
+/* search, filters, letters */
+.dz-tools{display:grid;gap:14px;margin-top:clamp(24px,4cqi,44px);scroll-margin-top:calc(var(--dz-top) + 12px)}
+.dz-lbl{font-family:var(--mono);font-size:10.5px;letter-spacing:.2em;text-transform:uppercase;color:var(--mut)}
+.dz-q{display:block;width:100%;max-width:760px;height:56px;margin-top:-4px;padding:0 18px;border:1px solid var(--line2);border-radius:var(--r2);
+  background:var(--bg2);color:var(--ink);font:17px/1.2 var(--body);-webkit-appearance:none;appearance:none;transition:border-color .2s}
+.dz-q::placeholder{color:var(--dim);opacity:1}
+.dz-q:focus{border-color:rgba(134,242,94,.6)}
+.dz-q:focus-visible{outline:2px solid var(--grx);outline-offset:2px}
+.dz-filters{display:grid;gap:10px}
+.dz-frow{display:grid;gap:8px;min-width:0}
+@container dz (min-width:720px){.dz-frow{grid-template-columns:96px minmax(0,1fr);align-items:center}}
+.dz-chips{display:flex;flex-wrap:wrap;gap:6px;min-width:0}
+@container dz (max-width:719.98px){
+  /* one swipeable row per filter group keeps the list close to the top on phones */
+  .dz-chips{flex-wrap:nowrap;overflow-x:auto;scrollbar-width:none;padding:3px 3px 5px;margin:-3px -3px -5px;
+    -webkit-mask-image:linear-gradient(90deg,#000 calc(100% - 28px),transparent);mask-image:linear-gradient(90deg,#000 calc(100% - 28px),transparent)}
+  .dz-chips::-webkit-scrollbar{display:none}
+}
+.dz-chip{flex:none;display:inline-flex;align-items:center;gap:8px;min-height:44px;padding:0 15px;border:1px solid var(--line2);border-radius:999px;
+  font-size:14px;color:var(--ink);white-space:nowrap;transition:background-color .2s,border-color .2s,color .2s,opacity .2s}
+.dz-chip-n{font-family:var(--mono);font-size:11px;color:var(--mut);font-variant-numeric:tabular-nums}
+.dz-chip[aria-pressed="true"]{background:var(--grx);border-color:var(--grx);color:#07100a}
+.dz-chip[aria-pressed="true"] .dz-chip-n{color:rgba(7,16,10,.72)}
+.dz-chip:disabled{opacity:.4}
+@media (hover:hover) and (pointer:fine){.dz-chip{min-height:38px}}
+.dz-azrow{display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:8px 16px;min-width:0}
+.dz-az{display:flex;flex-wrap:wrap;gap:2px;min-width:0}
+@container dz (max-width:719.98px){
+  .dz-azrow{flex-wrap:nowrap}
+  .dz-az{flex:1;flex-wrap:nowrap;overflow-x:auto;scrollbar-width:none;padding:3px;margin:-3px}
+  .dz-az::-webkit-scrollbar{display:none}
+}
+.dz-az-b{flex:none;display:grid;place-items:center;width:40px;height:44px;border-radius:var(--r1);font-family:var(--mono);font-size:13px;color:var(--ink);
+  transition:color .2s,background-color .2s}
+.dz-az-b:disabled{color:var(--dim);opacity:.45}
+@media (hover:hover) and (pointer:fine){.dz-az-b{width:32px;height:36px}}
+.dz-clear{flex:none;min-height:44px;padding:0 4px;font-family:var(--mono);font-size:10.5px;letter-spacing:.18em;text-transform:uppercase;color:var(--grx);
+  text-decoration:underline;text-underline-offset:4px}
+
+/* the list */
+.dz-list{margin-top:clamp(18px,3cqi,30px)}
+/* folded: the first few rows, fading out, with a button for the rest */
+.dz-folded .dz-list{max-height:calc(6 * 104px + 64px);overflow:hidden;overflow:clip;
+  -webkit-mask-image:linear-gradient(#000 calc(100% - 150px),transparent);mask-image:linear-gradient(#000 calc(100% - 150px),transparent)}
+.dz-more{display:flex;justify-content:center;margin-top:-28px;position:relative;z-index:1}
+.dz-more[hidden]{display:none}
+.dz-more-b{min-height:48px;padding:0 24px;border:1px solid var(--line2);border-radius:999px;background:rgba(7,13,8,.7);
+  font-family:var(--mono);font-size:11px;letter-spacing:.18em;text-transform:uppercase;color:var(--ink);
+  transition:background-color .2s,border-color .2s,color .2s}
+@media (hover:hover) and (pointer:fine){.dz-more-b:hover{border-color:var(--grx);color:var(--grx)}}
+.dz-more-b:active{translate:0 1px}
+.dz-g{content-visibility:auto}
+.dz-g-h{position:sticky;top:var(--dz-top);z-index:2;padding:12px 0 8px;background:var(--dz-bg);font-family:var(--disp);font-weight:800;font-size:28px;line-height:1;
+  color:var(--grx);scroll-margin-top:var(--dz-top)}
+.dz-g-h:focus-visible{outline-offset:-2px}
+.dz-rows{border-top:1px solid var(--line)}
+.dz-row{position:relative;isolation:isolate;display:grid;grid-template-columns:minmax(0,1fr) auto;align-items:center;gap:12px 32px;padding:16px 6px;
+  border-bottom:1px solid var(--line);scroll-margin-top:calc(var(--dz-top) + 64px)}
+.dz-row::before{content:"";position:absolute;inset:0;z-index:-1;background:linear-gradient(90deg,rgba(63,174,42,.13),rgba(63,174,42,0) 72%);
+  transform:scaleX(0);transform-origin:left;transition:transform .6s var(--eo)}
+.dz-row.is-flash::before{transform:scaleX(1)}
+@container dz (max-width:719.98px){.dz-row{grid-template-columns:minmax(0,1fr);padding:16px 2px}}
+.dz-who{min-width:0}
+.dz-name{display:block;font-family:var(--disp);font-weight:600;font-size:clamp(17px,2.1cqi,21px);line-height:1.25;letter-spacing:-.005em;color:var(--ink);
+  text-align:left;overflow-wrap:anywhere;transition:color .25s,transform .5s var(--eo)}
+.dz-meta{margin-top:5px;display:flex;flex-wrap:wrap;align-items:center;gap:4px 10px;font-family:var(--mono);font-size:10.5px;letter-spacing:.12em;text-transform:uppercase;color:var(--mut)}
+.dz-code{display:inline-flex;align-items:center;gap:5px;height:20px;padding:0 6px;border:1px solid var(--line2);border-radius:6px;color:var(--ink);letter-spacing:.08em}
+.dz-code [aria-hidden]{color:var(--mut)}
+.dz-teach{color:var(--grx)}
+.dz-phones{min-width:0}
+@container dz (min-width:720px){.dz-phones{width:min(372px,42cqi)}.dz-phones .ct-ph{flex-wrap:nowrap}}
+
+@media (hover:hover) and (pointer:fine){
+  .dz-chip:hover:not([aria-pressed="true"]):not(:disabled){border-color:rgba(134,242,94,.55)}
+  .dz-az-b:hover:not(:disabled){color:var(--grx);background:rgba(238,242,232,.06)}
+  .dz-row:hover::before{transform:scaleX(1)}
+  .dz-name:hover{color:var(--grx);transform:translateX(6px)}
+  .dz-clear:hover{color:var(--ink)}
+}
+
+.dz-empty{padding:clamp(30px,5cqi,56px) 0;border-top:1px solid var(--line)}
+.dz-empty-t{font-family:var(--disp);font-weight:800;font-size:clamp(26px,4.4cqi,44px);line-height:1.08;letter-spacing:-.025em}
+.dz-empty-t em{font-family:var(--ser);font-style:italic;font-weight:400;color:var(--grx);letter-spacing:0}
+.dz-empty-s{margin-top:8px;color:var(--mut)}
+
+/* sticks to the bottom edge while the list is on screen, once the search box has scrolled away */
+.dz-jump{position:sticky;bottom:calc(16px + env(safe-area-inset-bottom));z-index:3;display:flex;align-items:center;width:max-content;min-height:46px;
+  margin:18px 0 0 auto;padding:0 20px;border-radius:999px;background:var(--ink);color:#07100a;
+  font-family:var(--disp);font-weight:700;font-size:12.5px;letter-spacing:.12em;text-transform:uppercase;
+  box-shadow:0 14px 34px -12px rgba(0,0,0,.8);visibility:hidden;opacity:0;translate:0 10px;
+  transition:opacity .3s,translate .4s var(--eo),visibility 0s linear .4s,background-color .2s}
+.dz.dz-far .dz-jump{visibility:visible;opacity:1;translate:0 0;transition:opacity .3s,translate .4s var(--eo),visibility 0s,background-color .2s}
+@media (hover:hover) and (pointer:fine){.dz-jump:hover{background:var(--grx)}}
+
+/* detail dialog */
+.dz-dlg{width:min(680px,calc(100vw - 48px));max-width:none;max-height:min(88dvh,920px);margin:auto;padding:0;overflow:hidden;
+  border:1px solid var(--line2);border-radius:var(--r3);background:var(--bg2);color:var(--ink);box-shadow:0 34px 90px -26px rgba(0,0,0,.9)}
+.dz-dlg::backdrop{background:rgba(3,7,4,.66)}
+.dz-dlg[open]{display:flex;flex-direction:column;animation:dz-pop .34s var(--eo)}
+@keyframes dz-pop{from{opacity:0;translate:0 10px}to{opacity:1;translate:0 0}}
+.dz-dlg-in{flex:1;min-height:0;overflow-y:auto;overscroll-behavior:contain;padding:18px clamp(18px,4vw,30px) 30px}
+.dz-dlg-top{display:flex;align-items:center;justify-content:space-between;gap:12px}
+.dz-dlg-k{font-family:var(--mono);font-size:10.5px;letter-spacing:.2em;text-transform:uppercase;color:var(--grx)}
+.dz-x{display:grid;place-items:center;flex:none;width:44px;height:44px;margin-right:-6px;border:1px solid var(--line2);border-radius:50%;color:var(--ink);transition:color .2s,border-color .2s}
+.dz-x svg{width:18px;height:18px}
+.dz-dlg-n{margin-top:6px;font-family:var(--disp);font-weight:800;font-size:clamp(24px,4.2vw,34px);line-height:1.12;letter-spacing:-.02em;text-wrap:balance;overflow-wrap:anywhere}
+.dz-dlg-n:focus-visible{outline-offset:4px;border-radius:var(--r1)}
+.dz-dlg-codes{margin-top:8px;font-size:14px;color:var(--mut)}
+.dz-dlg-ph{margin-top:18px}
+.dz-dlg-sub{margin-top:28px;display:flex;align-items:baseline;justify-content:space-between;gap:10px;font-family:var(--mono);font-weight:400;font-size:10.5px;
+  letter-spacing:.2em;text-transform:uppercase;color:var(--mut)}
+.dz-dlg-sub span{color:var(--grx)}
+.dz-dlg-none{margin-top:12px;color:var(--mut)}
+.dz-se{margin-top:10px;border-top:1px solid var(--line)}
+.dz-se-b{display:grid;grid-template-columns:118px minmax(0,1fr);gap:2px 16px;width:100%;padding:12px 4px;border-bottom:1px solid var(--line);text-align:left;
+  transition:background-color .2s}
+.dz-se-d{grid-row:span 2;font-family:var(--mono);font-size:12px;letter-spacing:.04em;color:var(--ink)}
+.dz-se-tm{display:block;margin-top:3px;font-size:11px;color:var(--mut)}
+.dz-se-t{font-weight:600;font-size:15px;line-height:1.35;overflow-wrap:anywhere}
+.dz-se-k{font-family:var(--mono);font-size:10.5px;letter-spacing:.12em;text-transform:uppercase;color:var(--mut)}
+.dz-se-next{margin-left:10px;color:var(--grx)}
+.dz-se .is-past .dz-se-t,.dz-se .is-past .dz-se-d{color:var(--mut)}
+@media (hover:hover) and (pointer:fine){
+  .dz-se-b:hover{background:rgba(63,174,42,.08)}
+  .dz-se-b:hover .dz-se-t{color:var(--grx)}
+  .dz-x:hover{color:var(--grx);border-color:var(--grx)}
+}
+@media (max-width:639.98px){
+  .dz-dlg{width:100%;max-height:calc(100dvh - 28px);margin:auto 0 0;border-radius:var(--r3) var(--r3) 0 0;border-bottom:0}
+  .dz-dlg[open]{animation-name:dz-sheet}
+  .dz-dlg-in{padding-bottom:calc(28px + env(safe-area-inset-bottom))}
+}
+@media (max-width:420px){.dz-se-b{grid-template-columns:minmax(0,1fr)}.dz-se-d{grid-row:auto}}
+@keyframes dz-sheet{from{translate:0 40px;opacity:.4}to{translate:0 0;opacity:1}}
+
+@media (prefers-reduced-motion:reduce){
+  .dz *,.dz *::before,.dz *::after{animation:none!important;transition:none!important;scroll-behavior:auto!important}
+}

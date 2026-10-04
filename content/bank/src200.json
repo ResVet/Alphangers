@@ -1,0 +1,2197 @@
+[
+ {
+  "q": "Mineral yang merupakan bagian dari molekul protein adalah sulfur.",
+  "o": [
+   "Benar",
+   "Salah"
+  ],
+  "a": 0,
+  "e": "Sulfur merupakan unsur penyusun beberapa asam amino, seperti sistein dan metionin.",
+  "t": "tf"
+ },
+ {
+  "q": "Keseimbangan mineral fosfor diatur tubuh bersama dengan kalsium dan vitamin D.",
+  "o": [
+   "Benar",
+   "Salah"
+  ],
+  "a": 0,
+  "e": "Fosfor berinteraksi erat dengan kalsium dan vitamin D dalam homeostasis mineral.",
+  "t": "tf"
+ },
+ {
+  "q": "Mineral yang berfungsi sebagai remineralisasi pada enamel gigi adalah fluor.",
+  "o": [
+   "Benar",
+   "Salah"
+  ],
+  "a": 0,
+  "e": "Fluor membantu pembentukan mineral enamel yang lebih tahan terhadap asam.",
+  "t": "tf"
+ },
+ {
+  "q": "Mineral krom berfungsi pada metabolisme glukosa, protein, dan lemak.",
+  "o": [
+   "Benar",
+   "Salah"
+  ],
+  "a": 0,
+  "e": "Krom dikaitkan dengan metabolisme makronutrien dan kerja insulin.",
+  "t": "tf"
+ },
+ {
+  "q": "Peran biologis utama karbohidrat adalah sebagai spesifikasi biologis.",
+  "o": [
+   "Benar",
+   "Salah"
+  ],
+  "a": 1,
+  "e": "Dalam rangkuman, peran utama karbohidrat adalah sumber energi dan fungsi struktural, bukan 'spesifikasi biologis'.",
+  "t": "tf"
+ },
+ {
+  "q": "Laktosa adalah gula utama dalam susu mamalia.",
+  "o": [
+   "Benar",
+   "Salah"
+  ],
+  "a": 0,
+  "e": "Laktosa merupakan disakarida utama pada susu mamalia.",
+  "t": "tf"
+ },
+ {
+  "q": "Pati dengan enzim amilase akan terpecah menjadi maltosa, laktosa, dan sukrosa.",
+  "o": [
+   "Benar",
+   "Salah"
+  ],
+  "a": 1,
+  "e": "Amilase memecah pati terutama menjadi maltosa dan dekstrin; laktosa dan sukrosa bukan hasil hidrolisis pati oleh amilase.",
+  "t": "tf"
+ },
+ {
+  "q": "Glukosa dalam darah jika tidak digunakan sebagai energi akan disimpan dalam bentuk glikogen.",
+  "o": [
+   "Benar",
+   "Salah"
+  ],
+  "a": 0,
+  "e": "Glukosa dapat disimpan sebagai glikogen, terutama di hati dan otot.",
+  "t": "tf"
+ },
+ {
+  "q": "Polisakarida alami seperti kitosan berbentuk nanopartikel yang digunakan dalam sistem penghantaran obat.",
+  "o": [
+   "Benar",
+   "Salah"
+  ],
+  "a": 0,
+  "e": "Rangkuman menyatakan kitosan sebagai polisakarida yang dapat digunakan dalam sistem penghantaran obat.",
+  "t": "tf"
+ },
+ {
+  "q": "Mineral Mo (molibdat) berperan dalam metabolisme purin untuk menghasilkan asam urat.",
+  "o": [
+   "Benar",
+   "Salah"
+  ],
+  "a": 0,
+  "e": "Molibdenum merupakan kofaktor enzim yang terlibat dalam metabolisme purin.",
+  "t": "tf"
+ },
+ {
+  "q": "Asam lemak jenuh ditandai dengan...",
+  "o": [
+   "Adanya ikatan rangkap",
+   "Tidak memiliki ikatan rangkap",
+   "Penamaan akhiran -enoat",
+   "Terdiri dari satu molekul gliserol"
+  ],
+  "a": 1,
+  "e": "Asam lemak jenuh tidak memiliki ikatan rangkap C=C.",
+  "t": "mc"
+ },
+ {
+  "q": "Lipoprotein yang disebut \"kolesterol jahat\" adalah...",
+  "o": [
+   "HDL",
+   "LDL",
+   "IDL",
+   "VLDL"
+  ],
+  "a": 1,
+  "e": "LDL membawa kolesterol ke jaringan dan bila berlebih berkaitan dengan aterosklerosis.",
+  "t": "mc"
+ },
+ {
+  "q": "Molekul nonpolar kecil seperti O₂ dan CO₂ dapat menembus membran karena sifatnya...",
+  "o": [
+   "Hidrofilik",
+   "Hidrofobik",
+   "Amfifilik",
+   "Bermuatan listrik"
+  ],
+  "a": 1,
+  "e": "Molekul kecil nonpolar dapat berdifusi melalui inti hidrofobik bilayer.",
+  "t": "mc"
+ },
+ {
+  "q": "Kelarutan asam lemak dalam air semakin rendah jika...",
+  "o": [
+   "Rantai karbon makin pendek",
+   "Jumlah ikatan rangkap makin sedikit",
+   "Rantai karbon makin panjang",
+   "Gugus hidrogen menurun"
+  ],
+  "a": 2,
+  "e": "Rantai hidrokarbon yang lebih panjang meningkatkan sifat hidrofobik.",
+  "t": "mc"
+ },
+ {
+  "q": "Glikolipid merupakan klasifikasi lipid...",
+  "o": [
+   "Lipid sederhana",
+   "Derivat lipid",
+   "Lipid terkonjugasi",
+   "Lipid kompleks"
+  ],
+  "a": 3,
+  "e": "Glikolipid termasuk lipid kompleks/terkonjugasi karena memiliki komponen lipid dan karbohidrat.",
+  "t": "mc"
+ },
+ {
+  "q": "Kelas lipoprotein dengan densitas paling rendah adalah...",
+  "o": [
+   "HDL",
+   "IDL",
+   "Kilomikron",
+   "VLDL"
+  ],
+  "a": 2,
+  "e": "Kilomikron memiliki densitas paling rendah.",
+  "t": "mc"
+ },
+ {
+  "q": "Penumpukan kolesterol, terutama LDL teroksidasi, di dinding arteri disebut...",
+  "o": [
+   "Hiperkolesterolemia",
+   "Aterosklerosis",
+   "Azoospermia",
+   "Hiperlipidemia"
+  ],
+  "a": 1,
+  "e": "Aterosklerosis melibatkan akumulasi lipid pada dinding arteri.",
+  "t": "mc"
+ },
+ {
+  "q": "Komponen utama membran sel yang menyusun lapisan bilayer semipermeabel adalah...",
+  "o": [
+   "Kolesterol",
+   "Fosfolipid",
+   "Glikolipid",
+   "Trigliserida"
+  ],
+  "a": 1,
+  "e": "Fosfolipid membentuk bilayer membran.",
+  "t": "mc"
+ },
+ {
+  "q": "Hukum distribusi Nernst berlaku pada...",
+  "o": [
+   "Dua pelarut yang saling bercampur",
+   "Dua pelarut yang tidak saling bercampur",
+   "Suspensi",
+   "Larutan sejati"
+  ],
+  "a": 1,
+  "e": "Hukum distribusi berlaku untuk distribusi zat terlarut di antara dua pelarut yang tidak saling bercampur.",
+  "t": "mc"
+ },
+ {
+  "q": "Emulsi adalah koloid dengan fase terdispersi berupa...",
+  "o": [
+   "Gas",
+   "Cair",
+   "Padat",
+   "Buih"
+  ],
+  "a": 1,
+  "e": "Emulsi merupakan sistem koloid cair dalam cair.",
+  "t": "mc"
+ },
+ {
+  "q": "Dekokta menggunakan suhu...",
+  "o": [
+   "20–30°C",
+   "60–70°C",
+   "90–95°C",
+   "120°C"
+  ],
+  "a": 2,
+  "e": "Dekokta menggunakan pemanasan air mendekati titik didih, sekitar 90–95°C.",
+  "t": "mc"
+ },
+ {
+  "q": "Metode ekstraksi yang biasanya digunakan untuk mengekstraksi minyak atsiri adalah...",
+  "o": [
+   "Maserasi",
+   "Destilasi",
+   "Perkolasi",
+   "Dekokta"
+  ],
+  "a": 1,
+  "e": "Minyak atsiri yang volatil umumnya diekstraksi dengan destilasi.",
+  "t": "mc"
+ },
+ {
+  "q": "Jika K = 1, maka zat terdistribusi...",
+  "o": [
+   "Hanya dalam pelarut organik",
+   "Hanya dalam air",
+   "Sama banyak pada kedua pelarut",
+   "Tidak terlarut"
+  ],
+  "a": 2,
+  "e": "K = 1 menunjukkan konsentrasi relatif sama pada kedua fase sesuai definisi koefisien distribusi.",
+  "t": "mc"
+ },
+ {
+  "q": "Gerakan zig-zag partikel koloid di bawah mikroskop disebut...",
+  "o": [
+   "Osmosis",
+   "Difusi",
+   "Gerak Brown",
+   "Efek Tyndall"
+  ],
+  "a": 2,
+  "e": "Gerak Brown adalah gerakan acak/zag-zig partikel koloid.",
+  "t": "mc"
+ },
+ {
+  "q": "Adsorpsi menyebabkan partikel koloid...",
+  "o": [
+   "Menjadi tidak bermuatan",
+   "Menyerap ion sehingga bermuatan",
+   "Mengendap",
+   "Meningkatkan viskositas"
+  ],
+  "a": 1,
+  "e": "Adsorpsi ion pada permukaan partikel dapat memberikan muatan listrik.",
+  "t": "mc"
+ },
+ {
+  "q": "Jika suatu zat nonpolar dilarutkan dalam air, hasil ekstraksinya...",
+  "o": [
+   "Sangat baik",
+   "Buruk",
+   "Netral",
+   "Larut"
+  ],
+  "a": 1,
+  "e": "Zat nonpolar kurang larut dalam air yang polar.",
+  "t": "mc"
+ },
+ {
+  "q": "Kromatografi lapis tipis (KLT) menggunakan fase diam...",
+  "o": [
+   "Air",
+   "Gel silika/alumina",
+   "Eter",
+   "Ekstrak"
+  ],
+  "a": 1,
+  "e": "Silika gel atau alumina lazim digunakan sebagai fase diam KLT.",
+  "t": "mc"
+ },
+ {
+  "q": "Dialisis adalah proses pemurnian koloid dengan...",
+  "o": [
+   "Distilasi",
+   "Filtrasi biasa",
+   "Difusi melalui membran semipermeabel",
+   "Pemanasan"
+  ],
+  "a": 2,
+  "e": "Dialisis memanfaatkan difusi partikel kecil melalui membran semipermeabel.",
+  "t": "mc"
+ },
+ {
+  "q": "Potensial membran berubah dari −70 mV menjadi −55 mV. Peristiwa ini disebut...",
+  "o": [
+   "Hiperpolarisasi",
+   "Depolarisasi",
+   "Repolarisasi",
+   "Tidak ada perubahan"
+  ],
+  "a": 1,
+  "e": "Potensial menjadi kurang negatif, yaitu depolarisasi.",
+  "t": "mc"
+ },
+ {
+  "q": "Potensial membran berubah dari −70 mV menjadi −90 mV. Peristiwa ini disebut...",
+  "o": [
+   "Depolarisasi",
+   "Repolarisasi",
+   "Hiperpolarisasi",
+   "Potensial nol"
+  ],
+  "a": 2,
+  "e": "Potensial menjadi lebih negatif dari istirahat.",
+  "t": "mc"
+ },
+ {
+  "q": "Apa yang dimaksud dengan repolarisasi?",
+  "o": [
+   "Kembali ke nilai potensial istirahat setelah depolarisasi",
+   "Menjadi lebih negatif daripada nilai istirahat",
+   "Kehilangan potensial membran sama sekali",
+   "Masuknya Na+ secara cepat"
+  ],
+  "a": 0,
+  "e": "Repolarisasi adalah fase kembalinya potensial membran menuju nilai istirahat.",
+  "t": "mc"
+ },
+ {
+  "q": "Pada grafik potensial aksi, bagian yang naik tajam dari −70 mV menuju puncak menggambarkan fase...",
+  "o": [
+   "Repolarisasi",
+   "Depolarisasi",
+   "Hiperpolarisasi",
+   "Istirahat"
+  ],
+  "a": 1,
+  "e": "Fase naik tajam terutama disebabkan masuknya Na+.",
+  "t": "mc"
+ },
+ {
+  "q": "Jika ion Na+ masuk ke dalam sel, bagian dalam sel akan...",
+  "o": [
+   "Menjadi lebih negatif",
+   "Tidak berubah",
+   "Menjadi kurang negatif",
+   "Menjadi netral permanen"
+  ],
+  "a": 2,
+  "e": "Masuknya Na+ membawa muatan positif sehingga membran mengalami depolarisasi.",
+  "t": "mc"
+ },
+ {
+  "q": "Nilai potensial membran istirahat neuron adalah sekitar...",
+  "o": [
+   "+70 mV",
+   "−70 mV",
+   "0 mV",
+   "+30 mV"
+  ],
+  "a": 1,
+  "e": "Nilai tipikal potensial istirahat neuron sekitar −70 mV.",
+  "t": "mc"
+ },
+ {
+  "q": "Pompa Na+/K+-ATPase memindahkan ion dengan cara...",
+  "o": [
+   "3 Na+ keluar dan 2 K+ masuk",
+   "3 Na+ masuk dan 2 K+ keluar",
+   "2 Na+ keluar dan 3 K+ masuk",
+   "2 Na+ masuk dan 2 K+ keluar"
+  ],
+  "a": 0,
+  "e": "Pompa menggunakan ATP untuk mengeluarkan 3 Na+ dan memasukkan 2 K+.",
+  "t": "mc"
+ },
+ {
+  "q": "Keluarnya K+ dari dalam sel menyebabkan bagian dalam sel menjadi...",
+  "o": [
+   "Lebih positif",
+   "Lebih negatif",
+   "Tidak berubah",
+   "Selalu nol"
+  ],
+  "a": 1,
+  "e": "K+ keluar membawa muatan positif sehingga bagian dalam menjadi lebih negatif.",
+  "t": "mc"
+ },
+ {
+  "q": "Saat sel dalam keadaan istirahat, membran paling permeabel terhadap ion...",
+  "o": [
+   "Na+",
+   "K+",
+   "Ca2+",
+   "Cl−"
+  ],
+  "a": 1,
+  "e": "Kebocoran K+ dominan pada membran neuron saat istirahat.",
+  "t": "mc"
+ },
+ {
+  "q": "Ion natrium (Na+) memiliki konsentrasi lebih tinggi di...",
+  "o": [
+   "Dalam sel (CIS)",
+   "Luar sel (CES)",
+   "Sama di kedua sisi",
+   "Nukleus"
+  ],
+  "a": 1,
+  "e": "Na+ lebih tinggi di cairan ekstraseluler.",
+  "t": "mc"
+ },
+ {
+  "q": "Uji diazo pada asam salisilat memerlukan penambahan NaOH 10% hingga suasana menjadi basa.",
+  "o": [
+   "Benar",
+   "Salah"
+  ],
+  "a": 0,
+  "e": "Kopling diazonium memerlukan suasana basa untuk pembentukan pewarna azo.",
+  "t": "tf"
+ },
+ {
+  "q": "Hasil positif uji diazo ditunjukkan dengan warna biru pekat.",
+  "o": [
+   "Benar",
+   "Salah"
+  ],
+  "a": 1,
+  "e": "Rangkuman menyebut hasil positif berupa merah hingga jingga/oranye.",
+  "t": "tf"
+ },
+ {
+  "q": "Uji iodoform pada fruktosa menghasilkan endapan kristal yang diamati di bawah mikroskop.",
+  "o": [
+   "Benar",
+   "Salah"
+  ],
+  "a": 1,
+  "e": "Rangkuman menyatakan fruktosa tidak memberikan hasil positif iodoform seperti senyawa yang memiliki gugus metil keton.",
+  "t": "tf"
+ },
+ {
+  "q": "Pada uji natrium thiosulfat pada asam asetat, reagen serbuk harus ditambahkan sangat banyak.",
+  "o": [
+   "Benar",
+   "Salah"
+  ],
+  "a": 1,
+  "e": "Reagen kualitatif ditambahkan secukupnya agar tidak mengganggu pengamatan.",
+  "t": "tf"
+ },
+ {
+  "q": "Campuran esterifikasi asam benzoat dengan metanol dan asam sulfat tidak boleh dipanaskan dengan api langsung.",
+  "o": [
+   "Benar",
+   "Salah"
+  ],
+  "a": 0,
+  "e": "Metanol mudah terbakar sehingga pemanasan menggunakan penangas air.",
+  "t": "tf"
+ },
+ {
+  "q": "Pereaksi Marquis pada guaifenesin menggunakan asam sulfat pekat dan formalin 10%.",
+  "o": [
+   "Benar",
+   "Salah"
+  ],
+  "a": 0,
+  "e": "Marquis terdiri dari H2SO4 pekat dan formaldehida/formalin.",
+  "t": "tf"
+ },
+ {
+  "q": "Hasil positif uji Marquis guaifenesin adalah kuning pucat.",
+  "o": [
+   "Benar",
+   "Salah"
+  ],
+  "a": 1,
+  "e": "Rangkuman menyebut warna ungu hingga merah keunguan.",
+  "t": "tf"
+ },
+ {
+  "q": "Uji esterifikasi ibuprofen dapat menggunakan etanol dan asam sulfat pekat.",
+  "o": [
+   "Benar",
+   "Salah"
+  ],
+  "a": 0,
+  "e": "Gugus karboksilat ibuprofen dapat diesterifikasi dengan alkohol berkatalis asam.",
+  "t": "tf"
+ },
+ {
+  "q": "Pemanasan uji esterifikasi ibuprofen dilakukan langsung di atas api spiritus selama 2–3 menit.",
+  "o": [
+   "Benar",
+   "Salah"
+  ],
+  "a": 1,
+  "e": "Alkohol mudah terbakar; gunakan penangas air.",
+  "t": "tf"
+ },
+ {
+  "q": "Cara mencium aroma hasil esterifikasi adalah dengan mengibaskan uap dari tabung ke arah hidung.",
+  "o": [
+   "Benar",
+   "Salah"
+  ],
+  "a": 0,
+  "e": "Teknik wafting mengurangi paparan langsung uap pekat.",
+  "t": "tf"
+ },
+ {
+  "q": "Identifikasi senyawa organik didasarkan pada keberadaan gugus fungsional tertentu.",
+  "o": [
+   "Benar",
+   "Salah"
+  ],
+  "a": 0,
+  "e": "Gugus fungsional menentukan banyak reaksi identifikasi khas.",
+  "t": "tf"
+ },
+ {
+  "q": "Reaksi identifikasi gugus fungsional hanya ditandai dengan perubahan warna larutan.",
+  "o": [
+   "Benar",
+   "Salah"
+  ],
+  "a": 1,
+  "e": "Identifikasi dapat melibatkan warna, endapan, gas, atau perubahan lain.",
+  "t": "tf"
+ },
+ {
+  "q": "Aldehida bersifat sebagai reduktor kuat, sedangkan keton lebih sulit mengalami oksidasi.",
+  "o": [
+   "Benar",
+   "Salah"
+  ],
+  "a": 0,
+  "e": "Aldehida lebih mudah dioksidasi dibanding keton dan dapat bertindak sebagai reduktor.",
+  "t": "tf"
+ },
+ {
+  "q": "Aldehida dengan pereaksi Tollens menghasilkan endapan Cu2O merah bata.",
+  "o": [
+   "Benar",
+   "Salah"
+  ],
+  "a": 1,
+  "e": "Tollens memberikan cermin perak; Cu2O merah bata terkait Fehling/Benedict.",
+  "t": "tf"
+ },
+ {
+  "q": "Pereaksi Fehling dan Benedict mengandung ion Cu2+ yang dapat direduksi oleh aldehida.",
+  "o": [
+   "Benar",
+   "Salah"
+  ],
+  "a": 0,
+  "e": "Aldehida mereduksi Cu2+ dalam kondisi uji tersebut.",
+  "t": "tf"
+ },
+ {
+  "q": "Identifikasi senyawa obat hanya didasarkan pada sifat fisik tanpa reaksi kimia spesifik.",
+  "o": [
+   "Benar",
+   "Salah"
+  ],
+  "a": 1,
+  "e": "Identifikasi dapat menggunakan reaksi kimia spesifik selain sifat fisik.",
+  "t": "tf"
+ },
+ {
+  "q": "Asam salisilat memiliki gugus fenol bebas yang terikat langsung pada cincin benzena.",
+  "o": [
+   "Benar",
+   "Salah"
+  ],
+  "a": 0,
+  "e": "Asam salisilat memiliki gugus fenol dan karboksilat pada cincin benzena.",
+  "t": "tf"
+ },
+ {
+  "q": "Tablet asetosal murni memberikan warna ungu pekat dengan FeCl3.",
+  "o": [
+   "Benar",
+   "Salah"
+  ],
+  "a": 1,
+  "e": "Asetosal tidak memberikan warna ungu pekat seperti salisilat bebas pada uji FeCl3.",
+  "t": "tf"
+ },
+ {
+  "q": "Analisis kualitatif melalui reaksi kimia dapat digunakan untuk menguji kemurnian bahan baku obat.",
+  "o": [
+   "Benar",
+   "Salah"
+  ],
+  "a": 0,
+  "e": "Reaksi khas dapat membantu identifikasi dan pemeriksaan kemurnian.",
+  "t": "tf"
+ },
+ {
+  "q": "Reaksi ninhidrin pada amoksisilin dilakukan dengan pemanasan penangas air sekitar 80–100°C.",
+  "o": [
+   "Benar",
+   "Salah"
+  ],
+  "a": 0,
+  "e": "Rangkuman menyatakan prosedur tersebut.",
+  "t": "tf"
+ },
+ {
+  "q": "Kation adalah ion bermuatan positif akibat kehilangan elektron.",
+  "o": [
+   "Benar",
+   "Salah"
+  ],
+  "a": 0,
+  "e": "Kation bermuatan positif terbentuk ketika atom/kelompok kehilangan elektron.",
+  "t": "tf"
+ },
+ {
+  "q": "Jika CO2 dialirkan ke Ba(OH)2, terjadi kekeruhan karena pembentukan barium karbonat putih.",
+  "o": [
+   "Benar",
+   "Salah"
+  ],
+  "a": 0,
+  "e": "CO2 bereaksi menghasilkan BaCO3 yang sukar larut.",
+  "t": "tf"
+ },
+ {
+  "q": "Pada uji natrium digunakan asam oksalat dan kristalnya diamati di bawah mikroskop.",
+  "o": [
+   "Benar",
+   "Salah"
+  ],
+  "a": 1,
+  "e": "Rangkuman mengoreksi bahwa pereaksi yang dimaksud adalah asam pikrat.",
+  "t": "tf"
+ },
+ {
+  "q": "Endapan merkuro klorida akan larut setelah ditambah amonia karena membentuk kompleks.",
+  "o": [
+   "Benar",
+   "Salah"
+  ],
+  "a": 1,
+  "e": "Dalam rangkuman, pernyataan tersebut dinyatakan salah.",
+  "t": "tf"
+ },
+ {
+  "q": "H2SO4 pekat dialirkan perlahan melalui dinding tabung karena sangat mudah membeku pada suhu ruang.",
+  "o": [
+   "Benar",
+   "Salah"
+  ],
+  "a": 1,
+  "e": "Alasan keselamatan yang benar berkaitan dengan sifat korosifnya.",
+  "t": "tf"
+ },
+ {
+  "q": "Karbohidrat memiliki atom karbon asimetris yang mengikat empat atom/gugus berbeda.",
+  "o": [
+   "Benar",
+   "Salah"
+  ],
+  "a": 0,
+  "e": "Karbon kiral memiliki empat substituen berbeda.",
+  "t": "tf"
+ },
+ {
+  "q": "Pada uji Seliwanoff, perubahan warna cukup diamati setelah pencampuran tanpa pemanasan.",
+  "o": [
+   "Benar",
+   "Salah"
+  ],
+  "a": 1,
+  "e": "Rangkuman menyatakan campuran perlu dipanaskan.",
+  "t": "tf"
+ },
+ {
+  "q": "Furfural dan hidroksimetilfurfural tidak dapat bereaksi dengan resorsinol.",
+  "o": [
+   "Benar",
+   "Salah"
+  ],
+  "a": 1,
+  "e": "Keduanya dapat bereaksi dengan senyawa fenolik pada uji terkait.",
+  "t": "tf"
+ },
+ {
+  "q": "Gula dengan gugus karbonil bebas dapat bertindak sebagai pereduksi.",
+  "o": [
+   "Benar",
+   "Salah"
+  ],
+  "a": 0,
+  "e": "Gugus karbonil bebas memungkinkan reaksi reduksi tertentu.",
+  "t": "tf"
+ },
+ {
+  "q": "Endapan merah-oranye di dasar tabung menunjukkan adanya maltosa atau laktosa.",
+  "o": [
+   "Benar",
+   "Salah"
+  ],
+  "a": 0,
+  "e": "Rangkuman memberikan interpretasi tersebut.",
+  "t": "tf"
+ },
+ {
+  "q": "Staf administrasi sering membungkuk lama. Dampak fisiologis jangka panjang yang paling mungkin adalah...",
+  "o": [
+   "Peningkatan klirens mukosiliar",
+   "Kompresi diskus tulang belakang dan kelelahan otot punggung",
+   "Penurunan beban metabolik",
+   "Gangguan koordinasi motorik halus"
+  ],
+  "a": 1,
+  "e": "Postur membungkuk lama meningkatkan beban mekanik tulang belakang dan otot punggung.",
+  "t": "mc"
+ },
+ {
+  "q": "Paparan suhu tinggi dan kelembaban tinggi mengganggu pengaturan panas karena...",
+  "o": [
+   "Vasokonstriksi kulit",
+   "Keringat sulit menguap akibat udara lembap",
+   "Metabolisme turun drastis",
+   "Shivering meningkat"
+  ],
+  "a": 1,
+  "e": "Kelembapan tinggi menghambat evaporasi keringat.",
+  "t": "mc"
+ },
+ {
+  "q": "Respon fisiologis utama tubuh terhadap suhu dingin adalah...",
+  "o": [
+   "Vasodilatasi dan keringat",
+   "Shivering dan vasokonstriksi",
+   "Denyut jantung turun drastis",
+   "Evaporasi meningkat"
+  ],
+  "a": 1,
+  "e": "Menggigil menghasilkan panas dan vasokonstriksi mengurangi kehilangan panas.",
+  "t": "mc"
+ },
+ {
+  "q": "Pencahayaan satu sisi di laboratorium menyebabkan perubahan posisi kepala/tubuh. Risiko jangka panjang yang paling sesuai adalah...",
+  "o": [
+   "Ambliopia",
+   "Skotoma sentral",
+   "Gangguan persepsi kedalaman/kontras disertai keluhan muskuloskeletal",
+   "Rabun jauh progresif"
+  ],
+  "a": 2,
+  "e": "Distribusi cahaya tidak merata dapat memicu ketegangan visual dan postural.",
+  "t": "mc"
+ },
+ {
+  "q": "Pencahayaan redup, suhu panas, dan ventilasi buruk paling mungkin menyebabkan...",
+  "o": [
+   "Peningkatan efisiensi kerja",
+   "Relaksasi dan penghematan energi",
+   "Kelelahan mata, gangguan termoregulasi, dan menurunnya kenyamanan",
+   "Peningkatan stamina"
+  ],
+  "a": 2,
+  "e": "Kondisi lingkungan tersebut meningkatkan beban visual dan termal.",
+  "t": "mc"
+ },
+ {
+  "q": "Ventilasi buruk dan CO2 tinggi setelah 2 jam dapat menyebabkan pusing dan sulit konsentrasi terutama karena...",
+  "o": [
+   "Aktivasi mukosa hidung",
+   "Vasokonstriksi paru",
+   "Hipoksia ringan akibat pertukaran udara tidak optimal",
+   "Produksi mukus menurun"
+  ],
+  "a": 2,
+  "e": "Ventilasi buruk dapat menurunkan kualitas pertukaran udara.",
+  "t": "mc"
+ },
+ {
+  "q": "Kebisingan kronis sebagai stresor dapat berkaitan dengan gangguan metabolik melalui...",
+  "o": [
+   "Peningkatan aktivitas saraf simpatik",
+   "Aktivasi HPA",
+   "Kerusakan langsung organ Corti",
+   "Vasodilatasi sistemik"
+  ],
+  "a": 1,
+  "e": "Rangkuman mengaitkannya dengan respons stres melalui sumbu HPA.",
+  "t": "mc"
+ },
+ {
+  "q": "Cahaya hanya terfokus di meja dan area sekitar gelap dapat menimbulkan keluhan leher kaku, mata lelah, sulit fokus karena...",
+  "o": [
+   "Kontraksi berulang pupil akibat kontras cahaya tinggi",
+   "Sensitivitas warna turun",
+   "Adaptasi gelap gagal",
+   "Inhibisi akomodasi"
+  ],
+  "a": 0,
+  "e": "Rangkuman memberi jawaban kontraksi pupil berulang akibat kontras cahaya tinggi.",
+  "t": "mc"
+ },
+ {
+  "q": "Besar kecilnya cahaya yang jatuh pada permukaan dan diukur dalam lux disebut...",
+  "o": [
+   "Temperatur warna",
+   "Distribusi warna",
+   "Distribusi cahaya",
+   "Intensitas cahaya"
+  ],
+  "a": 3,
+  "e": "Lux merupakan satuan iluminansi; rangkuman memberi pilihan 'intensitas cahaya'.",
+  "t": "mc"
+ },
+ {
+  "q": "Menurut soal rangkuman, kenaikan kebisingan 10 dB(A) dikaitkan dengan peningkatan insiden penyakit jantung koroner sebesar...",
+  "o": [
+   "5%",
+   "8%",
+   "12%",
+   "15%"
+  ],
+  "a": 2,
+  "e": "Jawaban yang tercantum dalam soal adalah 12%.",
+  "t": "mc"
+ },
+ {
+  "q": "Senyawa alkohol yang sering digunakan di bidang kedokteran adalah isopropanol dan etanol 90%.",
+  "o": [
+   "Benar",
+   "Salah"
+  ],
+  "a": 1,
+  "e": "Rangkuman mengoreksi menjadi etanol 70%.",
+  "t": "tf"
+ },
+ {
+  "q": "Penggunaan gas etuna sebagai anestesi inhalasi tidak digunakan lagi karena mudah meledak.",
+  "o": [
+   "Benar",
+   "Salah"
+  ],
+  "a": 1,
+  "e": "Rangkuman memberi koreksi terkait dietil eter/eter, bukan etuna.",
+  "t": "tf"
+ },
+ {
+  "q": "Contoh senyawa aldehid adalah formalin.",
+  "o": [
+   "Benar",
+   "Salah"
+  ],
+  "a": 0,
+  "e": "Formalin merupakan larutan formaldehida, suatu aldehida.",
+  "t": "tf"
+ },
+ {
+  "q": "Asam karboksilat merupakan basa lemah.",
+  "o": [
+   "Benar",
+   "Salah"
+  ],
+  "a": 1,
+  "e": "Asam karboksilat adalah golongan asam organik.",
+  "t": "tf"
+ },
+ {
+  "q": "Urea merupakan salah satu senyawa eter.",
+  "o": [
+   "Benar",
+   "Salah"
+  ],
+  "a": 1,
+  "e": "Urea memiliki gugus karbonil yang berikatan dengan gugus amina.",
+  "t": "tf"
+ },
+ {
+  "q": "Reaksi adisi dapat digunakan untuk mengetahui ketidakjenuhan suatu senyawa.",
+  "o": [
+   "Benar",
+   "Salah"
+  ],
+  "a": 0,
+  "e": "Reaksi adisi terjadi pada ikatan tak jenuh.",
+  "t": "tf"
+ },
+ {
+  "q": "Reaksi eliminasi pada senyawa organik adalah reaksi pembentukan alkohol.",
+  "o": [
+   "Benar",
+   "Salah"
+  ],
+  "a": 1,
+  "e": "Eliminasi umumnya membentuk senyawa tak jenuh/ikatan rangkap.",
+  "t": "tf"
+ },
+ {
+  "q": "Reaksi substitusi digunakan untuk menentukan kadar vitamin C.",
+  "o": [
+   "Benar",
+   "Salah"
+  ],
+  "a": 1,
+  "e": "Rangkuman menyebut titrasi redoks untuk penentuan kadar vitamin C.",
+  "t": "tf"
+ },
+ {
+  "q": "Reaksi reduksi adalah reaksi terbentuknya ikatan rangkap.",
+  "o": [
+   "Benar",
+   "Salah"
+  ],
+  "a": 1,
+  "e": "Reduksi dapat menghilangkan ikatan rangkap, misalnya melalui penambahan hidrogen.",
+  "t": "tf"
+ },
+ {
+  "q": "Esterifikasi terjadi antara asam karboksilat dan aseton.",
+  "o": [
+   "Benar",
+   "Salah"
+  ],
+  "a": 1,
+  "e": "Esterifikasi berlangsung antara asam karboksilat dan alkohol.",
+  "t": "tf"
+ },
+ {
+  "q": "Reaksi proteolitik secara non-enzimatis terjadi secara cepat.",
+  "o": [
+   "Benar",
+   "Salah"
+  ],
+  "a": 1,
+  "e": "Dalam rangkuman, reaksi non-enzimatis dinyatakan sangat lambat.",
+  "t": "tf"
+ },
+ {
+  "q": "Endopeptidase menghidrolisis protein pada bagian terminal.",
+  "o": [
+   "Benar",
+   "Salah"
+  ],
+  "a": 1,
+  "e": "Endopeptidase memotong di bagian dalam rantai.",
+  "t": "tf"
+ },
+ {
+  "q": "Proteasom merupakan kompleks riboprotein dari reaksi proteolisis.",
+  "o": [
+   "Benar",
+   "Salah"
+  ],
+  "a": 1,
+  "e": "Rangkuman menyatakan proteasom sebagai kompleks protein.",
+  "t": "tf"
+ },
+ {
+  "q": "Enzim protease dikeluarkan dalam bentuk aktif.",
+  "o": [
+   "Benar",
+   "Salah"
+  ],
+  "a": 1,
+  "e": "Banyak protease disekresikan sebagai zimogen/inaktif.",
+  "t": "tf"
+ },
+ {
+  "q": "Reaksi proteolitik menyebabkan hambatan proses pencernaan protein di lambung.",
+  "o": [
+   "Benar",
+   "Salah"
+  ],
+  "a": 1,
+  "e": "Proteolisis merupakan inti proses pencernaan protein.",
+  "t": "tf"
+ },
+ {
+  "q": "Menurut konsep Lewis, asam adalah senyawa yang memberikan ion H+.",
+  "o": [
+   "Benar",
+   "Salah"
+  ],
+  "a": 1,
+  "e": "Menurut Lewis, asam adalah akseptor pasangan elektron.",
+  "t": "tf"
+ },
+ {
+  "q": "Reaksi asam dengan basa menghasilkan gas nitrogen dan basa lemah.",
+  "o": [
+   "Benar",
+   "Salah"
+  ],
+  "a": 1,
+  "e": "Netralisasi asam-basa menghasilkan garam dan air.",
+  "t": "tf"
+ },
+ {
+  "q": "Basa lemah terionisasi sempurna di dalam air.",
+  "o": [
+   "Benar",
+   "Salah"
+  ],
+  "a": 1,
+  "e": "Basa lemah hanya terionisasi sebagian.",
+  "t": "tf"
+ },
+ {
+  "q": "pH darah normal adalah 7.",
+  "o": [
+   "Benar",
+   "Salah"
+  ],
+  "a": 1,
+  "e": "Rangkuman memberi rentang sekitar 7,35–7,45.",
+  "t": "tf"
+ },
+ {
+  "q": "Perubahan fraksi HCO3− menunjukkan asidosis/alkalosis respiratori.",
+  "o": [
+   "Benar",
+   "Salah"
+  ],
+  "a": 1,
+  "e": "Perubahan HCO3− terutama mengindikasikan gangguan metabolik.",
+  "t": "tf"
+ },
+ {
+  "q": "Analisis kualitatif adalah analisis untuk menentukan kadar suatu zat.",
+  "o": [
+   "Benar",
+   "Salah"
+  ],
+  "a": 1,
+  "e": "Penentuan kadar merupakan analisis kuantitatif.",
+  "t": "tf"
+ },
+ {
+  "q": "Volumetri adalah jenis analisis kualitatif.",
+  "o": [
+   "Benar",
+   "Salah"
+  ],
+  "a": 1,
+  "e": "Volumetri termasuk analisis kuantitatif.",
+  "t": "tf"
+ },
+ {
+  "q": "1 mol asam mungkin bereaksi dengan 1, 2, atau 3 mol basa.",
+  "o": [
+   "Benar",
+   "Salah"
+  ],
+  "a": 0,
+  "e": "Jumlah ekuivalen bergantung pada jumlah proton asam yang dapat bereaksi.",
+  "t": "tf"
+ },
+ {
+  "q": "Titik akhir titrasi adalah titik ketika indikator berubah warna.",
+  "o": [
+   "Benar",
+   "Salah"
+  ],
+  "a": 0,
+  "e": "Titik akhir ditandai perubahan indikator pada metode titrasi tertentu.",
+  "t": "tf"
+ },
+ {
+  "q": "Larutan baku sekunder adalah larutan yang konsentrasinya diketahui pasti sejak dibuat tanpa standardisasi.",
+  "o": [
+   "Benar",
+   "Salah"
+  ],
+  "a": 1,
+  "e": "Larutan baku primer memiliki kemurnian tinggi; baku sekunder perlu standardisasi.",
+  "t": "tf"
+ },
+ {
+  "q": "Prinsip dasar spektrofotometri menggunakan Hukum Lambert-Beer.",
+  "o": [
+   "Benar",
+   "Salah"
+  ],
+  "a": 0,
+  "e": "Absorbansi berhubungan dengan konsentrasi menurut Lambert-Beer pada kondisi berlaku.",
+  "t": "tf"
+ },
+ {
+  "q": "Terdapat hanya dua jenis spektrofotometri, yaitu UV dan UV-Vis.",
+  "o": [
+   "Benar",
+   "Salah"
+  ],
+  "a": 1,
+  "e": "Rangkuman mencantumkan beberapa jenis, termasuk UV, Vis, UV-Vis, IR, AAA, dan fluoresensi.",
+  "t": "tf"
+ },
+ {
+  "q": "Panjang gelombang UV adalah 190–380 nm.",
+  "o": [
+   "Benar",
+   "Salah"
+  ],
+  "a": 0,
+  "e": "Itu rentang UV yang tercantum dalam rangkuman.",
+  "t": "tf"
+ },
+ {
+  "q": "Panjang gelombang spektrofotometri dinyatakan dalam nanometer.",
+  "o": [
+   "Benar",
+   "Salah"
+  ],
+  "a": 0,
+  "e": "Nanometer lazim digunakan untuk panjang gelombang spektrofotometri.",
+  "t": "tf"
+ },
+ {
+  "q": "Jika A = 2 − log T (%) dan T = 100%, maka A = 1.",
+  "o": [
+   "Benar",
+   "Salah"
+  ],
+  "a": 1,
+  "e": "A = 2 − log(100) = 0.",
+  "t": "tf"
+ },
+ {
+  "q": "Sifat koligatif seperti penurunan titik beku dan tekanan osmotik terutama bergantung pada jumlah partikel zat terlarut.",
+  "o": [
+   "Benar",
+   "Salah"
+  ],
+  "a": 0,
+  "e": "Sifat koligatif ditentukan terutama oleh jumlah partikel, bukan identitas kimianya.",
+  "t": "tf"
+ },
+ {
+  "q": "Pemberian cairan hipotonis IV dapat menyebabkan eritrosit menyerap air berlebih hingga lisis.",
+  "o": [
+   "Benar",
+   "Salah"
+  ],
+  "a": 0,
+  "e": "Air bergerak ke sel pada kondisi hipotonis.",
+  "t": "tf"
+ },
+ {
+  "q": "NaCl 0,9% sering digunakan sebagai cairan resusitasi karena bersifat isotonis terhadap plasma.",
+  "o": [
+   "Benar",
+   "Salah"
+  ],
+  "a": 0,
+  "e": "NaCl 0,9% merupakan cairan kristaloid yang secara umum dianggap isotonic.",
+  "t": "tf"
+ },
+ {
+  "q": "Menurut Boyle, ketika volume rongga dada membesar saat inspirasi, tekanan intrapleural meningkat.",
+  "o": [
+   "Benar",
+   "Salah"
+  ],
+  "a": 1,
+  "e": "Pada suhu konstan, peningkatan volume berkaitan dengan penurunan tekanan.",
+  "t": "tf"
+ },
+ {
+  "q": "Difusi O2 dari alveolus ke kapiler terjadi karena PO2 alveolus lebih tinggi daripada darah kapiler.",
+  "o": [
+   "Benar",
+   "Salah"
+  ],
+  "a": 0,
+  "e": "O2 bergerak mengikuti gradien tekanan parsial.",
+  "t": "tf"
+ },
+ {
+  "q": "Kesetimbangan Donnan berkaitan dengan protein besar bermuatan yang tidak bebas melintasi membran.",
+  "o": [
+   "Benar",
+   "Salah"
+  ],
+  "a": 0,
+  "e": "Protein yang tidak dapat berdifusi memengaruhi distribusi ion di kedua sisi.",
+  "t": "tf"
+ },
+ {
+  "q": "Kekurangan albumin meningkatkan tekanan osmotik plasma dan menarik cairan ke pembuluh.",
+  "o": [
+   "Benar",
+   "Salah"
+  ],
+  "a": 1,
+  "e": "Kekurangan albumin menurunkan tekanan onkotik plasma sehingga cairan lebih mudah keluar.",
+  "t": "tf"
+ },
+ {
+  "q": "Koefisien partisi K tinggi menunjukkan obat lebih lipofilik dan cenderung lebih mudah menembus membran.",
+  "o": [
+   "Benar",
+   "Salah"
+  ],
+  "a": 0,
+  "e": "Lipofilisitas mendukung partisi ke fase lipid membran.",
+  "t": "tf"
+ },
+ {
+  "q": "HPLC menggunakan gas helium sebagai fase gerak untuk sampel volatil.",
+  "o": [
+   "Benar",
+   "Salah"
+  ],
+  "a": 1,
+  "e": "Gas sebagai fase gerak merupakan prinsip kromatografi gas; HPLC menggunakan fase gerak cair.",
+  "t": "tf"
+ },
+ {
+  "q": "TDM untuk obat berindeks terapi sempit sering menggunakan HPLC karena sensitivitas/akurasi.",
+  "o": [
+   "Benar",
+   "Salah"
+  ],
+  "a": 0,
+  "e": "HPLC dapat digunakan untuk mengukur kadar obat secara analitik.",
+  "t": "tf"
+ },
+ {
+  "q": "Pada titik isoelektrik, asam amino berbentuk zwitterion dengan muatan bersih nol dan tidak bergerak menuju anoda maupun katoda.",
+  "o": [
+   "Benar",
+   "Salah"
+  ],
+  "a": 0,
+  "e": "Pada pI, muatan bersih rata-rata nol.",
+  "t": "tf"
+ },
+ {
+  "q": "Sebagian besar protein manusia disintesis menggunakan asam amino konfigurasi D.",
+  "o": [
+   "Benar",
+   "Salah"
+  ],
+  "a": 1,
+  "e": "Protein manusia menggunakan L-amino acids.",
+  "t": "tf"
+ },
+ {
+  "q": "Tirosin merupakan prekursor hormon tiroid dan katekolamin.",
+  "o": [
+   "Benar",
+   "Salah"
+  ],
+  "a": 0,
+  "e": "Tirosin merupakan prekursor biosintesis T3/T4 dan katekolamin.",
+  "t": "tf"
+ },
+ {
+  "q": "Ikatan peptida dapat berotasi sangat bebas karena merupakan ikatan kovalen tunggal tanpa resonansi.",
+  "o": [
+   "Benar",
+   "Salah"
+  ],
+  "a": 1,
+  "e": "Resonansi memberi karakter ikatan rangkap parsial dan membatasi rotasi.",
+  "t": "tf"
+ },
+ {
+  "q": "Prolin dapat menjadi helix breaker karena struktur cincinnya membatasi geometri rantai.",
+  "o": [
+   "Benar",
+   "Salah"
+  ],
+  "a": 0,
+  "e": "Struktur prolin dapat mengganggu α-heliks.",
+  "t": "tf"
+ },
+ {
+  "q": "Pada anemia sel sabit, valin digantikan glutamat pada rantai hemoglobin.",
+  "o": [
+   "Benar",
+   "Salah"
+  ],
+  "a": 1,
+  "e": "Mutasi klasik HbS adalah glutamat digantikan valin.",
+  "t": "tf"
+ },
+ {
+  "q": "Autoklaf membunuh bakteri antara lain dengan denaturasi protein/enzim akibat panas.",
+  "o": [
+   "Benar",
+   "Salah"
+  ],
+  "a": 0,
+  "e": "Panas bertekanan menyebabkan denaturasi dan kerusakan komponen sel.",
+  "t": "tf"
+ },
+ {
+  "q": "Kooperativitas hemoglobin sangat bergantung pada struktur kuaterner.",
+  "o": [
+   "Benar",
+   "Salah"
+  ],
+  "a": 0,
+  "e": "Interaksi antarsubunit mendasari perubahan afinitas O2.",
+  "t": "tf"
+ },
+ {
+  "q": "Alzheimer dan penyakit prion sama-sama dapat berkaitan dengan misfolding/agregasi protein.",
+  "o": [
+   "Benar",
+   "Salah"
+  ],
+  "a": 0,
+  "e": "Keduanya melibatkan protein abnormal, meski mekanismenya berbeda.",
+  "t": "tf"
+ },
+ {
+  "q": "Histidin adalah buffer fisiologis yang buruk karena pKa rantai sampingnya jauh dari pH fisiologis.",
+  "o": [
+   "Benar",
+   "Salah"
+  ],
+  "a": 1,
+  "e": "Rangkuman menyatakan pKa imidazol sekitar 6,0 sehingga relatif dekat dengan pH fisiologis.",
+  "t": "tf"
+ },
+ {
+  "q": "Elektrolit utama yang jika kekurangan dapat mengganggu keseimbangan asam-basa dan jika berlebihan meningkatkan produksi asam lambung adalah...",
+  "o": [
+   "Kalsium",
+   "Kalium",
+   "Magnesium",
+   "Klorida"
+  ],
+  "a": 3,
+  "e": "Jawaban dalam rangkuman adalah klorida.",
+  "t": "mc"
+ },
+ {
+  "q": "Polisakarida struktural dinding sel tumbuhan yang tidak dapat dicerna manusia adalah...",
+  "o": [
+   "Glikogen",
+   "Laktosa",
+   "Selulosa",
+   "Amilosa"
+  ],
+  "a": 2,
+  "e": "Selulosa merupakan polisakarida struktural tumbuhan.",
+  "t": "mc"
+ },
+ {
+  "q": "Mengapa PUFA lebih cair daripada MUFA dan lemak jenuh pada suhu ruang?",
+  "o": [
+   "Banyak ikatan rangkap cis menyebabkan tekukan struktur",
+   "Rantai karbon sangat pendek dan hidrofilik",
+   "Tidak memiliki ikatan rangkap",
+   "Hanya memiliki satu ikatan rangkap"
+  ],
+  "a": 0,
+  "e": "Ikatan rangkap cis membuat rantai bengkok sehingga packing lebih longgar.",
+  "t": "mc"
+ },
+ {
+  "q": "Lipid sederhana yang terdiri dari gliserol terikat tiga asam lemak melalui ikatan ester adalah...",
+  "o": [
+   "Fosfolipid",
+   "Kolesterol",
+   "Trigliserida",
+   "Kilomikron"
+  ],
+  "a": 2,
+  "e": "Trigliserida terdiri dari gliserol dan tiga asam lemak.",
+  "t": "mc"
+ },
+ {
+  "q": "Kegagalan transport trigliserida makanan dari usus ke jaringan perifer paling berkaitan dengan gangguan...",
+  "o": [
+   "Kilomikron",
+   "LDL",
+   "HDL",
+   "VLDL"
+  ],
+  "a": 0,
+  "e": "Kilomikron mengangkut trigliserida makanan dari usus.",
+  "t": "mc"
+ },
+ {
+  "q": "Jika eritrosit berada dalam larutan hipertonis, sel akan mengalami...",
+  "o": [
+   "Pembelahan",
+   "Tidak berubah",
+   "Hemolisis",
+   "Krenasi"
+  ],
+  "a": 3,
+  "e": "Air keluar dari eritrosit sehingga sel mengkerut/krenasi.",
+  "t": "mc"
+ },
+ {
+  "q": "Monomer DNA tersusun atas...",
+  "o": [
+   "Ribosa, asam amino, sulfat",
+   "Deoksiribosa, fosfat, basa nitrogen",
+   "Gliserol, asam lemak, purin",
+   "Asam karboksilat, amina, cincin furan"
+  ],
+  "a": 1,
+  "e": "Nukleotida DNA mengandung deoksiribosa, fosfat, dan basa nitrogen.",
+  "t": "mc"
+ },
+ {
+  "q": "Fase depolarisasi potensial aksi neuron terutama disebabkan oleh...",
+  "o": [
+   "Masuknya Cl−",
+   "Keluarnya K+",
+   "Masuknya Na+ cepat",
+   "Keluarnya Ca2+ dari retikulum"
+  ],
+  "a": 2,
+  "e": "Pembukaan kanal Na+ menyebabkan influx Na+ cepat.",
+  "t": "mc"
+ },
+ {
+  "q": "Quadriceps femoris saat menendang bola bertindak sebagai...",
+  "o": [
+   "Sinergis fleksi panggul",
+   "Fiksator pasif",
+   "Antagonis ekstensi lutut",
+   "Agonis utama ekstensi lutut"
+  ],
+  "a": 3,
+  "e": "Quadriceps merupakan agonis utama ekstensi lutut.",
+  "t": "mc"
+ },
+ {
+  "q": "Gas hasil pembakaran tidak sempurna yang berafinitas tinggi terhadap hemoglobin adalah...",
+  "o": [
+   "O3",
+   "CO",
+   "SO2",
+   "CH4"
+  ],
+  "a": 1,
+  "e": "CO berikatan kuat dengan hemoglobin.",
+  "t": "mc"
+ },
+ {
+  "q": "Kelainan refraksi ketika bayangan objek jauh jatuh di depan retina adalah...",
+  "o": [
+   "Astigmatisme",
+   "Miopi",
+   "Presbiopi",
+   "Hipermetropi"
+  ],
+  "a": 1,
+  "e": "Miopi membuat fokus objek jauh berada di depan retina.",
+  "t": "mc"
+ },
+ {
+  "q": "Fotoreseptor untuk penglihatan warna dan ketajaman pada kondisi terang adalah...",
+  "o": [
+   "Sel ganglion",
+   "Sel bipolar",
+   "Sel kerucut",
+   "Sel batang"
+  ],
+  "a": 2,
+  "e": "Cone cells berperan dalam penglihatan warna dan fotopik.",
+  "t": "mc"
+ },
+ {
+  "q": "Pepsinogen diaktifkan menjadi pepsin terutama oleh...",
+  "o": [
+   "K+",
+   "Enteropeptidase",
+   "HCl lambung",
+   "Insulin"
+  ],
+  "a": 2,
+  "e": "Lingkungan asam lambung mengaktifkan pepsinogen.",
+  "t": "mc"
+ },
+ {
+  "q": "Organel tempat translasi RNA menjadi rantai polipeptida adalah...",
+  "o": [
+   "Badan Golgi",
+   "Sentrosom",
+   "Mitokondria",
+   "Ribosom"
+  ],
+  "a": 3,
+  "e": "Ribosom merupakan tempat sintesis protein.",
+  "t": "mc"
+ },
+ {
+  "q": "Untuk membuat 500 mL larutan glukosa 9% b/v, massa glukosa yang dibutuhkan adalah...",
+  "o": [
+   "4,5 g",
+   "90 g",
+   "9 g",
+   "45 g"
+  ],
+  "a": 3,
+  "e": "9% b/v = 9 g/100 mL; untuk 500 mL diperlukan 45 g.",
+  "t": "mc"
+ },
+ {
+  "q": "Diare akut didefinisikan sebagai BAB cair ≥3 kali/hari yang berlangsung >14 hari.",
+  "o": [
+   "Benar",
+   "Salah"
+  ],
+  "a": 1,
+  "e": "Dalam rangkuman, diare akut berlangsung <14 hari.",
+  "t": "tf"
+ },
+ {
+  "q": "Mata cekung pada pasien dehidrasi merupakan tanda hilangnya cairan dari jaringan dan lemak retro-orbital.",
+  "o": [
+   "Benar",
+   "Salah"
+  ],
+  "a": 0,
+  "e": "Kehilangan cairan mengurangi volume jaringan/lemak retro-orbital.",
+  "t": "tf"
+ },
+ {
+  "q": "Tekanan darah 85/55 mmHg diklasifikasikan sebagai hipertensi.",
+  "o": [
+   "Benar",
+   "Salah"
+  ],
+  "a": 1,
+  "e": "85/55 mmHg menunjukkan hipotensi.",
+  "t": "tf"
+ },
+ {
+  "q": "Denyut nadi 115 kali/menit menunjukkan takikardia pada orang dewasa.",
+  "o": [
+   "Benar",
+   "Salah"
+  ],
+  "a": 0,
+  "e": "Denyut >100 kali/menit umumnya disebut takikardia.",
+  "t": "tf"
+ },
+ {
+  "q": "NaCl 0,9% merupakan cairan hipertonik yang menarik cairan dari sel ke pembuluh darah.",
+  "o": [
+   "Benar",
+   "Salah"
+  ],
+  "a": 1,
+  "e": "NaCl 0,9% dicantumkan sebagai isotonik.",
+  "t": "tf"
+ },
+ {
+  "q": "Molaritas menunjukkan jumlah mol zat terlarut per liter larutan.",
+  "o": [
+   "Benar",
+   "Salah"
+  ],
+  "a": 0,
+  "e": "Definisi molaritas adalah mol zat terlarut per liter larutan.",
+  "t": "tf"
+ },
+ {
+  "q": "Osmolaritas mengukur jumlah partikel osmotik dalam 1 kg air.",
+  "o": [
+   "Benar",
+   "Salah"
+  ],
+  "a": 1,
+  "e": "Per kg pelarut adalah osmolalitas; osmolaritas dinyatakan per liter larutan.",
+  "t": "tf"
+ },
+ {
+  "q": "Cairan hipotonik dapat menyebabkan sel membengkak dan lisis karena air masuk ke sel.",
+  "o": [
+   "Benar",
+   "Salah"
+  ],
+  "a": 0,
+  "e": "Air berpindah ke kompartemen dengan konsentrasi osmotik lebih tinggi.",
+  "t": "tf"
+ },
+ {
+  "q": "Menggantung cairan infus 1 m di atas pasien bertujuan menurunkan tekanan hidrostatik.",
+  "o": [
+   "Benar",
+   "Salah"
+  ],
+  "a": 1,
+  "e": "Kolom cairan yang lebih tinggi meningkatkan tekanan hidrostatik.",
+  "t": "tf"
+ },
+ {
+  "q": "Pompa infus merupakan perangkat elektromekanik yang mengatur pemberian cairan secara terkontrol.",
+  "o": [
+   "Benar",
+   "Salah"
+  ],
+  "a": 0,
+  "e": "Pompa membantu menghasilkan tekanan dan mengatur laju secara presisi.",
+  "t": "tf"
+ },
+ {
+  "q": "Sensor optik/inframerah dapat digunakan pada sistem pompa untuk mendeteksi tetesan.",
+  "o": [
+   "Benar",
+   "Salah"
+  ],
+  "a": 0,
+  "e": "Rangkuman menyatakan beberapa sistem menggunakan sensor optik/inframerah.",
+  "t": "tf"
+ },
+ {
+  "q": "Pemberian 500 mL NaCl 0,9% selama 2 jam membutuhkan laju 250 mL/menit.",
+  "o": [
+   "Benar",
+   "Salah"
+  ],
+  "a": 1,
+  "e": "Laju yang benar 250 mL/jam, sekitar 4,17 mL/menit.",
+  "t": "tf"
+ },
+ {
+  "q": "Termometer klinis dapat menggunakan transduser yang mengubah perubahan sifat fisik akibat suhu menjadi informasi suhu.",
+  "o": [
+   "Benar",
+   "Salah"
+  ],
+  "a": 0,
+  "e": "Transduser mengubah perubahan fisik menjadi sinyal terukur.",
+  "t": "tf"
+ },
+ {
+  "q": "Stetoskop dirancang untuk mengurangi kehilangan energi gelombang suara ke lingkungan.",
+  "o": [
+   "Benar",
+   "Salah"
+  ],
+  "a": 0,
+  "e": "Desain membantu meneruskan suara tubuh dan mengurangi redaman.",
+  "t": "tf"
+ },
+ {
+  "q": "Bunyi pertama saat mengukur tekanan darah terdengar ketika tekanan manset sama dengan tekanan sistolik.",
+  "o": [
+   "Benar",
+   "Salah"
+  ],
+  "a": 1,
+  "e": "Bunyi Korotkoff pertama muncul saat tekanan manset turun ke sekitar tekanan sistolik.",
+  "t": "tf"
+ },
+ {
+  "q": "Pelepasan gas pada tensimeter mengubah aliran darah arteri brakialis dan menghasilkan perubahan bunyi Korotkoff.",
+  "o": [
+   "Benar",
+   "Salah"
+  ],
+  "a": 0,
+  "e": "Perubahan aliran selama deflasi menghasilkan bunyi Korotkoff.",
+  "t": "tf"
+ },
+ {
+  "q": "Tekanan hidrostatik dipengaruhi oleh massa jenis, gravitasi, dan tinggi/kedalaman kolom cairan.",
+  "o": [
+   "Benar",
+   "Salah"
+  ],
+  "a": 0,
+  "e": "Hubungannya P = ρgh.",
+  "t": "tf"
+ },
+ {
+  "q": "Menurut hukum Poiseuille, laju aliran berbanding terbalik dengan perbedaan tekanan dan lurus dengan viskositas.",
+  "o": [
+   "Benar",
+   "Salah"
+  ],
+  "a": 1,
+  "e": "Laju aliran sebanding dengan ΔP dan berbanding terbalik dengan viskositas.",
+  "t": "tf"
+ },
+ {
+  "q": "Cairan tubuh hanya kehilangan air tanpa kehilangan elektrolit.",
+  "o": [
+   "Benar",
+   "Salah"
+  ],
+  "a": 1,
+  "e": "Diare dapat menyebabkan kehilangan Na+, K+, Cl−, dan elektrolit lain.",
+  "t": "tf"
+ },
+ {
+  "q": "Dehidrasi akibat diare akut hanya melibatkan hilangnya air tanpa kehilangan elektrolit seperti natrium.",
+  "o": [
+   "Benar",
+   "Salah"
+  ],
+  "a": 1,
+  "e": "Kehilangan cairan akibat diare dapat disertai kehilangan elektrolit.",
+  "t": "tf"
+ },
+ {
+  "q": "Hal yang harus dilakukan sebelum melakukan USG abdomen adalah...",
+  "o": [
+   "Puasa sekitar 8 jam",
+   "Tidak perlu persiapan",
+   "Mengonsumsi makanan tinggi lemak",
+   "Berolahraga berat"
+  ],
+  "a": 0,
+  "e": "Dalam file kedua, persiapan yang dicantumkan adalah puasa 8 jam.",
+  "t": "mc"
+ },
+ {
+  "q": "Prinsip proteksi dalam radiologi yang dicantumkan pada file kedua adalah...",
+  "o": [
+   "Kontras, nonkontras, imaging",
+   "Jarak, waktu, perisai (shielding)",
+   "Puasa, hidrasi, posisi",
+   "Frekuensi, amplitudo, fase"
+  ],
+  "a": 1,
+  "e": "Proteksi radiasi menggunakan prinsip jarak, waktu, dan shielding.",
+  "t": "mc"
+ },
+ {
+  "q": "Hal yang paling diperhatikan saat menggunakan pedometer adalah...",
+  "o": [
+   "Kapasitas aplikasi",
+   "Harga telepon genggam",
+   "Sensitivitas aplikasi terhadap langkah kaki",
+   "Berat telepon genggam"
+  ],
+  "a": 2,
+  "e": "File kedua menekankan sensitivitas aplikasi terhadap langkah kaki.",
+  "t": "mc"
+ },
+ {
+  "q": "Teknologi kedokteran yang bertujuan memberi layanan kesehatan dari jarak jauh disebut...",
+  "o": [
+   "Telekonferensi",
+   "Telemedicine",
+   "Telemetri",
+   "Telekinetik"
+  ],
+  "a": 1,
+  "e": "Telemedicine adalah pelayanan kesehatan yang dilakukan dari jarak jauh.",
+  "t": "mc"
+ },
+ {
+  "q": "Teknologi kedokteran yang dicantumkan untuk terapi penderita autisme adalah...",
+  "o": [
+   "PCR",
+   "Imaginary Friend Society",
+   "Augmented Reality Glasses",
+   "EKG"
+  ],
+  "a": 2,
+  "e": "File kedua mencantumkan Augmented Reality Glasses sebagai pilihan yang benar.",
+  "t": "mc"
+ },
+ {
+  "q": "Pada kartu Snellen, pasien hanya dapat melihat baris huruf besar pada jarak 6 meter. Hal ini menunjukkan...",
+  "o": [
+   "Retina pasti berfungsi optimal",
+   "Ketajaman penglihatan menurun",
+   "Kelainan retina pasti",
+   "Penglihatan warna meningkat"
+  ],
+  "a": 1,
+  "e": "Kemampuan hanya membaca huruf besar pada jarak tersebut menunjukkan ketajaman penglihatan menurun.",
+  "t": "mc"
+ },
+ {
+  "q": "Pemeriksaan radiologi yang dapat memvisualisasikan organ secara dinamis atau bergerak adalah...",
+  "o": [
+   "Radiografi statis",
+   "Fluoroskopi",
+   "CT tanpa kontras",
+   "Mammografi"
+  ],
+  "a": 1,
+  "e": "Fluoroskopi memberikan pencitraan real-time/dinamis.",
+  "t": "mc"
+ },
+ {
+  "q": "Dampak yang dicantumkan pada file kedua akibat paparan lampu LED biru 6000 K dalam konteks gangguan tidur adalah...",
+  "o": [
+   "Peningkatan melatonin",
+   "Penekanan melatonin yang dapat mengganggu tidur",
+   "Peningkatan suhu inti permanen",
+   "Penurunan kebutuhan tidur"
+  ],
+  "a": 1,
+  "e": "File kedua menyebut sinar biru dapat menekan melatonin sehingga mengganggu tidur.",
+  "t": "mc"
+ },
+ {
+  "q": "Indikator fenolftalein mempunyai pH pada kisaran..",
+  "o": [
+   "7,5 - 8,8",
+   "8,3 - 10",
+   "8 - 9",
+   "6 - 7"
+  ],
+  "a": 0,
+  "e": "File kedua mencantumkan kisaran perubahan warna fenolftalein sekitar 7,5–8,8.",
+  "t": "mc"
+ },
+ {
+  "q": "Jika kekurangan mineral ini akan mengakibatkan sembelit dan kelumpuhan otot dan kram, jika kelebihan maka akan mengakibatkan diare mual dan penyakit ginjal, mineral apakah ini",
+  "o": [
+   "KALIUM",
+   "Magnesium",
+   "Natrium",
+   "Kalsium",
+   "Sulfur"
+  ],
+  "a": 0,
+  "e": "File kedua mengaitkan kondisi tersebut dengan kalium (K+).",
+  "t": "mc"
+ },
+ {
+  "q": "Salah satu contoh dari Trace Mineral adalah",
+  "o": [
+   "BESI",
+   "Magnesium",
+   "Sulfur",
+   "Kalsium",
+   "Fosfor"
+  ],
+  "a": 0,
+  "e": "Besi dicantumkan sebagai contoh trace mineral pada file kedua.",
+  "t": "mc"
+ },
+ {
+  "q": "Apa karbohidrat yang memiliki struktur furanosa?",
+  "o": [
+   "FRUKTOSA",
+   "Glukosa",
+   "Manosa",
+   "Sukrosa"
+  ],
+  "a": 0,
+  "e": "Fruktosa dapat membentuk struktur cincin furanosa.",
+  "t": "mc"
+ },
+ {
+  "q": "Gangguan biolistrik pada jantung dapat diketahui menggunakan alat",
+  "o": [
+   "Mri",
+   "CT scan",
+   "Usg",
+   "Eeg",
+   "EKG"
+  ],
+  "a": 4,
+  "e": "EKG merekam aktivitas listrik jantung.",
+  "t": "mc"
+ },
+ {
+  "q": "Senyawa berbau sedap, sukar larut dalam air, (ada ciri-ciri lain), dan berisomer dengan alkohol adalah ...",
+  "o": [
+   "ETER",
+   "aldehid",
+   "Ester",
+   "Amida"
+  ],
+  "a": 2,
+  "e": "Ester umumnya berbau khas dan merupakan isomer fungsi alkohol/asam karboksilat dalam konteks yang dicantumkan.",
+  "t": "mc"
+ },
+ {
+  "q": "Sifat dari fosfolipid",
+  "o": [
+   "Hidrofobik",
+   "Hidrofilik",
+   "AMFIPATIK",
+   "Larut dalam air",
+   "Struktur steroid"
+  ],
+  "a": 2,
+  "e": "Fosfolipid memiliki bagian hidrofilik dan hidrofobik sehingga bersifat amfipatik.",
+  "t": "mc"
+ },
+ {
+  "q": "Contoh otot yang bekerja terus menerus untuk menjaga postur adalah...",
+  "o": [
+   "otot jantung",
+   "otot soleus",
+   "otot biceps",
+   "otot deltoid",
+   "otot lidah"
+  ],
+  "a": 1,
+  "e": "Otot soleus berperan penting mempertahankan postur berdiri.",
+  "t": "mc"
+ },
+ {
+  "q": "Serbuk teh dididihkan dengan air, setelah itu dipindahkan ke corong terpisah terus ditambahkan kloroform. Dikocok dan didiamkan akan terbentuk 2 lapisan. Sebagian besar serbuk teh ke lapisan kloroform. Hal ini disebabkan..",
+  "o": [
+   "kafein kelarutannya lebih tinggi pada pelarut organik",
+   "Kafein lebih larut pada air karna non polar",
+   "Kafein bersifat hidrofilik",
+   "Kloroform bersifat sangat polar"
+  ],
+  "a": 0,
+  "e": "Dalam file kedua, distribusi kafein ke fase kloroform dikaitkan dengan kelarutannya yang lebih tinggi pada pelarut organik.",
+  "t": "mc"
+ },
+ {
+  "q": "perbandingan konsentrasi yang diketahui 10:1  pKa H2CO3: 6,1 Ph: pKa + log [H2CO3]/[HCO3-] berapa ph?",
+  "o": [
+   "6,1",
+   "7,1",
+   "8,1",
+   "5,1"
+  ],
+  "a": 1,
+  "e": "Dengan rasio 10:1, pH = 6,1 + log(10) = 7,1.",
+  "t": "mc"
+ },
+ {
+  "q": "Seorang petani menggunakan insektisida untuk membasmi hama di sawahnya. Setelah beberapa tahun, tanah pertaniannya diketahui masih mengandung residu pestisida yang tinggi, meskipun ia sudah berhenti menggunakan obat tersebut. Insektisida yang paling mungkin digunakan adalah...",
+  "o": [
+   "Karbamat",
+   "Organofosfat",
+   "Dichloro-diphenyl-trichloroethane",
+   "Pyrethroid",
+   "Neonicotinoid"
+  ],
+  "a": 2,
+  "e": "Dichloro-diphenyl-trichloroethane (DDT) merupakan insektisida yang persisten dan dapat meninggalkan residu lingkungan dalam waktu lama.",
+  "t": "mc"
+ },
+ {
+  "q": "Sebuah kota industri mencatat peningkatan kasus eksaserbasi asma dan gangguan pernapasan kronis pada warga sekitar. Analisis kualitas udara menunjukkan tingginya kadar polutan yang memicu terjadinya fenomena hujan asam. Senyawa emisi utama dari pembakaran bahan bakar fosil yang mendasari fenomena tersebut adalah...",
+  "o": [
+   "Sulfur dioksida (SO2)",
+   "Karbon monoksida (CO)",
+   "Karbon dioksida (CO2)",
+   "Metana (CH4)",
+   "Ozon (O3)"
+  ],
+  "a": 0,
+  "e": "SO2 dari pembakaran bahan bakar fosil dapat teroksidasi dan berkontribusi pada pembentukan asam sulfat dalam hujan asam.",
+  "t": "mc"
+ },
+ {
+  "q": "Seorang anak yang tinggal di pusat kota padat lalu lintas mengalami eksaserbasi serangan asma pada siang hari saat terik matahari. Dokter menjelaskan bahwa kondisi ini dipicu oleh pencemar udara sekunder hasil photochemical smog. Polutan fasa gas yang paling mungkin menjadi pencetus kondisi pasien tersebut adalah...",
+  "o": [
+   "Ozon troposferik (O3)",
+   "Partikulat halus (PM1)",
+   "Timbal airborne (Pb)",
+   "Karbon monoksida (CO)",
+   "Sulfur dioksida (SO2)"
+  ],
+  "a": 0,
+  "e": "Ozon troposferik merupakan polutan sekunder utama photochemical smog dan dapat mengiritasi saluran napas.",
+  "t": "mc"
+ },
+ {
+  "q": "4. Seorang wanita yang tinggal di daerah aliran sungai dekat pembuangan limbah tambang mengalami fraktur patologis, nyeri tulang hebat, dan disfungsi tubulus renalis proksimal. Logam berat pencemar yang paling mungkin menyebabkan kondisi tersebut adalah...",
+  "o": [
+   "Kadmium (Cd)",
+   "Raksa (Hg)",
+   "Timbal (Pb)",
+   "Arsen (As)",
+   "Kromium (Cr)"
+  ],
+  "a": 0,
+  "e": "Kadmium dapat menyebabkan kerusakan tubulus proksimal dan gangguan tulang pada paparan kronis.",
+  "t": "mc"
+ },
+ {
+  "q": "Seorang fisioterapis menggunakan short wave diathermy untuk mengurangi nyeri otot pasien. Prinsip dasar yang digunakan adalah...",
+  "o": [
+   "Energi mekanik menjadi energi kimia",
+   "Energi elektromagnetik diubah menjadi panas dalam jaringan",
+   "Energi panas berubah menjadi energi listrik",
+   "Radiasi ionisasi merusak DNA sel",
+   "Energi listrik berubah menjadi cahaya"
+  ],
+  "a": 1,
+  "e": "Short wave diathermy menggunakan energi elektromagnetik frekuensi tinggi yang menghasilkan pemanasan jaringan.",
+  "t": "mc"
+ },
+ {
+  "q": "Seorang pasien dengan luka otot kronis diterapi menggunakan short wave diathermy. Efek fisiologis utama yang terjadi adalah...",
+  "o": [
+   "Penurunan aliran darah",
+   "Vasodilatasi dan peningkatan suplai oksigen",
+   "Penghambatan metabolisme sel",
+   "Pendinginan jaringan",
+   "Penurunan difusi molekul"
+  ],
+  "a": 1,
+  "e": "Pemanasan jaringan dapat menyebabkan vasodilatasi sehingga aliran darah dan suplai oksigen meningkat.",
+  "t": "mc"
+ },
+ {
+  "q": "8.Seorang pasien hipotermia dihangatkan dengan selimut elektrik. Panas berpindah dari selimut (suhu tinggi) ke tubuh pasien (suhu rendah). Mekanisme ini sesuai dengan...",
+  "o": [
+   "Zeroth Law",
+   "Hukum Il Termodinamika",
+   "Homeostasis",
+   "Energi bebas Gibbs",
+   "Hukum I Termodinamika"
+  ],
+  "a": 1,
+  "e": "Perpindahan energi panas dari benda bersuhu tinggi ke benda bersuhu lebih rendah terkait dengan konservasi energi dalam Hukum I Termodinamika.",
+  "t": "mc"
+ },
+ {
+  "q": "Saat seseorang mengonsumsi makanan, sebagian energi digunakan untuk aktivitas tubuh sedangkan sisanya dilepas sebagai panas. Fenomena ini sesuai dengan...",
+  "o": [
+   "Hukum II Termodinamika",
+   "Hukum I Termodinamika",
+   "Zeroth Law",
+   "Homeostasis",
+   "Entropi berkurang"
+  ],
+  "a": 1,
+  "e": "Hukum I Termodinamika menjelaskan bahwa energi tidak hilang, tetapi dapat berubah bentuk, termasuk menjadi panas.",
+  "t": "mc"
+ },
+ {
+  "q": "Seorang pasien berada di ruangan bersuhu 10 °C. Tubuhnya menggigil dan terjadi vasokonstriksi. Respon ini sesuai dengan prinsip termodinamika dalam...",
+  "o": [
+   "Zeroth Law",
+   "Homeostasis fisiologis terhadap dingin",
+   "Hukum Termodinamika I",
+   "Radiasi panas",
+   "Konduksi"
+  ],
+  "a": 1,
+  "e": "Menggigil dan vasokonstriksi merupakan respons homeostatik untuk mempertahankan suhu inti tubuh saat dingin.",
+  "t": "mc"
+ },
+ {
+  "q": "Penduduk di sebuah desa pesisir * mengeluhkan gejala neurologis berupa tremor, ataksia, dan penyempitan lapang pandang. Pemeriksaan lanjutan menemukan tingginya insidensi kelainan kongenital pada bayi yang dilahirkan oleh ibu yang rutin mengonsumsi ikan dari teluk setempat. Agen toksik utama yang bertanggung jawab atas timbulnya manifestasi klinis tersebut adalah...",
+  "o": [
+   "Metilmerkuri",
+   "Kadmium",
+   "Timbal",
+   "Arsenik",
+   "Cromium Heksavalen"
+  ],
+  "a": 0,
+  "e": "Metilmerkuri dapat terakumulasi dalam ikan dan menyebabkan toksisitas neurologis serta gangguan perkembangan janin.",
+  "t": "mc"
+ },
+ {
+  "q": "Akson adalah",
+  "o": [
+   "penghantar sinyal kimia yang disebut potensial bergradasi.",
+   "berkas saraf.",
+   "tempat terjadinya potensial reseptor bergradasi pada neuron sensorik.",
+   "struktur panjang dan tipis yang menjulur dari badan sel neuron."
+  ],
+  "a": 3,
+  "e": "Akson merupakan juluran panjang neuron yang menghantarkan potensial aksi menjauhi badan sel.",
+  "t": "mc"
+ },
+ {
+  "q": "Manakah dari hal berikut yang lebih mudah?",
+  "o": [
+   "perekaman potensial aksi secara ekstraseluler",
+   "perekaman potensial aksi secara intraseluler",
+   "Perekaman potensial aksi secara intraseluler dan ekstraseluler sama-sama sulit.",
+   "Keduanya sama mudah"
+  ],
+  "a": 0,
+  "e": "Perekaman ekstraseluler umumnya lebih mudah dilakukan karena elektroda tidak perlu menembus membran sel.",
+  "t": "mc"
+ },
+ {
+  "q": "Potensial aksi biasanya dimulai pada akson di atau dekat",
+  "o": [
+   "bukit akson (axon hillock)",
+   "segmen awal",
+   "zona pemicu",
+   "semua jawaban di atas"
+  ],
+  "a": 3,
+  "e": "Zona pemicu mencakup daerah sekitar axon hillock dan segmen awal yang memiliki banyak kanal Na+ berpintu tegangan.",
+  "t": "mc"
+ },
+ {
+  "q": "Pemicuan potensial aksi pada neuron sensorik di dalam tubuh biasanya",
+  "o": [
+   "terjadi setelah adanya potensial reseptor depolarisasi yang cukup besar.",
+   "terjadi ketika potensial membran pada axon hillock mencapai -70 mV.",
+   "memerlukan ruang saraf,",
+   "terjadi pada dendrit."
+  ],
+  "a": 0,
+  "e": "Potensial reseptor yang cukup besar dapat mendepolarisasi membran hingga mencapai ambang dan memicu potensial aksi.",
+  "t": "mc"
+ },
+ {
+  "q": "Mengapa potensial aksi yang direkam oleh elektroda perekam kedua (R2) mengalami keterlambatan dibandingkan dengan potensial aksi yang direkam oleh elektroda perekam pertama (R1)?",
+  "o": [
+   "Kekuatan stimulus terlalu kecil untuk menghasilkan perekaman secara simultan.",
+   "Akson yang digunakan dalam eksperimen ini memiliki panjang yang tidak wajar.",
+   "Potensial aksi harus merambat dari R1 ke R2.",
+   "Kabel perekam dalam eksperimen ini tidak mampu mendeteksi perekaman secara simultan."
+  ],
+  "a": 2,
+  "e": "Potensial aksi merambat sepanjang akson, sehingga mencapai elektroda R2 setelah melewati posisi R1.",
+  "t": "mc"
+ },
+ {
+  "q": "Peningkatan kadar K ekstraseluler akan menyebabkan depolarisasi pada neuron. Depolarisasi ini dapat terjadi jika neuron mengalami kerusakan. Berdasarkan apa yang baru saja Anda pelajari mengenai pembentukan potensial aksi, apa dampaknya terhadap akson di sekitarnya? Membran akson di sekitarnya akan…",
+  "o": [
+   "menghasilkan potensial aksi yang lebih kecil daripada biasanya.",
+   "mengalami depolarisasi hingga mencapai nilai yang mendekati atau melampaui tegangan ambang batas.",
+   "menghasilkan potensial aksi yang lebih cepat daripada biasanya.",
+   "mengalami depolarisasi lebih lanjut hingga mencapai nilai di bawah tegangan ambang batas."
+  ],
+  "a": 1,
+  "e": "Peningkatan K+ ekstraseluler membuat potensial membran lebih positif sehingga dapat mendekati atau melampaui ambang.",
+  "t": "mc"
+ },
+ {
+  "q": "Tegangan ambang pada akson biasanya",
+  "o": [
+   "kurang negatif dibandingkan potensial membran istirahat.",
+   "lebih negatif dibandingkan potensial membran istirahat.",
+   "dicapai di laboratorium dengan memberikan -20 mV.",
+   "bernilai sama dengan potensial membran istirahat."
+  ],
+  "a": 0,
+  "e": "Tegangan ambang lebih positif/kurang negatif dibandingkan potensial membran istirahat.",
+  "t": "mc"
+ },
+ {
+  "q": "Jika potensial reseptor bergradasi menyebabkan potensial membran istirahat akson menjadi lebih negatif (misalnya, berubah dari -70 mV menjadi -75 mV), maka Anda dapat memperkirakan bahwa",
+  "o": [
+   "akson tersebut akan lebih mudah mencapai tegangan ambang.",
+   "durasi potensial aksi berikutnya akan menjadi lebih singkat.",
+   "tidak ada perubahan pada kemampuan akson tersebut untuk mencapai tegangan ambang.",
+   "akson tersebut akan lebih sulit mencapai tegangan ambang."
+  ],
+  "a": 3,
+  "e": "Membran yang lebih negatif berada lebih jauh dari ambang, sehingga lebih sulit mencapai tegangan ambang.",
+  "t": "mc"
+ },
+ {
+  "q": "Kegagalan untuk mencapai tegangan ambang pada akson neuron sensorik dapat disebabkan oleh",
+  "o": [
+   "pembentukan potensial reseptor yang membuat potensial membran istirahat akson menjadi lebih negatif.",
+   "potensial reseptor depolarisasi yang tidak memadai.",
+   "pemberian modalitas stimulus yang keliru.",
+   "semua jawaban di atas"
+  ],
+  "a": 3,
+  "e": "Ketiga kondisi tersebut dapat menyebabkan depolarisasi tidak mencapai tegangan ambang.",
+  "t": "mc"
+ }
+]

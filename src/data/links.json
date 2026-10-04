@@ -1,0 +1,75 @@
+{
+ "v": 1,
+ "channels": [
+  {
+   "id": "lobby",
+   "name": "Main Lobby",
+   "tag": "Pusat info",
+   "sub": "Pengumuman dan jadwal blok. Buka ini dulu sebelum kuliah.",
+   "url": ""
+  },
+  {
+   "id": "batu",
+   "name": "Batu",
+   "tag": "Arsip soal",
+   "sub": "Soal tahun-tahun sebelumnya, dipilah per blok.",
+   "url": "https://drive.google.com/drive/folders/1SjbVIVTfUkw76ucu2IflsOfXF31ooDjZ"
+  },
+  {
+   "id": "tryout",
+   "kind": "tryout",
+   "name": "Try Out CBT",
+   "tag": "Latihan CBT",
+   "sub": "Latihan soal CBT per blok, lengkap sama pembahasannya. Nilai kamu cuma kesimpan di perangkat sendiri."
+  },
+  {
+   "id": "it",
+   "name": "Integrated Teaching",
+   "tag": "Kuliah terpadu · IT",
+   "sub": "Slide tiap sesi IT, diurutkan per minggu.",
+   "url": "https://drive.google.com/drive/folders/1z4gtztvZSSM_GHp57zOWnjmmv0AVkTCa"
+  },
+  {
+   "id": "quiz",
+   "name": "Quiz",
+   "tag": "Latihan",
+   "sub": "Kuis mingguan plus bank soal buat latihan sendiri.",
+   "url": "https://drive.google.com/drive/folders/1L93A88YRR7DRRiOKtL-nwPKwSJZqME6g"
+  },
+  {
+   "id": "osce",
+   "name": "OSCE",
+   "tag": "Ujian keterampilan klinis",
+   "sub": "Materi skill lab buat latihan OSCE: checklist station dan video prosedur.",
+   "url": "https://drive.google.com/drive/folders/1DPRVNFC7OFOKDO9UCjXjXzR_MxqExrS0"
+  },
+  {
+   "id": "ospe",
+   "name": "OSPE",
+   "tag": "Ujian praktikum",
+   "sub": "Bahan OSPE per departemen, dari anatomi sampai faal.",
+   "url": ""
+  },
+  {
+   "id": "tutorial",
+   "name": "Tutorial",
+   "tag": "Diskusi PBL",
+   "sub": "Skenario dan notulen diskusi tiap kelompok.",
+   "url": ""
+  },
+  {
+   "id": "praktikum",
+   "name": "Praktikum",
+   "tag": "Lab",
+   "sub": "Penuntun praktikum sama template laporannya.",
+   "url": "https://drive.google.com/drive/folders/1LTCIJ6ieAdvzZXUIvfrnTe_ww6ID32Xm"
+  },
+  {
+   "id": "kating",
+   "name": "File Kating",
+   "tag": "Warisan angkatan",
+   "sub": "Semua yang diturunin kakak tingkat, ngumpul di sini.",
+   "url": ""
+  }
+ ]
+}

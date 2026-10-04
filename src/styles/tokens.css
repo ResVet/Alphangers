@@ -1,0 +1,20 @@
+/* Design tokens shared by the portal, the admin page and every feature module.
+   Dark only. One accent (--grx), greens for everything else. */
+:root{
+  --bg:#070d08; --bg2:#0a140b; --bg3:#0d1a0e;
+  --ink:#eef2e8; --mut:#9ba797; --dim:#778772;
+  --grn:#3fae2a; --grx:#86f25e; --gdeep:#174d10;
+  --red:#ff7a6b; --amb:#f4c65a;
+  --line:rgba(238,242,232,.12); --line2:rgba(238,242,232,.2);
+  --glass:rgba(13,26,14,.72);
+  --disp:'Bricolage Grotesque Variable','Bricolage Grotesque',system-ui,sans-serif;
+  --ser:'Instrument Serif',Georgia,serif;
+  --body:'Archivo Variable','Archivo',system-ui,sans-serif;
+  --mono:'JetBrains Mono Variable','JetBrains Mono',ui-monospace,Menlo,monospace;
+  --eo:cubic-bezier(.16,1,.3,1);
+  --eio:cubic-bezier(.83,0,.17,1);
+  --gut:clamp(16px,4vw,56px);
+  --barh:58px;
+  --r1:10px; --r2:16px; --r3:22px;
+  color-scheme:dark;
+}

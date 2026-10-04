@@ -1,0 +1,23 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Dev · heart explorer</title>
+</head>
+<body>
+<main style="padding:40px 0">
+  <section class="sec sec-anatomi" id="anatomi"><div class="feat-root" id="anatomiRoot"></div></section>
+</main>
+<script type="module">
+import '../src/styles/fonts.css';
+import '../src/styles/tokens.css';
+import '../src/styles/v3.css';
+import '../src/styles/shell.css';
+import heart from '../src/data/heart-parts.json';
+import { mountAnatomi } from '../src/features/anatomi/anatomi.js';
+document.documentElement.classList.add('js');
+window.__view = mountAnatomi(document.getElementById('anatomiRoot'), { heart });
+</script>
+</body>
+</html>

@@ -1,0 +1,1159 @@
+[
+ {
+  "id": 40,
+  "q": "Yang termasuk titrasi primer /baku redoks adalah",
+  "opts": [
+   "K Biftalat",
+   "Na2CO3",
+   "KIO3",
+   "NaCl",
+   "K2Cr2O7"
+  ],
+  "ans": 4,
+  "expl": "Jawaban benar: K2Cr2O7. Pilihan ini sesuai dengan konsep yang ditanyakan pada soal."
+ },
+ {
+  "id": 27,
+  "q": "Komponen sistem komputer yang berisi program hasil rekayasa ilmu teknologi yang dipasang pada suatu alat sesuai sistem operasi alat atau teknologi tersebut disebut?",
+  "opts": [
+   "Aplikasi",
+   "Perangkat keras",
+   "Sistem operasi",
+   "Database",
+   "Sensor"
+  ],
+  "ans": 0,
+  "expl": "Jawaban benar: Aplikasi. Pilihan ini sesuai dengan konsep yang ditanyakan pada soal."
+ },
+ {
+  "id": 67,
+  "q": "Spektrofotometri,  absorbansi baku = 0,8 ; konsentrasi baku = 100 ppm ; absorbansi sampel 0,2 ; dan faktor pengenceran 10x. Berapakah kadar sampel tersebut?",
+  "opts": [
+   "250 ppm",
+   "25 ppm",
+   "100 ppm",
+   "500 ppm",
+   "1000 ppm"
+  ],
+  "ans": 0,
+  "expl": "Jawaban benar: 250 ppm. Pilihan ini sesuai dengan konsep yang ditanyakan pada soal."
+ },
+ {
+  "id": 74,
+  "q": "Dalam pemeriksaan hiperlipidemia, terdapat partikel lipoprotein terbesar mengandung",
+  "opts": [
+   "menuju jaringan perifer, jenis lipoprotein apakah itu",
+   "HDL",
+   "LDL",
+   "VLDL",
+   "KILOMIKRON"
+  ],
+  "ans": 4,
+  "expl": "Jawaban benar: KILOMIKRON. Pilihan ini sesuai dengan konsep yang ditanyakan pada soal."
+ },
+ {
+  "id": 14,
+  "q": "Reaksi antara asam salisilat dengan etanol dengan asam sulfat sebagai katalisator akan menghasilkan asam asetil salisilat. Reaksi apakah yang dimaksud?",
+  "opts": [
+   "Oksidasi",
+   "Reduksi",
+   "ESTERIFIKASI",
+   "Adisi",
+   "Eliminasi"
+  ],
+  "ans": 2,
+  "expl": "Jawaban benar: ESTERIFIKASI. Pilihan ini sesuai dengan konsep yang ditanyakan pada soal."
+ },
+ {
+  "id": 25,
+  "q": "pekerja di pabrik kimia, ada senyawa NO2 dan VOC, reaksi senyawa yg terbentuk?",
+  "opts": [
+   "PAN",
+   "CFC",
+   "SO2",
+   "CO",
+   "Tidak ada pilihan lain yang sesuai"
+  ],
+  "ans": 0,
+  "expl": "Jawaban benar: PAN. Pilihan ini sesuai dengan konsep yang ditanyakan pada soal."
+ },
+ {
+  "id": "NEW",
+  "q": "Saat distrofia otot, proses apa yang terganggu di dalam tubuh?",
+  "opts": [
+   "Glikolisis Glukosa",
+   "Glikogenesis",
+   "Glukoneogenesis",
+   "Beta-oksidasi",
+   "Siklus Krebs"
+  ],
+  "ans": 0,
+  "expl": "Jawaban benar: Glikolisis Glukosa. Pilihan ini sesuai dengan konsep yang ditanyakan pada soal."
+ },
+ {
+  "id": 47,
+  "q": "⁠Mineral ini penting untuk Gigi dan Tulang, berfungsi dalam memperkuat Gigi, dan kepadatan tulang mineral apakah ini?",
+  "opts": [
+   "P",
+   "F",
+   "S",
+   "Fe",
+   "Co"
+  ],
+  "ans": 1,
+  "expl": "Jawaban benar: F. Pilihan ini sesuai dengan konsep yang ditanyakan pada soal."
+ },
+ {
+  "id": 7,
+  "q": "mineral yang berfungsi dalam jantung dan pembuluh darah, dalam kerja Xanto oksidase enzim aldehida oksidase, yang jika berlebih akan mengakibatkan hiperurinase…",
+  "opts": [
+   "Fe",
+   "Mo",
+   "Cr",
+   "Cu",
+   "Na"
+  ],
+  "ans": 1,
+  "expl": "Jawaban benar: Mo. Pilihan ini sesuai dengan konsep yang ditanyakan pada soal."
+ },
+ {
+  "id": 77,
+  "q": "Mineral ini termasuk ke dalam protein B12, dengan fungsi membentuk sel darah merah dan merawat saraf. Mineral apakah ini?.",
+  "opts": [
+   "I",
+   "Fe",
+   "Co",
+   "F",
+   "Ca"
+  ],
+  "ans": 2,
+  "expl": "Jawaban benar: Co. Pilihan ini sesuai dengan konsep yang ditanyakan pada soal."
+ },
+ {
+  "id": 50,
+  "q": "prekursor atau bahan dasar penting bagi tubuh untuk mensintesis hormon tiroid T3 dan T4, serta hormon katekolamin seperti epinefrin",
+  "opts": [
+   "Triptofan",
+   "Tirosin",
+   "Histidin",
+   "Arginin",
+   "Metionin"
+  ],
+  "ans": 1,
+  "expl": "Jawaban benar: Tirosin. Pilihan ini sesuai dengan konsep yang ditanyakan pada soal."
+ },
+ {
+  "id": 10,
+  "q": "pokoknya yang berfungsi untuk menjaga fluiditas membran",
+  "opts": [
+   "Glikolipid",
+   "Fosfolipid",
+   "Kolesterol",
+   "Lipoprotein",
+   "Trigliserida"
+  ],
+  "ans": 2,
+  "expl": "Jawaban benar: Kolesterol. Pilihan ini sesuai dengan konsep yang ditanyakan pada soal."
+ },
+ {
+  "id": 21,
+  "q": "yang dapat membantu mengatasi penggumpalan darah",
+  "opts": [
+   "Tirosin",
+   "Glikosidin",
+   "Heparin",
+   "Triptofan",
+   "Fibrinogen"
+  ],
+  "ans": 2,
+  "expl": "Jawaban benar: Heparin. Pilihan ini sesuai dengan konsep yang ditanyakan pada soal."
+ },
+ {
+  "id": 22,
+  "q": "Kanker adalah penyakit yang disebabkan oleh ketidakteraturan perjalanan hormon yang mengakibatkan tumbuhnya daging pada jaringan tubuh yang normal atau sering dikenal sebagai tumor ganas. Selain itu gejala ini juga dikenal sebagai neoplasma ganas dan sering kali ditandai dengan kelainan siklus sel yang khas. Apakah Manfaat spesifik penggunaan teknologi kedokteran yang berkaitan dengan penyakit di atas?",
+  "opts": [
+   "Pencegahan",
+   "Terapi",
+   "Pengobatan",
+   "Monitor Kesehatan",
+   "Rehabilitasi"
+  ],
+  "ans": 1,
+  "expl": "Jawaban benar: Terapi. Pilihan ini sesuai dengan konsep yang ditanyakan pada soal."
+ },
+ {
+  "id": 8,
+  "q": "mineral yang berkontribusi dalam kerja insulin, metabolisme lemak, glukosa, dan protein..",
+  "opts": [
+   "Cu",
+   "Cr",
+   "Fe",
+   "Mo",
+   "I"
+  ],
+  "ans": 1,
+  "expl": "Jawaban benar: Cr. Pilihan ini sesuai dengan konsep yang ditanyakan pada soal."
+ },
+ {
+  "id": 55,
+  "q": "Glikoprotein, proteoglikan, dan glikolipid berikatan kovalen pada permukaan membran sel, bertindak sebagai reseptor sinyal, penanda respon imun, dan situs pengikatan toksin mikroba disebut…",
+  "opts": [
+   "Polisakarida konjugat",
+   "Homopolisakarida",
+   "Glikokonjugat",
+   "Glukokonjugat",
+   "Heteropolisakarida"
+  ],
+  "ans": 2,
+  "expl": "Jawaban benar: Glikokonjugat. Pilihan ini sesuai dengan konsep yang ditanyakan pada soal."
+ },
+ {
+  "id": 41,
+  "q": "Asam amino sebagai prekursor pembentukan NO",
+  "opts": [
+   "Arginin",
+   "Leusin",
+   "Tirosin",
+   "Triptofan",
+   "Histidin"
+  ],
+  "ans": 0,
+  "expl": "Jawaban benar: Arginin. Pilihan ini sesuai dengan konsep yang ditanyakan pada soal."
+ },
+ {
+  "id": 33,
+  "q": "Peran otot quadriceps femoris saat menendang bola",
+  "opts": [
+   "Fiksasi pinggul",
+   "Pilihan salah",
+   "Antagonis ekstensi otot",
+   "Agonis fleksi utama",
+   "Agonis ekstensi utama"
+  ],
+  "ans": 3,
+  "expl": "Jawaban benar: Agonis fleksi utama. Pilihan ini sesuai dengan konsep yang ditanyakan pada soal."
+ },
+ {
+  "id": 73,
+  "q": "100 mg Asetosal (Mr = 180) dititrasi dengan NaOH 0,1 M sebanyak 5 ml. Berapa asetosal dalam tablet?",
+  "opts": [
+   "95%",
+   "80%",
+   "85%",
+   "90%",
+   "97,2%"
+  ],
+  "ans": 3,
+  "expl": "Jawaban benar: 90%. Pilihan ini sesuai dengan konsep yang ditanyakan pada soal."
+ },
+ {
+  "id": 83,
+  "q": "Seorang pekerja bekerja di ruangan tertutup sehingga kekurangan o2 dan mengalami hipoksia. Apa penyebab terjadinya hal tersebut?",
+  "opts": [
+   "Kompetisi O2 dan CO2",
+   "Kelebihan oksigen",
+   "Peningkatan tekanan atmosfer",
+   "Hiperventilasi",
+   "Kelebihan nitrogen"
+  ],
+  "ans": 0,
+  "expl": "Jawaban benar: Kompetisi O2 dan CO2. Pilihan ini sesuai dengan konsep yang ditanyakan pada soal."
+ },
+ {
+  "id": 68,
+  "q": "Uji sederhana untuk memeriksa keberadaan NAPZA melalui tes urin,",
+  "opts": [
+   "Spektrofotometri",
+   "KLT (Kromatografi Lapis Tipis)",
+   "Titrimetri",
+   "Gravimetri",
+   "Elektroforesis"
+  ],
+  "ans": 1,
+  "expl": "Jawaban benar: KLT (Kromatografi Lapis Tipis). Pilihan ini sesuai dengan konsep yang ditanyakan pada soal."
+ },
+ {
+  "id": 84,
+  "q": "Diketahui seseorang memiliki PO2 sebesar 95. Di alveolus diketahui PO2nya 104, sedangkan di jaringan kapiler darah pernapasan PO2nya 40. Bagaimana mekanisme perpindahan O2 dari alveolus ke kapiler darah?",
+  "opts": [
+   "Dengan difusi fick mengikuti gradien",
+   "Dengan osmosis melawan gradien",
+   "Dengan difusi melawan gradien",
+   "Dengan filtrasi",
+   "Dengan transport aktif"
+  ],
+  "ans": 0,
+  "expl": "Jawaban benar: Dengan difusi fick mengikuti gradien. Pilihan ini sesuai dengan konsep yang ditanyakan pada soal."
+ },
+ {
+  "id": 15,
+  "q": "Mengapa PUFA dapat menyebabkan membran lebih cair",
+  "opts": [
+   "Pufa memiliki banyak ikatan rantai karbon sehingga ikatan menjadi lurus",
+   "Pufa memiliki banyak ikatan rangkap karbon sehingga ikatan menjadi berlekuk",
+   "Ikatan rantai karbon pufa lurus sebab tidak memiliki rantai karbon",
+   "Pufa memiliki satu rangkap rantai karbon sehingga ikatan lurus",
+   "Tidak ada pilihan lain yang sesuai"
+  ],
+  "ans": 1,
+  "expl": "Jawaban benar: Pufa memiliki banyak ikatan rangkap karbon sehingga ikatan menjadi berlekuk. Pilihan ini sesuai dengan konsep yang ditanyakan pada soal."
+ },
+ {
+  "id": 11,
+  "q": "Jika terjadi cedera pada hamstring, gangguan yang paling terlihat adalah..",
+  "opts": [
+   "Fleksi lutut dan ekstensi panggul",
+   "Ekstensi lutut dan fleksi panggul",
+   "Abduksi bahu",
+   "Dorsifleksi pergelangan kaki",
+   "Rotasi leher"
+  ],
+  "ans": 0,
+  "expl": "Jawaban benar: Fleksi lutut dan ekstensi panggul. Pilihan ini sesuai dengan konsep yang ditanyakan pada soal."
+ },
+ {
+  "id": 98,
+  "q": "analisa kimia kuantitatif menghitung kadar gram suatu senyawa atau obat. jenis analisa kimia kuantitatif apakah yg digunakan tersebut?",
+  "opts": [
+   "iodometri",
+   "titrimetri",
+   "gravimetri",
+   "volumentri",
+   "instrumental"
+  ],
+  "ans": 2,
+  "expl": "Jawaban benar: gravimetri. Pilihan ini sesuai dengan konsep yang ditanyakan pada soal."
+ },
+ {
+  "id": 43,
+  "q": "Asam amino yang memecah heliks breaker adalah…",
+  "opts": [
+   "Glisin",
+   "Proline",
+   "Valin",
+   "Leusin",
+   "Alanine"
+  ],
+  "ans": 1,
+  "expl": "Jawaban benar: Proline. Pilihan ini sesuai dengan konsep yang ditanyakan pada soal."
+ },
+ {
+  "id": 60,
+  "q": "Intinya zat kimia yang mengokataminasi lingkungan yang menyebabkab hujan asam",
+  "opts": [
+   "SO₂",
+   "CO",
+   "NO₂",
+   "CFC",
+   "Ozon"
+  ],
+  "ans": 0,
+  "expl": "Jawaban benar: SO₂. Pilihan ini sesuai dengan konsep yang ditanyakan pada soal."
+ },
+ {
+  "id": 1,
+  "q": "Jenis karbohidrat yang berperan sebagai koagulan, yaitu heteropolisakarida yang mengikat antitrombin III yang memblokir pembekuan darah secara efisien adalah…",
+  "opts": [
+   "Alginat",
+   "Fruktan",
+   "Heparin",
+   "Glikosida",
+   "Pati"
+  ],
+  "ans": 2,
+  "expl": "Jawaban benar: Heparin. Pilihan ini sesuai dengan konsep yang ditanyakan pada soal."
+ },
+ {
+  "id": 26,
+  "q": "Lipid ini memiliki kepala gliserol dan tiga ekor asam lemak. Termasuk Senyawa lipid apakah",
+  "opts": [
+   "lipid kompleks-trigliserida",
+   "Lipid sederhana-trigliserida",
+   "Lipid kompleks-fosfolipid",
+   "Lipid sederhana-fosfolipid",
+   "Tidak ada pilihan lain yang sesuai"
+  ],
+  "ans": 1,
+  "expl": "Jawaban benar: Lipid sederhana-trigliserida. Pilihan ini sesuai dengan konsep yang ditanyakan pada soal."
+ },
+ {
+  "id": 4,
+  "q": "Seorang wanita yang tinggal di daerah aliran sungai dekat pembuangan limbah tambang mengalami fraktur patologis, nyeri tulang hebat, dan disfungsi tubulus renalis proksimal. Logam berat pencemar yang paling mungkin menyebabkan kondisi tersebut adalah…",
+  "opts": [
+   "Kadmium (Cd)",
+   "Raksa (Hg)",
+   "Timbal (Pb)",
+   "Arsen (As)",
+   "Kromium (Cr)"
+  ],
+  "ans": 0,
+  "expl": "Jawaban benar: Kadmium (Cd). Pilihan ini sesuai dengan konsep yang ditanyakan pada soal."
+ },
+ {
+  "id": 56,
+  "q": "Nanopartikel berbasis polisakarida. Berfungsi Penargetan reseptor, Pengiriman obat tertarget",
+  "opts": [
+   "Heparin",
+   "Dekstrano",
+   "Kitosan",
+   "Alginat",
+   "Pati"
+  ],
+  "ans": 1,
+  "expl": "Jawaban benar: Dekstrano. Pilihan ini sesuai dengan konsep yang ditanyakan pada soal."
+ },
+ {
+  "id": 17,
+  "q": "Indikator fenolftalein mempunyai pH pada kisaran…",
+  "opts": [
+   "8,3-10",
+   "7,45-8",
+   "6-7,35",
+   "4-5",
+   "3-5"
+  ],
+  "ans": 0,
+  "expl": "Jawaban benar: 8,3-10. Pilihan ini sesuai dengan konsep yang ditanyakan pada soal."
+ },
+ {
+  "id": 85,
+  "q": "100 ml larutan hcl 0,2 M dicampurkan dengan 200 ml larutan nh4oh 0,2 M (Kb = 2 x 10^-5). berapakah pH akhir larutan tersebut? ()",
+  "opts": [
+   "9 + log 2",
+   "5 + log 2",
+   "9 - log 2",
+   "5 - log 2",
+   "7"
+  ],
+  "ans": 0,
+  "expl": "Jawaban benar: 9 + log 2. Pilihan ini sesuai dengan konsep yang ditanyakan pada soal."
+ },
+ {
+  "id": 44,
+  "q": "(Lupa detail soal seperti apa)",
+  "opts": [
+   "Terjadi denaturasi",
+   "Protein bergerak ke anoda",
+   "Protein bergerak ke katoda",
+   "Tidak mengalami apapun",
+   "Protein mengendap"
+  ],
+  "ans": 1,
+  "expl": "Jawaban benar: Protein bergerak ke anoda. Pilihan ini sesuai dengan konsep yang ditanyakan pada soal."
+ },
+ {
+  "id": 93,
+  "q": "berikatan -SH dan distein",
+  "opts": [
+   "Ikatan disulfida",
+   "Ikatan peptida",
+   "Ikatan hidrogen",
+   "Ikatan ionik",
+   "Ikatan ester"
+  ],
+  "ans": 0,
+  "expl": "Jawaban benar: Ikatan disulfida. Pilihan ini sesuai dengan konsep yang ditanyakan pada soal."
+ },
+ {
+  "id": 58,
+  "q": "uji reaksi dengan 1 mL Tollens, terbentuk cermin perak.",
+  "opts": [
+   "hidrogen",
+   "aldehida",
+   "keton",
+   "alkohol",
+   "asam karboksilat"
+  ],
+  "ans": 1,
+  "expl": "Jawaban benar: aldehida. Pilihan ini sesuai dengan konsep yang ditanyakan pada soal."
+ },
+ {
+  "id": 75,
+  "q": "20ml  Larutan NaOH dengan konsentrasi 0,1 M direaksikan dengan 20ml larutan CH3COOH 0,2 M, diket Kb 2x10 pangkat -5 tentukan Ph larutan setelah dicampurkan",
+  "opts": [
+   "5-log2",
+   "5+log 2",
+   "9+log2",
+   "9-log2",
+   "Tidak ada pilihan lain yang sesuai"
+  ],
+  "ans": 3,
+  "expl": "Jawaban benar: 9-log2. Pilihan ini sesuai dengan konsep yang ditanyakan pada soal."
+ },
+ {
+  "id": 71,
+  "q": "Soal jawabannya cair cair",
+  "opts": [
+   "cair cair",
+   "cair padat",
+   "padat cair",
+   "gas cair",
+   "gas padat"
+  ],
+  "ans": 0,
+  "expl": "Jawaban benar: cair cair. Pilihan ini sesuai dengan konsep yang ditanyakan pada soal."
+ },
+ {
+  "id": 62,
+  "q": "Wadah penyimpanan makanan yang menggunakan senyawa Bisphenol A (BPA). Apa dampak kesehatan  jangka panjang penggunaan senyawa tersebut?",
+  "opts": [
+   "Gangguan sistem endokrin dan reproduksi",
+   "Gangguan penglihatan akut",
+   "Peningkatan massa tulang",
+   "Penurunan suhu tubuh",
+   "Peningkatan hemoglobin"
+  ],
+  "ans": 0,
+  "expl": "Jawaban benar: Gangguan sistem endokrin dan reproduksi. Pilihan ini sesuai dengan konsep yang ditanyakan pada soal."
+ },
+ {
+  "id": 80,
+  "q": "Sebuah larutan yang berada pada pI apabila dialiri listrik asam aminonya akan…",
+  "opts": [
+   "Bergerak cepat ke katoda",
+   "Bergerak cepat ke anoda",
+   "Diam/tidak terjadi apa-apa",
+   "Terdenaturasi asam aminonya",
+   "Mengendap"
+  ],
+  "ans": 2,
+  "expl": "Jawaban benar: Diam/tidak terjadi apa-apa. Pilihan ini sesuai dengan konsep yang ditanyakan pada soal."
+ },
+ {
+  "id": 86,
+  "q": "Mineral yang membantu perkembangan otak, tubuh, dan sistem saraf, serta berperan penting untuk kelenjar tiroid?",
+  "opts": [
+   "I",
+   "Cu",
+   "Mo",
+   "Fe",
+   "Se"
+  ],
+  "ans": 0,
+  "expl": "Jawaban benar: I. Pilihan ini sesuai dengan konsep yang ditanyakan pada soal."
+ },
+ {
+  "id": 96,
+  "q": "Tubuh kalo kepanasan + kelembapan tinggi",
+  "opts": [
+   "keringat tak bisa evaporasi (?) karena kelembapan tinggi..",
+   "keringat semakin cepat menguap",
+   "produksi keringat berhenti total",
+   "suhu tubuh langsung turun",
+   "vasokonstriksi kulit meningkat"
+  ],
+  "ans": 0,
+  "expl": "Jawaban benar: keringat tak bisa evaporasi (?) karena kelembapan tinggi... Pilihan ini sesuai dengan konsep yang ditanyakan pada soal."
+ },
+ {
+  "id": 45,
+  "q": "mineral yang berasal dari pabrik baterai mengakibatkan anak 5 tahun mengalami kerusakan otak permanen, gangguan perkembangan, IQ rendah, dan hiperaktif adalah",
+  "opts": [
+   "Timbal (Pb)",
+   "Kadmium (Cd)",
+   "Raksa (Hg)",
+   "Arsen (As)",
+   "Kromium (Cr)"
+  ],
+  "ans": 0,
+  "expl": "Jawaban benar: Timbal (Pb). Pilihan ini sesuai dengan konsep yang ditanyakan pada soal."
+ },
+ {
+  "id": 28,
+  "q": "Komponen penting pada pedometer?",
+  "opts": [
+   "Crystal clock",
+   "Motion sensor",
+   "Resistor",
+   "Thermometer",
+   "Gyroscope"
+  ],
+  "ans": 1,
+  "expl": "Jawaban benar: Motion sensor. Pilihan ini sesuai dengan konsep yang ditanyakan pada soal."
+ },
+ {
+  "id": 51,
+  "q": "Panjang sebuah silika pada KLT adalah 13 cm dengan panjang batas atas dan bawahnya 1,5 cm. Totolannya bergerak sepanjang 5 cm dari bawah dan atas. Berapakah nilai Rfnya ?",
+  "opts": [
+   "0,50",
+   "0,38",
+   "O,30",
+   "0,25",
+   "Tidak ada pilihan lain yang sesuai"
+  ],
+  "ans": 0,
+  "expl": "Jawaban benar: 0,50. Pilihan ini sesuai dengan konsep yang ditanyakan pada soal."
+ },
+ {
+  "id": 12,
+  "q": "Pada spektrofotometri, bagaimana hubungan antara transmitansi (T) dan absorbansi (A)...",
+  "opts": [
+   "A= 2-log T",
+   "A= 2+log T",
+   "A= 1-log T",
+   "A=- log T",
+   "A=1+log T"
+  ],
+  "ans": 3,
+  "expl": "Jawaban benar: A=- log T. Pilihan ini sesuai dengan konsep yang ditanyakan pada soal."
+ },
+ {
+  "id": 90,
+  "q": "suatu reaksi menggantikan atom H yang menggantikan Halogenasi, sufoligasi, nitrasi. reaksi apa yang digunakan?",
+  "opts": [
+   "reaksi adisi",
+   "reaksi subtitusi",
+   "reaksi eliminasi",
+   "reaksi oksidasi",
+   "reaksi reduksi"
+  ],
+  "ans": 1,
+  "expl": "Jawaban benar: reaksi subtitusi. Pilihan ini sesuai dengan konsep yang ditanyakan pada soal."
+ },
+ {
+  "id": 3,
+  "q": "Seorang petani menggunakan insektisida untuk membasmi hama di sawahnya. Setelah beberapa tahun, tanah pertaniannya diketahui masih mengandung residu pestisida yang tinggi, meskipun ia sudah berhenti menggunakan obat tersebut. Insektisida yang paling mungkin digunakan adalah…",
+  "opts": [
+   "Karbamat",
+   "Organofosfat",
+   "Dichloro-diphenyl-trichloroethane",
+   "Pyrethroid",
+   "Neonicotinoid"
+  ],
+  "ans": 2,
+  "expl": "Jawaban benar: Dichloro-diphenyl-trichloroethane. Pilihan ini sesuai dengan konsep yang ditanyakan pada soal."
+ },
+ {
+  "id": 19,
+  "q": "Faktor yang paling mempengaruhi besar gaya otot adalah",
+  "opts": [
+   "Warna otot",
+   "PANJANG AWAL SERABUT OTOT",
+   "Jumlah cairan intraseluler",
+   "Suhu lingkungan",
+   "Kadar hormon kortisol"
+  ],
+  "ans": 1,
+  "expl": "Jawaban benar: PANJANG AWAL SERABUT OTOT. Pilihan ini sesuai dengan konsep yang ditanyakan pada soal."
+ },
+ {
+  "id": 57,
+  "q": "Penghantaran obat",
+  "opts": [
+   "Dekstrano",
+   "Kitosan",
+   "Heparin",
+   "Pati",
+   "Glukosa"
+  ],
+  "ans": 1,
+  "expl": "Jawaban benar: Kitosan. Pilihan ini sesuai dengan konsep yang ditanyakan pada soal."
+ },
+ {
+  "id": 30,
+  "q": "Di ruang laboratorium patologi, pencahayaan ruangan berasal dari satu sisi jendela besar tanpa distribusi merata. Saat mengamati preparat mikroskop, mahasiswa sering mengubah posisi kepala dan tubuh. Risiko fisiologis jangka panjang dari kondisi pencahayaan tersebut adalah…",
+  "opts": [
+   "Ambliopia akibat stimulasi visual yang tidak seimbang",
+   "Skotoma sentral karena adaptasi cahaya berlebihan pada fovea",
+   "Gangguan persepsi kedalaman dan kontras visual disertai keluhan muskuloskeletal",
+   "Rabun jauh progresif akibat akomodasi yang berlebihan",
+   "Tidak ada pilihan lain yang sesuai"
+  ],
+  "ans": 2,
+  "expl": "Jawaban benar: Gangguan persepsi kedalaman dan kontras visual disertai keluhan muskuloskeletal. Pilihan ini sesuai dengan konsep yang ditanyakan pada soal."
+ },
+ {
+  "id": 31,
+  "q": "alkohol yang digunakan untuk antiseptik…",
+  "opts": [
+   "isopropanol",
+   "metanol",
+   "etanol",
+   "propanol",
+   "butanol"
+  ],
+  "ans": 0,
+  "expl": "Jawaban benar: isopropanol. Pilihan ini sesuai dengan konsep yang ditanyakan pada soal."
+ },
+ {
+  "id": 72,
+  "q": "Asam karboksilat yang digunakan untuk senyawa obat dan kecantikan adalah",
+  "opts": [
+   "Asam asetat",
+   "Asam salisilat",
+   "Asam benzoat",
+   "Asam laktat",
+   "Asam oksalat"
+  ],
+  "ans": 1,
+  "expl": "Jawaban benar: Asam salisilat. Pilihan ini sesuai dengan konsep yang ditanyakan pada soal."
+ },
+ {
+  "id": 94,
+  "q": "Skenario seorang pasien yang mengalami edema",
+  "opts": [
+   "Turunnya tekanan onkotik koloid plasma darah",
+   "Naiknya tekanan onkotik plasma",
+   "Naiknya tekanan hidrostatik kapiler saja",
+   "Turunnya permeabilitas kapiler",
+   "Peningkatan albumin plasma"
+  ],
+  "ans": 0,
+  "expl": "Jawaban benar: Turunnya tekanan onkotik koloid plasma darah. Pilihan ini sesuai dengan konsep yang ditanyakan pada soal."
+ },
+ {
+  "id": 42,
+  "q": "Asam amino yang memiliki kapasitas buffer terbaik sekitar ph 7,4",
+  "opts": [
+   "Arginin",
+   "Leusin",
+   "Serin",
+   "Histidin",
+   "Valin"
+  ],
+  "ans": 3,
+  "expl": "Jawaban benar: Histidin. Pilihan ini sesuai dengan konsep yang ditanyakan pada soal."
+ },
+ {
+  "id": 35,
+  "q": "senyawa tersebut dapat digunakan pada perawatan kulit, untuk konsenstrasi tertentu yang digunakan pada formalin chemical peeling, senyawa apakah itu?",
+  "opts": [
+   "Aseton",
+   "Alkohol",
+   "isopropilalkohol",
+   "Glutaraldehid",
+   "kortison"
+  ],
+  "ans": 3,
+  "expl": "Jawaban benar: Glutaraldehid. Pilihan ini sesuai dengan konsep yang ditanyakan pada soal."
+ },
+ {
+  "id": 16,
+  "q": "Hubungan SID meningkat terhadap [H+] dan [OH-] adalah...",
+  "opts": [
+   "H+ menurun, OH-  meningkat",
+   "H+ rendah, OH- tinggi",
+   "H+ dan OH- sama-sama tinggi",
+   "H+ dan OH- sama-sama rendah",
+   "Tidak ada perubahan"
+  ],
+  "ans": 0,
+  "expl": "Jawaban benar: H+ menurun, OH-  meningkat. Pilihan ini sesuai dengan konsep yang ditanyakan pada soal."
+ },
+ {
+  "id": 32,
+  "q": "Gerak brown ada pada a dan b. Partikel a lebih kecil dari b. Membuat a menjadi?",
+  "opts": [
+   "lebih cepat",
+   "lebih lambat",
+   "tetap sama",
+   "berhenti",
+   "berubah arah"
+  ],
+  "ans": 0,
+  "expl": "Jawaban benar: lebih cepat. Pilihan ini sesuai dengan konsep yang ditanyakan pada soal."
+ },
+ {
+  "id": 18,
+  "q": "Ekuivalensi asam adalah banyaknya asam yang dapat bereaksi dengan 1 mol ion OH-. Berapa mol OH- yang bereaksi dengan 1 mol H2SO4?",
+  "opts": [
+   "3 mol OH'",
+   "1/2 mol OH-",
+   "4 mol OH-",
+   "1 mol OH-",
+   "2 MOL OH-"
+  ],
+  "ans": 1,
+  "expl": "Jawaban benar: 1/2 mol OH-. Pilihan ini sesuai dengan konsep yang ditanyakan pada soal."
+ },
+ {
+  "id": 76,
+  "q": "Seorang anak yang tinggal di pusat kota padat lalu lintas mengalami eksaserbasi serangan asma pada",
+  "opts": [
+   "pasien tersebut adalah…",
+   "Ozon troposferik (O₃)",
+   "Partikulat halus (PM₁₀)",
+   "Timbal airborne (Pb)D. Karbon monoksida (CO)",
+   "Sulfur dioksida (SO₂)"
+  ],
+  "ans": 1,
+  "expl": "Jawaban benar: Ozon troposferik (O₃). Pilihan ini sesuai dengan konsep yang ditanyakan pada soal."
+ },
+ {
+  "id": 24,
+  "q": "Sel sabit dapat terganggu ketika ikatan primer nomor ke 6 terganti menjadi",
+  "opts": [
+   "Glutamat",
+   "Leusin",
+   "Valin",
+   "Glisin",
+   "Alanine"
+  ],
+  "ans": 2,
+  "expl": "Jawaban benar: Valin. Pilihan ini sesuai dengan konsep yang ditanyakan pada soal."
+ },
+ {
+  "id": 54,
+  "q": "Diketahui persamaan y = 0,001x - 0,32. Nilai absorbansi sebesar 0,15. Nilai C terukurnya adalah",
+  "opts": [
+   "320 mg",
+   "470 mg",
+   "280 mg",
+   "450 mg",
+   "170 mg"
+  ],
+  "ans": 1,
+  "expl": "Jawaban benar: 470 mg. Pilihan ini sesuai dengan konsep yang ditanyakan pada soal."
+ },
+ {
+  "id": 65,
+  "q": "Gerakan isometrik dalam kehidupan sehari-hari…",
+  "opts": [
+   "Menahan posisi push-up",
+   "Mengangkat buku dari meja",
+   "Jalan kaki setiap hari",
+   "Lompat",
+   "Melempar bola"
+  ],
+  "ans": 0,
+  "expl": "Jawaban benar: Menahan posisi push-up. Pilihan ini sesuai dengan konsep yang ditanyakan pada soal."
+ },
+ {
+  "id": 69,
+  "q": "Blood Alcohol Content (BAC) di dalam darah terdapat etanol. Etanol mudah menguap di suhu ruang. (Kromatografi yang menjadi golden rules buat kasus forensik)",
+  "opts": [
+   "KLT",
+   "HPLC",
+   "gas Chromatography",
+   "Spektrofotometri",
+   "Elektroforesis"
+  ],
+  "ans": 2,
+  "expl": "Jawaban benar: gas Chromatography. Pilihan ini sesuai dengan konsep yang ditanyakan pada soal."
+ },
+ {
+  "id": 89,
+  "q": "Saat berjalan, otot betis berfungsi untuk?",
+  "opts": [
+   "Menggerakkan lutut",
+   "mengangkat tumit",
+   "menggoyangkan pinggul",
+   "fleksi siku",
+   "ekstensi pergelangan tangan"
+  ],
+  "ans": 1,
+  "expl": "Jawaban benar: mengangkat tumit. Pilihan ini sesuai dengan konsep yang ditanyakan pada soal."
+ },
+ {
+  "id": 13,
+  "q": "Ditemukan larutan CH3COOH dengan pH 3. Jika larutan tersebut diencerkan dengan aquades hingga 100 kali lipat, berapa pH akhir larutan….",
+  "opts": [
+   "4",
+   "6",
+   "5",
+   "7",
+   "8"
+  ],
+  "ans": 2,
+  "expl": "Jawaban benar: 5. Pilihan ini sesuai dengan konsep yang ditanyakan pada soal."
+ },
+ {
+  "id": 6,
+  "q": "mineral yang berfungsi untuk antioksidan glutathione, jaringan ikat (kuku, kulit, rambut) jantung,....",
+  "opts": [
+   "Fe",
+   "S",
+   "I",
+   "Mo",
+   "Cu"
+  ],
+  "ans": 1,
+  "expl": "Jawaban benar: S. Pilihan ini sesuai dengan konsep yang ditanyakan pada soal."
+ },
+ {
+  "id": 38,
+  "q": "Raya merupakan mahasiswa PSPD, dia mendapatkan sampel urine dari pasien dengan pH 5,0. Raya berniat menguji keasaman sampel tersebut dengan kertas lakmus merah dan biru. Pilihlah analisis dari pilihan berikut yang tepat!",
+  "opts": [
+   "Kertas lakmus merah berubah menjadi biru, kertas lakmus biru tetap biru",
+   "Kertas lakmus merah tetap merah, kertas lakmus biru menjadi merah",
+   "Tidak terjadi perubah di kedua-duanya",
+   "Kertas lakmus merah berubah ungu, kertas lakmus biru berubah hijau",
+   "Tidak ada pilihan lain yang sesuai"
+  ],
+  "ans": 1,
+  "expl": "Jawaban benar: Kertas lakmus merah tetap merah, kertas lakmus biru menjadi merah. Pilihan ini sesuai dengan konsep yang ditanyakan pada soal."
+ },
+ {
+  "id": 29,
+  "q": "Alzheimer disebabkan oleh…",
+  "opts": [
+   "Protein misfolding (pelipatan)",
+   "Denaturasi protein",
+   "Oksidasi lipid",
+   "Gangguan glikogen",
+   "Kerusakan kolagen"
+  ],
+  "ans": 0,
+  "expl": "Jawaban benar: Protein misfolding (pelipatan). Pilihan ini sesuai dengan konsep yang ditanyakan pada soal."
+ },
+ {
+  "id": 36,
+  "q": "Seseorang menuang tinta ke dalam gelas berisi air, tinta menyebar dan tidak berkumpul kembali, hal ini menggambarkan",
+  "opts": [
+   "Difusi",
+   "Hukum I",
+   "Hukum III",
+   "Hukum II / Entropi meningkat",
+   "Homeostasis"
+  ],
+  "ans": 1,
+  "expl": "Jawaban benar: Hukum I. Pilihan ini sesuai dengan konsep yang ditanyakan pada soal."
+ },
+ {
+  "id": 92,
+  "q": "Seseorang mengalami demam. Tubuhnya melakukan vasodilatasi kulit dan mengeluarkan keringat untuk menurunkan suhu tubuh. Hal ini sesuai dengan prinsip?",
+  "opts": [
+   "Homeostatis",
+   "Difusi",
+   "Osmosis",
+   "Denaturasi",
+   "Filtrasi"
+  ],
+  "ans": 0,
+  "expl": "Jawaban benar: Homeostatis. Pilihan ini sesuai dengan konsep yang ditanyakan pada soal."
+ },
+ {
+  "id": 34,
+  "q": "Farmasi meracik obat tetes antibiotik untuk mata, larutannya hrs isotonik biar ga iritasi dll., apa yg harus dilakukan?",
+  "opts": [
+   "berat molekul larutan",
+   "perhitungan ekivalensi NaCl (nilai E)",
+   "mengurangi volume air",
+   "menambah glukosa",
+   "menggunakan larutan hipertonik"
+  ],
+  "ans": 1,
+  "expl": "Jawaban benar: perhitungan ekivalensi NaCl (nilai E). Pilihan ini sesuai dengan konsep yang ditanyakan pada soal."
+ },
+ {
+  "id": 97,
+  "q": "Pada spetkrofotometer, digunakan untuk mendeteksi kadar blablabla dan ureum untuk menilai fungsi ginjal. Manfaat dibagian manakah itu?",
+  "opts": [
+   "Kimia medik",
+   "Hematologi",
+   "Diagnostik molekuler",
+   "Mikrobiologi",
+   "Imunologi"
+  ],
+  "ans": 0,
+  "expl": "Jawaban benar: Kimia medik. Pilihan ini sesuai dengan konsep yang ditanyakan pada soal."
+ },
+ {
+  "id": 88,
+  "q": "Pekerja tambang sesak nafas, mual, dan pusing. Tekanan PO2 normal tetapi…",
+  "opts": [
+   "Keracunan CO",
+   "Keracunan O2",
+   "Keracunan CO2",
+   "Hipoglikemia",
+   "Dehidrasi"
+  ],
+  "ans": 0,
+  "expl": "Jawaban benar: Keracunan CO. Pilihan ini sesuai dengan konsep yang ditanyakan pada soal."
+ },
+ {
+  "id": 49,
+  "q": "Seseorang masuk igd terus diinfus menggunakan aquades steril pada pembuluh darah vena dalam jumlah yang banyak. Apa dampak bagi sel eritrositnya?",
+  "opts": [
+   "Tidak ada hubungan",
+   "Selnya menebal",
+   "terjadi hemodialisis",
+   "terjadi krenasi",
+   "terjadi hemolisis"
+  ],
+  "ans": 3,
+  "expl": "Jawaban benar: terjadi krenasi. Pilihan ini sesuai dengan konsep yang ditanyakan pada soal."
+ },
+ {
+  "id": 46,
+  "q": "Seorang mahasiswa kedokteran melakukan praktikum histologi di laboratorium dengan pencahayaan hanya terfokus di meja, sedangkan area sekitarnya gelap. Setelah 3 jam, ia mengeluh leher kaku, mata lelah, dan sulit fokus. Dampak fisiologis yang paling menjelaskan kondisi ini adalah",
+  "opts": [
+   "Kontraksi berulang pupil akibat kontras cahaya yang tinggi",
+   "Penurunan sensitivitas retina terhadap warna akibat cahaya dingin",
+   "Adaptasi gelap yang gagal sehingga meningkatkan ketegangan sistem saraf otonom",
+   "Inhibisi refleks akomodasi akibat cahaya yang tidak terdistribusi merata",
+   "Penurunan daya konvergensi mata karena kelelahan otot rektus medialis"
+  ],
+  "ans": 0,
+  "expl": "Jawaban benar: Kontraksi berulang pupil akibat kontras cahaya yang tinggi. Pilihan ini sesuai dengan konsep yang ditanyakan pada soal."
+ },
+ {
+  "id": 78,
+  "q": "Semakin banyak zat terlarut dalam suatu larutan, bagaimana kecepatan pergerakannya (gerak brown)..",
+  "opts": [
+   "lebih cepat",
+   "lebih lambat",
+   "tetap",
+   "berhenti",
+   "tidak teratur"
+  ],
+  "ans": 1,
+  "expl": "Jawaban benar: lebih lambat. Pilihan ini sesuai dengan konsep yang ditanyakan pada soal."
+ },
+ {
+  "id": 64,
+  "q": "Asam amino pembentuk rantai awal AUG adalah….",
+  "opts": [
+   "Serin",
+   "Alanin",
+   "Glutamine",
+   "Metionin",
+   "Valin"
+  ],
+  "ans": 3,
+  "expl": "Jawaban benar: Metionin. Pilihan ini sesuai dengan konsep yang ditanyakan pada soal."
+ },
+ {
+  "id": 53,
+  "q": "Seseorang kekurangan tidur dan pergi ke dokter, diberikan asam amino prekursor seratonin dan melatonin yaitu",
+  "opts": [
+   "Tirosin",
+   "Triptofan",
+   "Histidin",
+   "Valin",
+   "Leusin"
+  ],
+  "ans": 1,
+  "expl": "Jawaban benar: Triptofan. Pilihan ini sesuai dengan konsep yang ditanyakan pada soal."
+ },
+ {
+  "id": 39,
+  "q": "Gas dari golongan hidrokarbon ini pada tahun 1920an banyak digunakan sebagai anestesi inhalasi dan dikombinasikan oksigen murni, gas apakah yang digunakan?",
+  "opts": [
+   "Etilena",
+   "Etena",
+   "Etuna",
+   "Etiluna",
+   "Ester"
+  ],
+  "ans": 2,
+  "expl": "Jawaban benar: Etuna. Pilihan ini sesuai dengan konsep yang ditanyakan pada soal."
+ },
+ {
+  "id": 61,
+  "q": "Amilase memecah pati jadi produk antara yaitu",
+  "opts": [
+   "Glukosa",
+   "Fruktosa",
+   "Maltosa",
+   "Sukrosa",
+   "Galaktosa"
+  ],
+  "ans": 2,
+  "expl": "Jawaban benar: Maltosa. Pilihan ini sesuai dengan konsep yang ditanyakan pada soal."
+ },
+ {
+  "id": 9,
+  "q": "Seseorang mengalami pneumonia, darahnya menjadi asidosis respiratorik. kondisi yang terjadi di dalam darah adalah…",
+  "opts": [
+   "P CO2 meningkat",
+   "P CO2 menurun",
+   "HCO3 meningkat",
+   "HCO3 menurun",
+   "Kadar P CO2 tetap"
+  ],
+  "ans": 0,
+  "expl": "Jawaban benar: P CO2 meningkat. Pilihan ini sesuai dengan konsep yang ditanyakan pada soal."
+ },
+ {
+  "id": 82,
+  "q": "Mineral untuk pembentukan darah",
+  "opts": [
+   "Fe",
+   "Ca",
+   "Mg",
+   "Na",
+   "K"
+  ],
+  "ans": 0,
+  "expl": "Jawaban benar: Fe. Pilihan ini sesuai dengan konsep yang ditanyakan pada soal."
+ },
+ {
+  "id": 81,
+  "q": "Mineral untuk jantung dan limfa",
+  "opts": [
+   "Se",
+   "Fe",
+   "I",
+   "Cu",
+   "Zn"
+  ],
+  "ans": 0,
+  "expl": "Jawaban benar: Se. Pilihan ini sesuai dengan konsep yang ditanyakan pada soal."
+ },
+ {
+  "id": 20,
+  "q": "Perhitungan kadar asam salisilat:",
+  "opts": [
+   "3,58 A2 - 3,49 A1",
+   "2,58 A2 - 2,49 A1",
+   "3,58 A1 - 3,49 A2",
+   "3,58 A2 + 3,49 A1",
+   "3,49 A2 - 3,58 A1"
+  ],
+  "ans": 0,
+  "expl": "Jawaban benar: 3,58 A2 - 3,49 A1. Pilihan ini sesuai dengan konsep yang ditanyakan pada soal."
+ },
+ {
+  "id": 91,
+  "q": "Reduksi Cu2+ menjadi Cu+ menghasilkan apa",
+  "opts": [
+   "endapan merah bata",
+   "endapan putih",
+   "endapan hitam",
+   "larutan biru jernih",
+   "gas"
+  ],
+  "ans": 0,
+  "expl": "Jawaban benar: endapan merah bata. Pilihan ini sesuai dengan konsep yang ditanyakan pada soal."
+ },
+ {
+  "id": 79,
+  "q": "Tekanan total suatu campuran gas yang tidak bereaksi secara kimia sama dengan jumlah tekanan parsial dari masing-masing gas penyusunnya.",
+  "opts": [
+   "Tekanan Parsial Dalton",
+   "Keseimbangan donnan",
+   "Hukum Boyle",
+   "Hukum Charles",
+   "Hukum Graham"
+  ],
+  "ans": 0,
+  "expl": "Jawaban benar: Tekanan Parsial Dalton. Pilihan ini sesuai dengan konsep yang ditanyakan pada soal."
+ },
+ {
+  "id": 95,
+  "q": "Suatu kation yang jika kekurangan menyebabkan kelelahan, kram atau kelemahan otot, sembelit dan kelumpuhan otot, sementara jika kelebihan akan menyebabkan diare, muntah, dan penyakit ginjal adalah",
+  "opts": [
+   "K+",
+   "Na+",
+   "Ca2+",
+   "Cl-",
+   "Fe2+"
+  ],
+  "ans": 0,
+  "expl": "Jawaban benar: K+. Pilihan ini sesuai dengan konsep yang ditanyakan pada soal."
+ },
+ {
+  "id": 2,
+  "q": "Tingkat kebisingan suara pada Permenaker No.13 tahun 2011 yang menetapkan Nilai Ambang Batas (NAB) sebesar…",
+  "opts": [
+   "70",
+   "75",
+   "80",
+   "85",
+   "90"
+  ],
+  "ans": 3,
+  "expl": "Jawaban benar: 85. Pilihan ini sesuai dengan konsep yang ditanyakan pada soal."
+ }
+]

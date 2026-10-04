@@ -1,0 +1,48 @@
+<!doctype html>
+<html lang="id">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="color-scheme" content="dark">
+<link rel="icon" href="data:,">
+<title>Jadwal, dev</title>
+<style>
+  /* minimal stand-in for the portal shell: reset, page colours and a fixed top bar of --barh */
+  *,*::before,*::after{box-sizing:border-box}
+  html{background:var(--bg);-webkit-text-size-adjust:100%;text-size-adjust:100%}
+  body{margin:0;background:var(--bg);color:var(--ink);font-family:var(--body);-webkit-font-smoothing:antialiased}
+  .devbar{position:fixed;inset:0 0 auto;z-index:60;height:calc(var(--barh) + env(safe-area-inset-top));padding:env(safe-area-inset-top) var(--gut) 0;
+    display:flex;align-items:center;justify-content:space-between;background:rgba(7,13,8,.86);border-bottom:1px solid var(--line);
+    font:800 12px/1 var(--disp);letter-spacing:.24em}
+  .devbar span{font:400 10px/1 var(--mono);letter-spacing:.2em;color:var(--mut);text-transform:uppercase}
+  main{padding-top:calc(var(--barh) + env(safe-area-inset-top))}
+</style>
+</head>
+<body>
+<header class="devbar"><b>ALPHANGERS</b><span>dev: jadwal</span></header>
+<main>
+  <section id="jadwal"></section>
+  <section id="dosen" hidden></section>
+</main>
+<script type="module">
+  import '../src/styles/fonts.css';
+  import '../src/styles/tokens.css';
+  import schedule from '../src/data/schedule.json';
+  import dosen from '../src/data/dosen.json';
+  import { mountJadwal } from '../src/features/jadwal/jadwal.js';
+
+  // ?now=2026-10-05T09:15:00%2B07:00 previews another moment; ?both also mounts the lecturer list
+  const params = new URLSearchParams(location.search);
+  const now = params.get('now') || undefined;
+  window.jadwal = mountJadwal(document.getElementById('jadwal'), { schedule, dosen, now });
+  if (params.has('both')) {
+    const { mountDosen } = await import('../src/features/dosen/dosen.js');
+    const section = document.getElementById('dosen');
+    section.hidden = false;
+    window.dosen = mountDosen(section, { schedule, dosen, now });
+  }
+  document.addEventListener('alpha:open', (e) => console.debug('alpha:open', e.detail));
+  document.documentElement.dataset.ready = '1';
+</script>
+</body>
+</html>

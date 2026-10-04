@@ -1,0 +1,24 @@
+{
+  "indexes": [
+    {
+      "collectionGroup": "history",
+      "queryScope": "COLLECTION",
+      "fields": [
+        { "fieldPath": "key", "order": "ASCENDING" },
+        { "fieldPath": "at", "order": "DESCENDING" }
+      ]
+    }
+  ],
+  "fieldOverrides": [
+    {
+      "collectionGroup": "content",
+      "fieldPath": "json",
+      "indexes": []
+    },
+    {
+      "collectionGroup": "history",
+      "fieldPath": "json",
+      "indexes": []
+    }
+  ]
+}

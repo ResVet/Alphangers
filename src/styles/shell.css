@@ -1,0 +1,38 @@
+/* v4 additions to the shell: section links in the bar, the search button, shared section spacing. */
+
+.bar-nav{position:absolute;left:50%;top:calc(env(safe-area-inset-top) + var(--barh) / 2);transform:translate(-50%,-50%);
+  display:none;gap:4px;padding:4px;border:1px solid var(--line);border-radius:999px;background:rgba(7,13,8,.5)}
+.bar-nav a{display:inline-flex;align-items:center;height:28px;padding:0 13px;border-radius:999px;
+  font-family:var(--mono);font-size:10px;letter-spacing:.2em;text-transform:uppercase;color:var(--mut);transition:color .25s,background .25s}
+.bar-nav a:hover,.bar-nav a.on{color:var(--ink);background:rgba(238,242,232,.07)}
+.bar-nav a.on{color:var(--grx)}
+@media (min-width:1080px){.bar-nav{display:flex}.bar-meta{display:none}}
+
+.find{display:inline-flex;align-items:center;gap:8px;height:34px;padding:0 6px 0 12px;border:1px solid var(--line);border-radius:999px;
+  font-family:var(--mono);font-size:10px;letter-spacing:.2em;text-transform:uppercase;color:var(--mut);transition:border-color .3s,color .3s}
+.find svg{width:15px;height:15px;fill:none;stroke:currentColor;stroke-width:1.8;stroke-linecap:round}
+.find-k{font-family:var(--mono);font-size:9.5px;letter-spacing:.06em;text-transform:none;color:var(--dim);
+  border:1px solid var(--line);border-radius:6px;padding:3px 6px}
+.find:hover{border-color:var(--line2);color:var(--ink)}
+@media (max-width:640px){.find{width:34px;padding:0;justify-content:center}.find-t,.find-k{display:none}}
+@media (hover:none){.find-k{display:none}.find{padding-right:12px}}
+@media (hover:none) and (max-width:640px){.find{padding:0}}
+
+/* sections added in v4 share the channel list's rhythm */
+.sec{position:relative;z-index:1;padding:clamp(64px,11vh,130px) 0 clamp(40px,7vh,80px)}
+.sec + .channels{padding-top:clamp(40px,7vh,80px)}
+.sec-jadwal{padding-top:clamp(56px,9vh,110px)}
+.feat-root{position:relative;min-height:120px}
+/* the schedule and lecturer modules bring their own gutters; inside .wrap they use the page's */
+#jadwalRoot.jw{--jw-pad-x:0px;--jw-pad-y:0px}
+#dosenRoot.dz{--dz-pad-x:0px;--dz-pad-y:0px}
+.feat-wait{padding:28px 0;color:var(--dim)}
+.sec-anatomi{padding-bottom:clamp(56px,9vh,110px)}
+.sec-anatomi .ch-head{margin-bottom:clamp(14px,2.4vh,26px)}
+
+/* announcement board above the schedule */
+.info{display:grid;gap:10px;margin:0 0 clamp(20px,3.4vh,34px)}
+.info[hidden]{display:none}
+
+.nojs{position:relative;z-index:2;padding:40px 24px;text-align:center;color:var(--mut)}
+.to-load{padding:32px 0}

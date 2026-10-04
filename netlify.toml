@@ -1,0 +1,129 @@
+# Netlify build and response headers.
+#
+# Header rules that match the same path are combined, not replaced. Two
+# Content-Security-Policy headers on one response means the browser enforces
+# both, and two Cache-Control values contradict each other. So the CSP,
+# frame and cache rules below are attached to exact HTML paths and asset
+# folders that never overlap. Only the headers that are the same for every
+# response live under "/*".
+#
+# If the portal gets another HTML page, give it its own block like "/" below.
+
+[build]
+  command = "npm run build"
+  publish = "dist"
+
+[build.environment]
+  NODE_VERSION = "22"
+
+# Every response.
+[[headers]]
+  for = "/*"
+  [headers.values]
+    Strict-Transport-Security = "max-age=63072000; includeSubDomains"
+    X-Content-Type-Options = "nosniff"
+    Referrer-Policy = "strict-origin-when-cross-origin"
+    # Motion sensors stay allowed for the page itself (the hero tilts with the
+    # phone) and so does fullscreen (the 3D heart has a fullscreen button).
+    Permissions-Policy = "camera=(), microphone=(), geolocation=(), payment=(), usb=(), serial=(), hid=(), midi=(), display-capture=(), browsing-topics=(), xr-spatial-tracking=(), accelerometer=(self), gyroscope=(self), magnetometer=(self), fullscreen=(self)"
+    # same-origin would break the Google sign-in popup on /admin/, which needs
+    # to keep a handle on the window it opened.
+    Cross-Origin-Opener-Policy = "same-origin-allow-popups"
+
+# Public portal.
+#
+# script-src: 'wasm-unsafe-eval' lets the meshopt decoder that unpacks
+#   /models/heart.glb compile its WebAssembly. It does not allow eval() or
+#   inline scripts.
+# style-src: the portal markup sets custom properties in style="" attributes
+#   and has a <noscript><style> block, hence 'unsafe-inline' for styles only.
+# img-src: data: for the SVG noise and ECG line in the CSS, blob: for
+#   textures three.js builds in memory.
+# font-src: data: because Vite inlines font files under 2 KB (assetsInlineLimit in
+#   vite.config.js) as data: URLs. A font cannot run script.
+# connect-src: the 3D model and JSON come from 'self'; Firestore is where
+#   src/lib/content.js reads the edited content over REST.
+[[headers]]
+  for = "/"
+  [headers.values]
+    Content-Security-Policy = "default-src 'self'; script-src 'self' 'wasm-unsafe-eval'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; font-src 'self' data:; media-src 'self'; connect-src 'self' https://firestore.googleapis.com; worker-src 'self'; manifest-src 'self'; frame-src 'none'; object-src 'none'; base-uri 'none'; form-action 'none'; frame-ancestors 'none'; upgrade-insecure-requests"
+    X-Frame-Options = "DENY"
+    Cache-Control = "public, max-age=0, must-revalidate"
+
+[[headers]]
+  for = "/index.html"
+  [headers.values]
+    Content-Security-Policy = "default-src 'self'; script-src 'self' 'wasm-unsafe-eval'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; font-src 'self' data:; media-src 'self'; connect-src 'self' https://firestore.googleapis.com; worker-src 'self'; manifest-src 'self'; frame-src 'none'; object-src 'none'; base-uri 'none'; form-action 'none'; frame-ancestors 'none'; upgrade-insecure-requests"
+    X-Frame-Options = "DENY"
+    Cache-Control = "public, max-age=0, must-revalidate"
+
+# Admin editor. Vite puts its scripts and styles in /assets/, so /admin/*
+# only ever matches the HTML page.
+#
+# style-src stays 'self': the admin page sets no inline styles.
+# font-src: data: for the same small inlined fonts as the portal.
+# script-src https://apis.google.com: Firebase Auth loads the Google API
+#   loader from there to run the sign-in popup.
+# frame-src https://*.firebaseapp.com: Firebase Auth keeps a hidden iframe
+#   on the project's authDomain ({project-id}.firebaseapp.com).
+# connect-src: Firestore, plus the two Google endpoints Firebase Auth uses to
+#   sign in (identitytoolkit) and refresh the ID token (securetoken).
+#
+# Turning on App Check (appCheckSiteKey in src/lib/firebase-config.js)
+# loads reCAPTCHA Enterprise. Then add:
+#   script-src  https://www.google.com/recaptcha/ https://www.gstatic.com/recaptcha/
+#   frame-src   https://www.google.com/recaptcha/ https://recaptcha.google.com/recaptcha/
+#   connect-src https://content-firebaseappcheck.googleapis.com
+[[headers]]
+  for = "/admin/*"
+  [headers.values]
+    Content-Security-Policy = "default-src 'self'; script-src 'self' https://apis.google.com; style-src 'self'; img-src 'self'; font-src 'self' data:; connect-src 'self' https://firestore.googleapis.com https://identitytoolkit.googleapis.com https://securetoken.googleapis.com; frame-src https://*.firebaseapp.com; worker-src 'self'; manifest-src 'self'; media-src 'none'; object-src 'none'; base-uri 'none'; form-action 'none'; frame-ancestors 'none'; upgrade-insecure-requests"
+    X-Frame-Options = "DENY"
+    X-Robots-Tag = "noindex, nofollow, noarchive"
+    Cache-Control = "no-store"
+
+# Hashed by Vite, so a changed file always gets a new name.
+# The service worker must always be fetched fresh, or a fix to it could take a day to arrive.
+[[headers]]
+  for = "/sw.js"
+  [headers.values]
+    Cache-Control = "no-cache"
+
+[[headers]]
+  for = "/manifest.webmanifest"
+  [headers.values]
+    Content-Type = "application/manifest+json"
+    Cache-Control = "public, max-age=3600"
+
+[[headers]]
+  for = "/assets/*"
+  [headers.values]
+    Cache-Control = "public, max-age=31536000, immutable"
+
+# Not hashed. A week is long enough to matter on phone data and short enough
+# that a rebuilt heart reaches everyone soon.
+[[headers]]
+  for = "/models/*"
+  [headers.values]
+    Cache-Control = "public, max-age=604800"
+
+# Optional: serve the Firebase sign-in handler from this site's own domain.
+# This makes the redirect fallback work in browsers that block third-party
+# storage (Safari, Firefox, and phones that open the popup as a redirect).
+# To use it: replace YOUR-PROJECT-ID, set authDomain in
+# src/lib/firebase-config.js to this site's domain, add
+# https://<your-site>/__/auth/handler as an authorized redirect URI on the
+# OAuth client in Google Cloud console, and in the /admin/* CSP above change
+# frame-src to 'self'. Details in docs/FIREBASE_SETUP.md.
+#
+# [[redirects]]
+#   from = "/__/auth/*"
+#   to = "https://YOUR-PROJECT-ID.firebaseapp.com/__/auth/:splat"
+#   status = 200
+#   force = true
+#
+# [[redirects]]
+#   from = "/__/firebase/*"
+#   to = "https://YOUR-PROJECT-ID.firebaseapp.com/__/firebase/:splat"
+#   status = 200
+#   force = true

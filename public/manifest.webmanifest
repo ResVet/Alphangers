@@ -1,0 +1,22 @@
+{
+  "name": "Alphangers · Class Alpha",
+  "short_name": "Alphangers",
+  "description": "Jadwal kuliah, kontak dosen, Drive kelas, try out CBT dan jantung 3D untuk Class Alpha, PSPD FK Unsri.",
+  "lang": "id",
+  "id": "/",
+  "start_url": "/",
+  "scope": "/",
+  "display": "standalone",
+  "background_color": "#070d08",
+  "theme_color": "#070d08",
+  "icons": [
+    { "src": "/icons/icon-192.png", "sizes": "192x192", "type": "image/png" },
+    { "src": "/icons/icon-512.png", "sizes": "512x512", "type": "image/png" },
+    { "src": "/icons/maskable-512.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable" }
+  ],
+  "shortcuts": [
+    { "name": "Jadwal hari ini", "short_name": "Jadwal", "url": "/#jadwal" },
+    { "name": "Daftar dosen", "short_name": "Dosen", "url": "/#dosen" },
+    { "name": "Jantung 3D", "short_name": "Jantung", "url": "/#anatomi" }
+  ]
+}

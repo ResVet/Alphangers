@@ -1,0 +1,179 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#070d08">
+<meta name="color-scheme" content="dark">
+<meta name="description" content="Portal Class Alpha, PSPD FK Unsri angkatan 2026. Jadwal kuliah, kontak dosen, semua Drive kelas, try out CBT, dan model jantung 3D yang bisa dibongkar.">
+<meta name="format-detection" content="telephone=no">
+<meta property="og:type" content="website">
+<meta property="og:title" content="ALPHANGERS · Class Alpha">
+<meta property="og:description" content="Jadwal, kontak dosen, Drive kelas, try out CBT, dan jantung 3D. Satu halaman buat Class Alpha.">
+<meta property="og:image" content="/og.jpg">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta name="twitter:card" content="summary_large_image">
+<title>ALPHANGERS · Class Alpha</title>
+<link rel="icon" type="image/png" sizes="32x32" href="/icons/favicon-32.png">
+<link rel="apple-touch-icon" href="/icons/apple-touch-icon.png">
+<link rel="manifest" href="/manifest.webmanifest">
+<script src="/boot.js"></script>
+</head>
+<body>
+<div class="amb" aria-hidden="true"><div class="blob b1"></div><div class="blob b2"></div></div>
+<div class="grain" aria-hidden="true"></div>
+
+<div id="loader" aria-hidden="true">
+  <div class="ld-row"><b>ALPHANGERS</b><span id="ldMsg">Menyambungkan monitor</span></div>
+  <canvas id="ldc"></canvas>
+  <div class="ld-row"><span class="ld-n"><span id="ldn">000</span><small>%</small></span><span>Class Alpha · FK Unsri</span></div>
+</div>
+
+<header class="bar" id="bar">
+  <a class="brand" href="#top" id="homeBtn" aria-label="Alphangers, kembali ke atas">
+    <span class="brand-m" aria-hidden="true"></span>
+    <span class="brand-t">ALPHANGERS</span>
+  </a>
+  <nav class="bar-nav" aria-label="Bagian halaman">
+    <a href="#jadwal" data-jump="jadwal">Jadwal</a>
+    <a href="#menu" data-jump="menu">Drive</a>
+    <a href="#dosen" data-jump="dosen">Dosen</a>
+    <a href="#anatomi" data-jump="anatomi">Jantung 3D</a>
+  </nav>
+  <div class="bar-r">
+    <span class="bar-meta">FK Unsri · 2026</span>
+    <button class="find" id="findBtn" type="button" aria-haspopup="dialog" aria-keyshortcuts="Control+K Meta+K" aria-label="Cari jadwal, dosen, channel, atau bagian jantung">
+      <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="10.5" cy="10.5" r="6"/><path d="m15 15 5 5"/></svg>
+      <span class="find-t">Cari</span><kbd class="find-k" id="findKey">Ctrl K</kbd>
+    </button>
+    <button class="snd" id="snd" type="button" aria-pressed="false" aria-label="Suara detak jantung">
+      <svg viewBox="0 0 28 16" aria-hidden="true"><path d="M1 9 H8 L10 5 L12.5 13 L15 1.5 L17.5 12 L19 9 H27"/></svg>
+      <span class="snd-t">Suara</span><span class="snd-s" id="sndS">off</span>
+    </button>
+    <a class="menu-b" href="#menu" data-jump="menu">Menu</a>
+  </div>
+  <div class="prog" aria-hidden="true"><svg id="progSvg" preserveAspectRatio="none"><path class="pg-b" id="pgB"/><path class="pg-f" id="pgF"/></svg></div>
+</header>
+
+<main id="home">
+  <section class="hero" id="top">
+    <div class="wrap hero-in">
+      <div class="hero-copy">
+        <p class="kick rv" style="--d:.05s">Portal kelas · PSPD FK Unsri</p>
+        <p class="lede rv" style="--d:.15s">Semua Drive Class Alpha ada di satu halaman ini. Pilih channel, langsung masuk ke foldernya. <span id="ledeEnd">Semangat belajarnya!</span></p>
+        <div class="hero-cta rv" style="--d:.25s">
+          <a class="cta mag" href="#menu" data-jump="menu">Buka channel <span>↓</span></a>
+          <span class="bpm" aria-label="Detak jantung halaman"><i class="bpm-h" id="bpmH"></i><b id="bpmN">72</b>bpm</span>
+        </div>
+      </div>
+      <div class="totem-wrap rv" style="--d:.2s">
+        <div class="totem pre" id="totem" role="button" tabindex="0" data-cur="klik" aria-label="Lambang Alphangers. Klik buat assemble ulang.">
+          <div class="float">
+            <div class="tilt" id="tilt">
+              <canvas class="halo" id="halo" aria-hidden="true"></canvas>
+              <div class="ly ly-glow" aria-hidden="true"></div>
+              <div class="ly ly-disc" aria-hidden="true"></div>
+              <div class="ly ly-silver" aria-hidden="true"></div>
+              <div class="spec" aria-hidden="true"></div>
+              <div class="sheen" aria-hidden="true"></div>
+            </div>
+            <div class="refl" aria-hidden="true"><div class="ly ly-disc"></div><div class="ly ly-silver"></div></div>
+            <div class="ground" aria-hidden="true"></div>
+          </div>
+        </div>
+      </div>
+      <div class="hero-word">
+        <h1 class="ttl" id="ttl" aria-label="Alphangers"><span class="ttl-sk" id="ttlSk">ALPHANGERS</span></h1>
+        <div class="asm rv" style="--d:.7s">
+          <span class="asm-w">assemble!</span>
+          <svg class="oval" viewBox="0 0 200 72" aria-hidden="true"><path pathLength="1" d="M12,38 C16,12 118,2 168,14 C198,22 196,50 148,60 C92,70 6,64 10,36 C12,24 44,16 78,14"/></svg>
+        </div>
+      </div>
+    </div>
+    <div class="cue" aria-hidden="true"><span>Scroll</span><svg viewBox="0 0 74 18"><path d="M0 11 H22 L26 8 L30 11 H34 L37 14 L41 1 L45 17 L48 11 H56 C60 11 61 7 64 7 S68 11 74 11"/></svg></div>
+  </section>
+
+  <div class="mq" aria-hidden="true"><div class="mq-in" id="mq">
+    <span class="mq-set"><b>Alphangers</b><i>✚</i><s>assemble!</s><i>✚</i><b>Class Alpha</b><i>✚</i><b>FK Unsri</b><i>✚</i><s>2026</s><i>✚</i><b>Alphangers</b><i>✚</i><s>assemble!</s><i>✚</i><b>Class Alpha</b><i>✚</i><b>FK Unsri</b><i>✚</i><s>2026</s><i>✚</i></span>
+    <span class="mq-set"><b>Alphangers</b><i>✚</i><s>assemble!</s><i>✚</i><b>Class Alpha</b><i>✚</i><b>FK Unsri</b><i>✚</i><s>2026</s><i>✚</i><b>Alphangers</b><i>✚</i><s>assemble!</s><i>✚</i><b>Class Alpha</b><i>✚</i><b>FK Unsri</b><i>✚</i><s>2026</s><i>✚</i></span>
+  </div></div>
+
+  <section class="sec sec-jadwal" id="jadwal">
+    <div class="wrap">
+      <div class="info" id="info" hidden></div>
+      <div class="feat-root" id="jadwalRoot"><p class="feat-wait lbl">Memuat jadwal</p></div>
+    </div>
+  </section>
+
+  <section class="channels" id="menu">
+    <div class="wrap">
+      <div class="ch-head">
+        <h2 class="ch-h rv">ke mana <em>hari ini?</em></h2>
+        <span class="lbl rv" style="--d:.1s" id="chCount">Menu · 10 channel</span>
+      </div>
+      <ol class="rows" id="rows"></ol>
+    </div>
+  </section>
+
+  <section class="sec sec-dosen" id="dosen">
+    <div class="wrap">
+      <div class="feat-root" id="dosenRoot"><p class="feat-wait lbl">Memuat daftar dosen</p></div>
+    </div>
+  </section>
+
+  <section class="pulse" id="siklus" aria-label="Siklus jantung">
+    <div class="stage" id="stage">
+      <canvas class="ecg-c" id="ecgc" aria-hidden="true"></canvas>
+      <canvas class="heart-c" id="heartc" role="img" aria-label="Model jantung 3D. Geser buat memutar."></canvas>
+      <div class="hud hud-l" aria-hidden="true"><span>Sadapan II</span><span>25 mm/s · 10 mm/mV</span></div>
+      <div class="hud hud-r" aria-hidden="true"><span>HR</span><b id="hr">072</b><span>bpm</span></div>
+      <div class="tags" id="tags" aria-hidden="true"></div>
+      <div class="p-intro" id="pIntro">
+        <p class="kick">Siklus jantung</p>
+        <h2 class="p-h">Satu detak,<br><em>biar kebayang.</em></h2>
+        <p class="p-s">Scroll pelan-pelan. Jantung dan EKG-nya jalan ikut scroll kamu.</p>
+      </div>
+      <div class="caps" id="caps"></div>
+      <ol class="rail" id="rail" aria-hidden="true"><li>P</li><li>PR</li><li>QRS</li><li>ST</li><li>T</li></ol>
+      <p class="drag-hint" id="dragHint" aria-hidden="true">geser jantungnya</p>
+    </div>
+  </section>
+
+  <section class="sec sec-anatomi" id="anatomi" aria-labelledby="anatomiH">
+    <div class="wrap">
+      <div class="ch-head">
+        <h2 class="ch-h rv" id="anatomiH">bongkar <em>jantungnya.</em></h2>
+        <span class="lbl rv" style="--d:.1s">Model 3D · 55 bagian</span>
+      </div>
+    </div>
+    <div class="feat-root" id="anatomiRoot"></div>
+  </section>
+
+  <footer class="foot">
+    <div class="wrap">
+      <div class="big" id="big" aria-hidden="true"><span class="big-o">ALPHANGERS</span><span class="big-f">ALPHANGERS</span><span class="big-g" id="bigG">ALPHANGERS</span></div>
+      <div class="ft">
+        <button class="carrd" type="button" id="loveBtn" data-cur="lihat" aria-haspopup="dialog">Made with love by Resvet</button>
+        <span class="clock" id="clock"><i></i>Palembang · --:-- WIB</span>
+        <span class="lbl">Class Alpha · FK Unsri 2026</span>
+      </div>
+    </div>
+  </footer>
+</main>
+
+<div class="peek" id="peek" aria-hidden="true"><div class="peek-box"><div class="peek-in" id="peekIn"></div></div></div>
+
+<section id="panel" role="dialog" aria-modal="true" aria-label="Channel" tabindex="-1"></section>
+
+<div id="curtain" aria-hidden="true"><i class="c1"></i><i class="c2"><svg viewBox="0 0 1000 120" preserveAspectRatio="xMidYMid slice"><path d="M0 60 H430 L445 50 L460 60 H478 L486 70 L500 8 L514 104 L522 60 H560 C575 60 580 42 596 42 C612 42 617 60 632 60 H1000"/></svg></i></div>
+<div class="toast" id="toast" role="status" aria-live="polite"></div>
+<div id="cd" aria-hidden="true"></div>
+<div id="cr" aria-hidden="true"><span id="crt"></span></div>
+
+<noscript><style>.rv{opacity:1!important;transform:none!important}.pulse,#loader{display:none}html.pre,html.pre body{overflow:auto}</style>
+<p class="nojs">Aktifkan JavaScript buat membuka channel, jadwal, dan model jantungnya.</p></noscript>
+
+<script type="module" src="/src/main.js"></script>
+</body>
+</html>

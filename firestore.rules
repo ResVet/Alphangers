@@ -1,0 +1,109 @@
+rules_version = '2';
+
+// Alphangers content store.
+//
+//   content/{key}   one document per content key, public read, admin write
+//   history/{id}    snapshot of every version that got replaced or reset
+//   admins/{uid}    who may write; created by hand in the console, never by a client
+//
+// Everything not matched below is denied.
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    function keys() {
+      return ['links', 'announcements', 'schedule', 'dosen', 'heart'];
+    }
+
+    // An admin is a verified Google account whose uid has a document in /admins.
+    function isAdmin() {
+      return request.auth != null
+        && request.auth.token.email_verified == true
+        && request.auth.token.firebase.sign_in_provider == 'google.com'
+        && exists(/databases/$(database)/documents/admins/$(request.auth.uid));
+    }
+
+    function contentPath(key) {
+      return /databases/$(database)/documents/content/$(key);
+    }
+
+    // History ids are derived from the version they hold, so the content
+    // rules below can demand that the snapshot exists in the same write.
+    function historyId(key, rev, updatedAt) {
+      return key + '-' + string(rev) + '-' + string(updatedAt.toMillis());
+    }
+
+    function validContent(d) {
+      return d.keys().hasOnly(['json', 'rev', 'updatedAt', 'updatedBy'])
+        && d.keys().hasAll(['json', 'rev', 'updatedAt', 'updatedBy'])
+        && d.json is string
+        && d.json.size() >= 2
+        && d.json.size() < 900000
+        && d.rev is int
+        && d.updatedAt == request.time
+        && d.updatedBy == request.auth.uid;
+    }
+
+    match /content/{key} {
+      // Public: the portal reads these over REST without signing in.
+      // Listing the collection is not needed by anyone, so it stays closed.
+      allow get: if key in keys();
+
+      // First save after the bundled default (or after a reset) starts at rev 1.
+      allow create: if isAdmin()
+        && key in keys()
+        && validContent(request.resource.data)
+        && request.resource.data.rev == 1;
+
+      // Optimistic concurrency: rev must move up by exactly one, and the
+      // version being replaced must land in history in the same batch.
+      allow update: if isAdmin()
+        && key in keys()
+        && validContent(request.resource.data)
+        && request.resource.data.rev == resource.data.rev + 1
+        && existsAfter(/databases/$(database)/documents/history/$(historyId(key, resource.data.rev, resource.data.updatedAt)));
+
+      // Delete means "go back to the bundled JSON". Same history requirement.
+      allow delete: if isAdmin()
+        && key in keys()
+        && existsAfter(/databases/$(database)/documents/history/$(historyId(key, resource.data.rev, resource.data.updatedAt)));
+    }
+
+    match /history/{id} {
+      function validHistory() {
+        let h = request.resource.data;
+        let before = get(contentPath(h.key)).data;
+        return h.keys().hasOnly(['key', 'op', 'rev', 'json', 'at', 'by', 'note'])
+          && h.keys().hasAll(['key', 'op', 'rev', 'json', 'at', 'by', 'note'])
+          && h.key in keys()
+          && h.op in ['save', 'reset']
+          && h.at == request.time
+          && h.by == request.auth.uid
+          && h.note is string
+          && h.note.size() <= 200
+          // The snapshot must be exactly the version that is being replaced.
+          && exists(contentPath(h.key))
+          && h.rev == before.rev
+          && h.json == before.json
+          && id == historyId(h.key, before.rev, before.updatedAt)
+          // And it must be replaced in this very batch.
+          && (h.op == 'save'
+                ? getAfter(contentPath(h.key)).data.rev == before.rev + 1
+                  && getAfter(contentPath(h.key)).data.updatedAt == request.time
+                : !existsAfter(contentPath(h.key)));
+      }
+
+      allow get: if isAdmin();
+      allow list: if isAdmin() && request.query.limit <= 50;
+      allow create: if isAdmin() && validHistory();
+      allow update: if false;
+      allow delete: if isAdmin();
+    }
+
+    match /admins/{uid} {
+      // Lets the admin page ask "am I an admin?". Nobody can read anyone else's
+      // entry, and no client can write here at all.
+      allow get: if request.auth != null && request.auth.uid == uid;
+      allow list, write: if false;
+    }
+  }
+}
