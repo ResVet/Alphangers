@@ -8,10 +8,13 @@ The GLB has four meshes so the viewer can draw them with different materials:
   valves      valves, papillary muscles, chordae, moderator band
   conduction  SA node to Purkinje fibres
 
-Every vertex carries two custom attributes:
+Every vertex carries three custom attributes:
   _PART  unsigned byte, the part index from parts.py, plus 128 when the vertex is on an
          inside (endocardial) surface
   _T     unsigned short, activation time in ms for the depolarisation wave (65535 = none)
+  _AO    unsigned byte, normalised ambient occlusion baked from the body and coronary
+         surfaces (255 = fully open), so grooves and the spaces between vessels read as
+         depth instead of flat colour
 
 pack.mjs then quantises and meshopt-compresses it into public/models/heart.glb.
 """
@@ -19,6 +22,7 @@ import os, sys, json, struct
 import numpy as np
 import trimesh
 from scipy.spatial import cKDTree
+from scipy import ndimage
 
 HERE = os.path.dirname(os.path.abspath(__file__))
 sys.path.insert(0, HERE)
@@ -38,6 +42,63 @@ def smooth_normals(V, F):
     return n[j]
 
 
+def hemisphere(n=28, seed=7):
+    """Cosine-weighted unit directions around +z, fixed seed so rebuilds are identical."""
+    rng = np.random.default_rng(seed)
+    u, v = rng.random(n), rng.random(n)
+    r, phi = np.sqrt(u), 2 * np.pi * v
+    return np.stack([r * np.cos(phi), r * np.sin(phi), np.sqrt(1 - u)], 1)
+
+
+def bake_ao(targets, occluders, voxel=0.1, reach=1.5):
+    """Ambient occlusion by marching rays through a voxelised copy of the surfaces.
+
+    targets:   list of (V, F) to bake
+    occluders: list of (V, F) that cast occlusion
+    Returns one array of values in [0, 1] per target, 1 = nothing nearby.
+    """
+    pts = []
+    for V, F in occluders:
+        V = np.asarray(V, np.float64)
+        pts += [V, V[F].mean(1), (V[F[:, 0]] + V[F[:, 1]]) / 2, (V[F[:, 1]] + V[F[:, 2]]) / 2, (V[F[:, 2]] + V[F[:, 0]]) / 2]
+    P = np.vstack(pts)
+    lo = P.min(0) - reach - 0.5
+    dims = np.ceil((P.max(0) + reach + 0.5 - lo) / voxel).astype(int)
+    grid = np.zeros(dims, bool)
+    ijk = ((P - lo) / voxel).astype(int)
+    grid[ijk[:, 0], ijk[:, 1], ijk[:, 2]] = True
+    grid = ndimage.binary_dilation(grid)
+    dirs = hemisphere()
+    steps = np.arange(0.3, reach + 1e-6, voxel)
+    out = []
+    for V, F in targets:
+        V = np.asarray(V, np.float64)
+        N = smooth_normals(V, F)
+        # orthonormal frame per vertex
+        bad = ~np.isfinite(N).all(1) | (np.linalg.norm(N, axis=1) < 0.5)
+        N[bad] = [0, 0, 1]
+        a = np.where(np.abs(N[:, 0:1]) < 0.9, [[1, 0, 0]], [[0, 1, 0]])
+        T = np.cross(N, a); T /= np.linalg.norm(T, axis=1, keepdims=True)
+        B = np.cross(N, T)
+        hit = np.zeros(len(V))
+        for d in dirs:
+            D = T * d[0] + B * d[1] + N * d[2]
+            blocked = np.zeros(len(V), bool)
+            for s in steps:
+                q = V + N * 0.25 + D * s
+                g = ((q - lo) / voxel).astype(int)
+                g = np.clip(g, 0, dims - 1)
+                blocked |= grid[g[:, 0], g[:, 1], g[:, 2]]
+            hit += blocked
+        ao = 1 - hit / len(dirs)
+        # one pass of neighbour averaging takes the speckle out of the ray noise
+        m = trimesh.Trimesh(V, F, process=False)
+        nb = m.vertex_neighbors
+        ao = np.array([0.5 * ao[i] + 0.5 * ao[n].mean() if len(n) else ao[i] for i, n in enumerate(nb)])
+        out.append(ao)
+    return out
+
+
 def compact(V, F, keep_faces):
     F = F[keep_faces]
     used = np.unique(F)
@@ -54,7 +115,12 @@ def build_meshes():
 
     meshes = []
     bp = body['part'].astype(np.int64) + 128 * body['inner'].astype(np.int64)
-    meshes.append(('body', body['v'], body['f'], bp, t_body))
+    bf = body['f']
+    # marching cubes hands the faces back wound inwards; the viewer relies on the outside of the
+    # wall being front facing (the cut face colour is drawn on back faces), so turn them round
+    if trimesh.Trimesh(body['v'], bf, process=False).volume < 0:
+        bf = bf[:, ::-1].copy()
+    meshes.append(('body', body['v'], bf, bp, t_body))
     meshes.append(('coronary', ves['v'], ves['f'], ves['part'].astype(np.int64), np.full(len(ves['v']), -1.0)))
 
     ip = inn['part'].astype(np.int64)
@@ -62,7 +128,14 @@ def build_meshes():
     for name, group in (('valves', VALVES), ('conduction', CONDUCTION)):
         used, F = compact(inn['v'], inn['f'], np.isin(fpart, list(group)))
         meshes.append((name, inn['v'][used], F, ip[used], inn['t'][used]))
-    return meshes
+
+    # the outer surfaces get baked occlusion; valves and conduction sit inside the heart and
+    # would come out black, so they stay fully open
+    surf = [(m[1], m[2]) for m in meshes[:2]]
+    aos = bake_ao(surf, surf)
+    for i, ao in enumerate(aos):
+        print(f'ao {meshes[i][0]:9s} mean {ao.mean():.3f} p5 {np.percentile(ao, 5):.3f}')
+    return [m + (aos[i] if i < 2 else np.ones(len(m[1])),) for i, m in enumerate(meshes)]
 
 
 def write_glb(path, meshes):
@@ -92,7 +165,7 @@ def write_glb(path, meshes):
         return len(accessors) - 1
 
     ARRAY, ELEMENT = 34962, 34963
-    for name, V, F, part, t in meshes:
+    for name, V, F, part, t, ao in meshes:
         V = np.asarray(V, np.float32)
         N = smooth_normals(V.astype(np.float64), F).astype(np.float32)
         T = np.where(np.asarray(t) < 0, NO_TIME, np.clip(np.round(t), 0, NO_TIME - 1)).astype(np.uint16)
@@ -101,6 +174,7 @@ def write_glb(path, meshes):
             'NORMAL': accessor(N, 5126, 'VEC3', ARRAY),
             '_PART': accessor(np.asarray(part, np.uint8), 5121, 'SCALAR', ARRAY),
             '_T': accessor(T, 5123, 'SCALAR', ARRAY),
+            '_AO': accessor(np.round(np.clip(ao, 0, 1) * 255).astype(np.uint8), 5121, 'SCALAR', ARRAY, normalized=True),
         }
         idx_type, idx_ct = (np.uint16, 5123) if len(V) < 65536 else (np.uint32, 5125)
         ind = accessor(np.asarray(F, idx_type).ravel(), idx_ct, 'SCALAR', ELEMENT)
@@ -127,7 +201,7 @@ def write_glb(path, meshes):
 def part_anchors(meshes):
     """Centre and size of every part, for flying the camera to a part picked from the list."""
     pts = {}
-    for _, V, F, part, _ in meshes:
+    for _, V, F, part, *_ in meshes:
         p = np.asarray(part) & 127
         for k in np.unique(p):
             pts.setdefault(int(k), []).append(np.asarray(V)[p == k])

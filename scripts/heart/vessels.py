@@ -119,7 +119,7 @@ def tube(P, r, sides=10, cap=True):
     for i in range(len(P) - 1):
         for j in range(sides):
             a = i * sides + j; b = i * sides + (j + 1) % sides
-            F += [[a, a + sides, b], [b, a + sides, b + sides]]
+            F += [[a, b, a + sides], [b, b + sides, a + sides]]   # outward facing
     V = list(V)
     if cap:
         for end, sgn in ((0, -1), (len(P) - 1, 1)):
