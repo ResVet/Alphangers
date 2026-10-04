@@ -189,8 +189,9 @@ Project ID yang diawali `demo-` membuat emulator tidak menyentuh project sungguh
 | --- | --- |
 | Login: "Domain ini belum ada di Authorized domains" | Langkah 6 belum, atau domainnya salah ketik. |
 | Login: "Login Google belum diaktifkan" | Langkah 2 belum. |
-| Setelah login selalu "Belum bisa masuk" | Document ID di `admins` tidak sama persis dengan UID. Salin ulang dengan tombol **Salin UID**. |
-| "Status admin tidak bisa dicek" | Rules belum di-deploy (langkah 5). Kalau pesannya "Gagal tersambung ke server", masalahnya koneksi, bukan rules. |
+| Setelah login selalu "Belum bisa masuk" dengan pesan "Akun ini belum terdaftar sebagai admin" | Document ID di `admins` tidak sama persis dengan UID. Salin ulang dengan tombol **Salin UID**. |
+| "Belum bisa masuk" dengan pesan "Gagal tersambung ke server" | Masalahnya koneksi, bukan rules atau UID. Cek internet lalu klik **Muat ulang**. |
+| "Status admin tidak bisa dicek" | Rules belum di-deploy (langkah 5). |
 | Simpan: "Server menolak" | Rules belum di-deploy, atau akun ini bukan admin lagi. |
 | Riwayat: "Index Firestore belum siap" | Tunggu beberapa menit setelah langkah 5. |
 | Login: "Login lewat halaman Google tidak selesai di browser ini" | Popup diblokir dan cara redirect gagal. Izinkan popup untuk situs ini lalu klik Masuk lagi, atau lihat bagian login lewat domain sendiri. |
