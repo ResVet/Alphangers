@@ -1,0 +1,29 @@
+Alphangers
+Copyright (c) 2026 Khalid (Resvet). All rights reserved.
+
+This project includes or depends on the following third-party material, each
+under its own license. Nothing in LICENSE changes those terms.
+
+Software (bundled into the built site)
+  three.js                  MIT License, Copyright (c) 2010-2026 three.js authors
+                            https://github.com/mrdoob/three.js
+  meshoptimizer decoder     MIT License, Copyright (c) 2016-2026 Arseny Kapoulkine
+  (via three/addons)        https://github.com/zeux/meshoptimizer
+  Firebase JS SDK           Apache License 2.0, Copyright Google LLC
+  (admin page only)         https://github.com/firebase/firebase-js-sdk
+
+Fonts (self-hosted through @fontsource)
+  Bricolage Grotesque       SIL Open Font License 1.1, Copyright The Bricolage Grotesque Project Authors
+  Instrument Serif          SIL Open Font License 1.1, Copyright The Instrument Serif Project Authors
+  Archivo                   SIL Open Font License 1.1, Copyright The Archivo Project Authors
+  JetBrains Mono            SIL Open Font License 1.1, Copyright The JetBrains Mono Project Authors
+
+Development tools (not shipped)
+  Vite, Playwright, axe-core, glTF Transform, meshoptimizer, firebase-tools,
+  @firebase/rules-unit-testing, and the Python packages NumPy, SciPy,
+  scikit-image, trimesh and fast-simplification, each under its own license.
+
+Data
+  The class schedule and lecturer contact list were compiled from documents
+  issued to Class Alpha by the Faculty of Medicine, Universitas Sriwijaya.
+  Lecturer names and phone numbers are published for classmates' use.
