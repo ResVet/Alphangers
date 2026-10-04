@@ -43,7 +43,7 @@ Firestore REST ──────┘     (6 s timeout, field mask, no cookies)
       └─▶ validate.js ──▶ differs from what is shown? ──▶ subscribers re-render
 ```
 
-`src/lib/content.js` answers `load(key)` immediately from the best copy on hand, then asks Firestore for the current document. A remote copy is used only if it passes `src/lib/validate.js`, the same validator the admin runs before saving. A missing document means "use the bundled copy" (that is how the admin's reset works). With `firebaseConfig` left `null`, the portal makes no network requests at all.
+`src/lib/content.js` answers `load(key)` immediately from the best copy on hand, then asks Firestore for the current document. A remote copy is used only if it passes `src/lib/validate.js`, the same validator the admin runs before saving. A missing document means "use the bundled copy" (that is how the admin's reset works). The localStorage copy keeps the document's update time; on the next visit the portal first asks for the `rev` field alone (Firestore still returns the update time) and downloads `json` only if the time changed. With `firebaseConfig` left `null`, the portal makes no network requests at all.
 
 ### Where the data came from
 
@@ -90,5 +90,5 @@ The heart is original work, modelled in code rather than downloaded, so every pa
 | `tests/validate.test.mjs`, `tests/content.test.mjs` | the validator and every content fallback path |
 | `tests/firestore.rules.test.mjs` | the security rules, on the emulator |
 | `tests/jadwal-dosen.e2e.mjs` | schedule and lecturer sections at 7 viewports, keyboard, reduced motion, storage blocked, axe |
-| `tests/admin.e2e.mjs` | the editor in setup and signed-in (mocked) states |
-| `tests/portal.e2e.mjs` | the built site under the production headers at 6 viewports: section order, channels and panels, try out, search, lecturers, the heart, no sideways scroll, no console errors, no CSP violations, no requests to other hosts; plus reduced motion, storage blocked, no WebGL and axe |
+| `tests/admin.e2e.mjs` | the setup guide, the real Google sign-in screen, and the editor signed in against a mock backend |
+| `tests/portal.e2e.mjs` | the built site under the production headers at 6 viewports: section order, channels and panels, try out, search, lecturers, the heart, no sideways scroll, no console errors, no CSP violations, no requests to other hosts except the Firestore content reads (answered as an empty database); plus reduced motion, storage blocked, no WebGL and axe |

@@ -2,7 +2,7 @@
 // firebaseConfig is set, so the setup screen never downloads the SDK.
 //
 // Every backend (this one and the dev mock) has the same shape:
-//   onAuth(cb) -> unsubscribe     cb(user | null)
+//   onAuth(cb, onError?) -> unsubscribe     cb(user | null); onError(e) if the user can't be read
 //   finishRedirect() -> Error | null
 //   signIn(), signOut()
 //   isAdmin(uid) -> boolean
@@ -25,7 +25,21 @@ import {
 import { initializeFirestore, memoryLocalCache } from 'firebase/firestore';
 import * as ops from './firestore-ops.js';
 
-const POPUP_FALLBACK = new Set(['auth/popup-blocked', 'auth/operation-not-supported-in-this-environment', 'auth/web-storage-unsupported']);
+// Only a blocked popup is worth a redirect. When the browser refuses storage to the auth
+// domain, the redirect would fail the same way, so that error is shown instead.
+const POPUP_FALLBACK = new Set(['auth/popup-blocked']);
+// Set just before a redirect sign-in, so the page can tell when it comes back empty-handed.
+const REDIRECT_FLAG = 'alpha.admin.redirect';
+
+function takeRedirectFlag() {
+  try {
+    const set = sessionStorage.getItem(REDIRECT_FLAG) === '1';
+    sessionStorage.removeItem(REDIRECT_FLAG);
+    return set;
+  } catch {
+    return false;
+  }
+}
 
 export async function createFirebaseBackend(config, appCheckSiteKey) {
   const app = initializeApp(config);
@@ -61,12 +75,30 @@ export async function createFirebaseBackend(config, appCheckSiteKey) {
 
   return {
     kind: 'firebase',
-    onAuth(cb) {
-      return onAuthStateChanged(auth, async (u) => cb(u ? await toUser(u) : null));
+    onAuth(cb, onError) {
+      // Events can overlap while a token refresh is in flight; only the newest one may
+      // reach the screen, so a slow or failed refresh can't override a later sign-out.
+      let seq = 0;
+      return onAuthStateChanged(auth, async (u) => {
+        const mine = ++seq;
+        let user = null;
+        try {
+          // A saved session needs a fresh token here, which fails without a connection.
+          user = u ? await toUser(u) : null;
+        } catch (e) {
+          if (mine === seq) onError?.(e);
+          return;
+        }
+        if (mine === seq) cb(user);
+      });
     },
     async finishRedirect() {
+      const pending = takeRedirectFlag();
       try {
-        await getRedirectResult(auth);
+        const result = await getRedirectResult(auth);
+        // Back from Google with no result and nobody signed in: the browser dropped the
+        // sign-in on the way (third-party storage blocked for the firebaseapp.com domain).
+        if (pending && !result && !auth.currentUser) return Object.assign(new Error('Redirect sign-in did not complete.'), { code: 'app/redirect-lost' });
         return null;
       } catch (e) {
         return e;
@@ -76,7 +108,20 @@ export async function createFirebaseBackend(config, appCheckSiteKey) {
       try {
         await signInWithPopup(auth, provider);
       } catch (e) {
-        if (POPUP_FALLBACK.has(e.code)) return signInWithRedirect(auth, provider);
+        if (POPUP_FALLBACK.has(e.code)) {
+          try {
+            sessionStorage.setItem(REDIRECT_FLAG, '1');
+          } catch {
+            /* the flag only makes a failed redirect easier to explain */
+          }
+          try {
+            return await signInWithRedirect(auth, provider);
+          } catch (err) {
+            // Still on this page (unauthorized domain, offline): no redirect is pending.
+            takeRedirectFlag();
+            throw err;
+          }
+        }
         if (e.code === 'auth/popup-closed-by-user' || e.code === 'auth/cancelled-popup-request') return;
         throw e;
       }

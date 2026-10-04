@@ -11,7 +11,7 @@ Report a problem privately to the repository owner on GitHub rather than in a pu
 
 ## The portal page
 
-- **No third-party requests.** Fonts, scripts, the 3D model and media are all served from the site. With Firebase configured, the only other host contacted is `firestore.googleapis.com`, for public reads of the five content documents, with `credentials: 'omit'`. The portal end-to-end suite fails if any other host is requested.
+- **One outside host.** Fonts, scripts, the 3D model and media are all served from the site. The only other host contacted is `firestore.googleapis.com`, for public reads of the five content documents, with `credentials: 'omit'` (and none at all while `firebaseConfig` is `null`). The portal end-to-end suite fails if any other host is requested.
 - **Content Security Policy** (from `netlify.toml`):
   `default-src 'self'; script-src 'self' 'wasm-unsafe-eval'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; font-src 'self' data:; media-src 'self'; connect-src 'self' https://firestore.googleapis.com; worker-src 'self'; manifest-src 'self'; frame-src 'none'; object-src 'none'; base-uri 'none'; form-action 'none'; frame-ancestors 'none'; upgrade-insecure-requests`.
   No inline scripts (the one bootstrap line lives in `public/boot.js`). `wasm-unsafe-eval` is needed only for the meshoptimizer decoder that unpacks the heart model. Inline styles are allowed because the page sets CSS custom properties from script; inline CSS cannot run code. The portal suite runs the built site under these exact headers and fails on any violation.
@@ -43,7 +43,7 @@ No client can write to `admins`. Admins are added and removed by hand in the Fir
 
 ### Abuse of the public read path
 
-Anyone can call the REST endpoint, so anyone can burn read quota. Reads are limited to five fixed document ids, the portal asks only for the `json` and `rev` fields, and if Firestore fails, rate limits, or times out (6 s), the portal keeps the copy it already has (localStorage, then bundled JSON) without an error. At worst visitors see stale content until the quota resets. App Check is not enforced on Firestore, because the portal reads without the SDK and would be locked out; this is a deliberate trade-off.
+Anyone can call the REST endpoint, so anyone can burn read quota and the monthly outbound transfer allowance. The rules limit reads to five fixed document ids, and every field of those documents is public (`json`, `rev`, `updatedAt`, and `updatedBy`, which is an admin's UID). The field mask is only what the portal asks for: a visitor who already holds a copy first asks for `rev` alone, which also returns the document's update time, and downloads `json` only when that time changed, so normal traffic stays small. A changed document therefore costs that visitor two reads once. If Firestore fails, rate limits, or times out (6 s), the portal keeps the copy it already has (localStorage, then bundled JSON) without an error. At worst visitors see stale content until the quota resets (reads daily, transfer monthly), and the admin cannot save until then. App Check is not enforced on Firestore, because the portal reads without the SDK and would be locked out; this is a deliberate trade-off.
 
 ### Hostile or broken documents
 
@@ -84,9 +84,9 @@ There are none in the repository. The web config is public by design, there are 
 ### Accepted risks
 
 - A compromised admin account can rewrite content and delete history. Git and JSON exports are the backup.
-- App Check is not enforced on Firestore, so read quota can be burned by anyone. The portal degrades to cached or bundled content.
+- App Check is not enforced on Firestore, so read quota and outbound transfer can be burned by anyone. The portal degrades to cached or bundled content.
 - The portal allows inline styles.
-- If popups are blocked, sign-in falls back to a redirect, which can fail in browsers that block third-party storage unless the optional same-domain auth proxy in `netlify.toml` is set up. This affects only the admin, and fails closed.
+- If popups are blocked, sign-in falls back to a redirect, which can fail in browsers that block third-party storage unless the optional same-domain auth proxy in `netlify.toml` is set up. A redirect that comes back empty, and a browser that refuses storage to the auth domain outright (some private windows), each get their own message asking for popups or a normal window. This affects only the admin, and fails closed.
 
 ## Checklist when changing things
 

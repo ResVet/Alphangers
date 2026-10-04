@@ -9,8 +9,13 @@ import { startPortal } from './legacy/app.js';
 import { load, subscribe } from './lib/content.js';
 
 const portal = startPortal({ links });
-subscribe('links', (data) => portal.setChannels(data));
-load('links').then((data) => { if (data !== links) portal.setChannels(data); }, () => {});
+// Subscribe once load() has answered, telling it which copy is on screen, so a remote copy
+// that matches it does not rebuild the channel rows.
+const watchLinks = (shown) => subscribe('links', (data) => portal.setChannels(data), shown);
+load('links').then((data) => {
+  if (data !== links) portal.setChannels(data);
+  watchLinks(data);
+}, () => watchLinks());
 
 const features = import.meta.glob(['./features/info/info.js', './features/jadwal/jadwal.js', './features/dosen/dosen.js', './features/anatomi/anatomi.js']);
 
@@ -41,7 +46,7 @@ async function mountFeature(path, rootId, keys, exportName, label) {
     const args = Object.fromEntries(keys.map((k, i) => [k, data[i]]));
     root.textContent = '';
     const view = mod[exportName](root, { ...args, portal });
-    keys.forEach((k) => subscribe(k, (fresh) => { args[k] = fresh; view?.update?.({ ...args }); }));
+    keys.forEach((k, i) => subscribe(k, (fresh) => { args[k] = fresh; view?.update?.({ ...args }); }, data[i]));
     portal.observeReveal(root);
     portal.relayout();
     return view;

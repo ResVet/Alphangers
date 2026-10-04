@@ -15,6 +15,7 @@ const EXE = process.env.CHROMIUM_PATH || '/opt/pw-browsers/chromium';
 const GL = ['--use-gl=angle', '--use-angle=swiftshader', '--enable-unsafe-swiftshader', '--ignore-gpu-blocklist'];
 const VIEWPORTS = (process.env.VIEWPORTS || '1440x900,1280x800,768x1024,390x844,360x640,844x390').split(',');
 const SHOTS = process.env.SHOTS;
+const FIRESTORE = 'https://firestore.googleapis.com';
 if (SHOTS) mkdirSync(SHOTS, { recursive: true });
 
 let srv, browser, noGl;
@@ -40,6 +41,14 @@ async function open(b, { w = 1280, h = 800, reducedMotion = false, blockStorage 
     window.__csp = [];
     document.addEventListener('securitypolicyviolation', (e) => window.__csp.push(e.violatedDirective + ' ' + e.blockedURI));
   });
+  // count channel rows taken out of the page: they should be drawn once, not redrawn when
+  // a remote copy turns out to match the one on screen
+  await ctx.addInitScript(() => {
+    window.__rowsRemoved = 0;
+    new MutationObserver((ms) => {
+      for (const m of ms) for (const n of m.removedNodes) if (n.nodeType === 1 && n.classList?.contains('row')) window.__rowsRemoved++;
+    }).observe(document, { childList: true, subtree: true });
+  });
   if (blockStorage) {
     await ctx.addInitScript(() => {
       for (const k of ['localStorage', 'sessionStorage']) {
@@ -47,13 +56,27 @@ async function open(b, { w = 1280, h = 800, reducedMotion = false, blockStorage 
       }
     });
   }
+  // Once Firebase is configured the portal asks Firestore for each content key. The tests
+  // answer like an empty database, so every section falls back to the bundled copy.
+  await ctx.route(FIRESTORE + '/**', (r) => r.fulfill({ status: 404, contentType: 'application/json', body: '{"error":{"code":404,"status":"NOT_FOUND"}}' }));
   const page = await ctx.newPage();
   const errors = [];
   page.on('pageerror', (e) => errors.push('pageerror: ' + e.message));
-  page.on('console', (m) => { if (m.type() === 'error') errors.push('console: ' + m.text()); });
+  page.on('console', (m) => {
+    if (m.type() !== 'error') return;
+    // the browser's own line for those 404s
+    if (m.text().startsWith('Failed to load resource') && m.location().url.startsWith(FIRESTORE)) return;
+    errors.push('console: ' + m.text());
+  });
   page.on('requestfailed', (r) => { if (!/\/sw\.js$/.test(r.url())) errors.push('requestfailed: ' + r.url()); });
   const outside = [];
-  page.on('request', (r) => { if (!r.url().startsWith(srv.url) && !r.url().startsWith('data:') && !r.url().startsWith('blob:')) outside.push(r.url()); });
+  page.on('request', (r) => {
+    const u = r.url();
+    if (u.startsWith(srv.url) || u.startsWith('data:') || u.startsWith('blob:')) return;
+    // Firestore reads are the one expected outside request: plain GETs for a content document, no cookies
+    if (u.startsWith(FIRESTORE + '/v1/projects/') && r.method() === 'GET' && /\/documents\/content\/[a-z]+\?key=/.test(u)) return;
+    outside.push(u);
+  });
   await page.goto(srv.url + '/' + hash, { waitUntil: 'load' });
   await page.waitForFunction(() => document.documentElement.classList.contains('js'));
   await page.waitForTimeout(reducedMotion ? 600 : 3400);
@@ -65,7 +88,7 @@ async function finish(t, s, name) {
   const csp = await s.ev(() => window.__csp).catch(() => []);
   assert.deepEqual(csp, [], 'CSP violations');
   assert.deepEqual(s.errors, [], 'page errors');
-  assert.deepEqual(s.outside, [], 'requests to other hosts (firebase config is null)');
+  assert.deepEqual(s.outside, [], 'requests to other hosts (only Firestore content reads are allowed)');
   await s.ctx.close();
 }
 
@@ -90,8 +113,9 @@ for (const vp of VIEWPORTS) {
     // the announcement board stays out of the way while there is nothing to announce
     assert.equal(await s.ev(() => document.getElementById('info').hidden), true);
 
-    // ten channels; a Drive channel opens its panel with the right folder, Escape closes it
+    // ten channels, drawn once; a Drive channel opens its panel with the right folder, Escape closes it
     assert.equal(await s.ev(() => document.querySelectorAll('#rows .row-b').length), 10);
+    assert.equal(await s.ev(() => window.__rowsRemoved), 0, 'channel rows were not redrawn');
     await s.ev(() => document.querySelector('.row-b[data-id="praktikum"]').scrollIntoView({ block: 'center' }));
     await s.page.waitForTimeout(400);
     await s.page.click('.row-b[data-id="praktikum"]');

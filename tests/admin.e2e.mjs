@@ -10,6 +10,7 @@ import { mkdirSync } from 'node:fs';
 import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { createServer } from 'vite';
+import { firebaseConfig } from '../src/lib/firebase-config.js';
 
 let server = null;
 let BASE = process.env.ADMIN_URL;
@@ -59,15 +60,26 @@ async function nav(p, label) {
 }
 
 try {
-  /* ---- no config: setup guide ---- */
+  /* ---- setup guide (no config, or ?setup in dev) and the real sign-in screen ---- */
   for (const [w, h] of [[390, 844], [1280, 800]]) {
-    const p = await open(w, h, '');
+    const p = await open(w, h, firebaseConfig ? '?setup' : '');
     check(`setup guide shows (${w})`, (await text(p, 'h1')) === 'Firebase belum disambungkan');
     check(`setup guide has 7 steps (${w})`, (await p.locator('.steps li').count()) === 7);
     check(`setup no horizontal scroll (${w})`, await noOverflow(p));
     check(`setup loads no Firebase SDK (${w})`, !(await p.evaluate(() => performance.getEntriesByType('resource').some((r) => /backend-firebase|firebase_auth|firebase_firestore/.test(r.name)))));
     await shot(p, `setup-${w}`, true);
     await p.context().close();
+  }
+  if (firebaseConfig) {
+    for (const [w, h] of [[390, 844], [1280, 800]]) {
+      const p = await open(w, h, '');
+      check(`real sign-in shows (${w})`, (await text(p, 'h1')) === 'Masuk dulu');
+      check(`real sign-in offers Google (${w})`, await p.getByRole('button', { name: 'Masuk dengan Google' }).isVisible());
+      check(`real sign-in shows no error on first load (${w})`, (await p.locator('.err-text').first().innerText()).trim() === '');
+      check(`real sign-in no horizontal scroll (${w})`, await noOverflow(p));
+      await shot(p, `signin-real-${w}`, true);
+      await p.context().close();
+    }
   }
 
   /* ---- signed out, then sign in ---- */

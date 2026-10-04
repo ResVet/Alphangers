@@ -17,5 +17,7 @@ export function explain(e) {
   if (code === 'auth/unauthorized-domain') return 'Domain ini belum ada di Authorized domains (Firebase Auth > Settings).';
   if (code === 'auth/operation-not-allowed') return 'Login Google belum diaktifkan di Firebase Auth.';
   if (code === 'auth/user-disabled') return 'Akun ini dinonaktifkan di Firebase Auth.';
+  if (code === 'auth/web-storage-unsupported') return 'Browser ini memblokir data pihak ketiga (misalnya di jendela Incognito), jadi login Google tidak bisa jalan. Buka di jendela biasa, atau izinkan cookie pihak ketiga untuk situs ini.';
+  if (code === 'app/redirect-lost') return 'Login lewat halaman Google tidak selesai di browser ini. Izinkan pop-up untuk situs ini, lalu klik Masuk lagi.';
   return 'Ada yang gagal: ' + ((e && e.message) || String(e));
 }

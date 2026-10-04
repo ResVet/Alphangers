@@ -21,6 +21,8 @@ async function createBackend() {
     const { createMockBackend } = await import('./backend-mock.js');
     return createMockBackend(params);
   }
+  // Same dev-only gate: ?setup shows the guide a fresh clone sees before Firebase is set.
+  if ((import.meta.env.DEV || import.meta.env.MODE === 'mock') && params.has('setup')) return null;
   if (!firebaseConfig) return null;
   const { createFirebaseBackend } = await import('./backend-firebase.js');
   return createFirebaseBackend(firebaseConfig, appCheckSiteKey);
@@ -40,6 +42,17 @@ async function loadDocs(backend) {
   return Object.fromEntries(KEYS.map((k) => [k, docs[k]]));
 }
 
+function renderFailure(title, e) {
+  replace(
+    root,
+    h(
+      'main',
+      { id: 'main', class: 'gate' },
+      h('div', { class: 'gate-card' }, h('h1', null, title), h('p', { class: 'err-text' }, explain(e)), h('button', { type: 'button', class: 'btn', onclick: () => location.reload() }, 'Coba lagi')),
+    ),
+  );
+}
+
 async function boot() {
   let backend;
   try {
@@ -54,28 +67,38 @@ async function boot() {
   }
 
   renderLoading(root, 'Mengecek login…');
-  const redirectError = await backend.finishRedirect();
+  // Shown once, on the first sign-in screen; a later sign-out starts clean.
+  let redirectError = await backend.finishRedirect();
   let started = false;
+
+  const onAuthError = (e) => {
+    if (!started) renderFailure('Login gagal dicek', e);
+  };
 
   backend.onAuth(async (user) => {
     if (!user) {
       if (started) location.reload(); // signed out mid-session: start clean
-      else renderSignIn(root, backend, redirectError);
+      else {
+        renderSignIn(root, backend, redirectError);
+        redirectError = null;
+      }
       return;
     }
     if (started) return;
     renderLoading(root, 'Mengecek akses admin…');
     let admin = false;
     let reason = 'not-admin';
+    let error = null;
     try {
       if (!user.verified) reason = 'unverified';
       else if (user.provider !== 'google.com') reason = 'provider';
       else admin = await backend.isAdmin(user.uid);
-    } catch {
+    } catch (e) {
       reason = 'error';
+      error = e;
     }
     if (!admin) {
-      renderNotAdmin(root, backend, user, reason);
+      renderNotAdmin(root, backend, user, reason, error);
       return;
     }
     renderLoading(root, 'Memuat konten…');
@@ -85,16 +108,9 @@ async function boot() {
       const { startApp } = await import('./app.js');
       startApp(root, { backend, user, docs });
     } catch (e) {
-      replace(
-        root,
-        h(
-          'main',
-          { id: 'main', class: 'gate' },
-          h('div', { class: 'gate-card' }, h('h1', null, 'Konten gagal dimuat'), h('p', { class: 'err-text' }, explain(e)), h('button', { type: 'button', class: 'btn', onclick: () => location.reload() }, 'Coba lagi')),
-        ),
-      );
+      renderFailure('Konten gagal dimuat', e);
     }
-  });
+  }, onAuthError);
 }
 
 boot();

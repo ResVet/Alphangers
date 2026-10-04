@@ -71,6 +71,13 @@ Perintah terakhir memasang `firestore.rules` dan `firestore.indexes.json`. Index
 
 Setiap kali `firestore.rules` diubah, jalankan lagi `npx firebase deploy --only firestore`.
 
+**Tanpa terminal**, semuanya bisa dari console:
+
+1. **Firestore Database**, tab **Rules**: hapus isi kotak, tempel seluruh isi `firestore.rules` dari repo, klik **Publish**.
+2. Tab **Indexes**, **Create index**: Collection ID `history`, field `key` Ascending, field `at` Descending, scope Collection, klik **Create**.
+
+Dua pengecualian index untuk field `json` di `firestore.indexes.json` cuma menghemat penyimpanan. Tanpa itu pun semuanya jalan.
+
 ### 6. Izinkan domain situs untuk login
 
 1. **Build > Authentication**, tab **Settings**, bagian **Authorized domains**.
@@ -127,7 +134,12 @@ Kalau ada admin kedua, pastikan dia juga memakai akun Google dengan verifikasi d
 
 ## Kuota paket gratis
 
-Paket Spark memberi 50.000 baca dan 20.000 tulis dokumen per hari. Satu kunjungan portal membaca paling banyak lima dokumen (satu per jenis konten yang dibuka), jadi kuota baru habis di sekitar 10.000 kunjungan sehari. Kalau kuota habis, portal tidak rusak: dia memakai salinan terakhir di browser atau data bawaan, sampai kuota pulih keesokan harinya.
+Paket Spark memberi 50.000 baca dan 20.000 tulis dokumen per hari, ditambah transfer keluar 10 GiB per bulan.
+
+- **Baca.** Biasanya satu kunjungan membaca satu dokumen per jenis konten yang dibuka, jadi paling banyak lima, dan kuota baca baru habis di sekitar 10.000 kunjungan sehari. Pengecualiannya kunjungan pertama setelah admin menyimpan: untuk dokumen yang berubah, portal membaca dua kali (cek dulu, lalu unduh), jadi kunjungan itu bisa sampai sepuluh baca. Kunjungan berikutnya kembali satu baca per dokumen. Dokumen yang belum pernah disimpan dari admin tetap dihitung satu baca per kunjungan.
+- **Transfer.** Browser menyimpan salinan terakhir. Di kunjungan berikutnya portal cuma menanyakan apakah dokumennya berubah (beberapa ratus byte), dan baru mengunduh isinya kalau memang berubah. Unduhan penuh terjadi di kunjungan pertama dan setelah admin menyimpan. Data dosen sekitar 90 KB dan data jantung sekitar 115 KB, jadi 10 GiB cukup untuk puluhan ribu unduhan penuh sebulan.
+
+Kalau kuota habis, portal tidak rusak: dia memakai salinan terakhir di browser atau data bawaan. Kuota baca pulih tiap tengah malam waktu Pasifik (sekitar pukul 14.00 atau 15.00 WIB), kuota transfer di awal bulan berikutnya. Selama kuota habis, admin juga tidak bisa memuat atau menyimpan.
 
 ## Opsional: App Check
 
@@ -151,7 +163,7 @@ Penjaga utama tetap rules: hanya admin yang bisa menulis, dan isi yang dibaca po
 
 ## Opsional: login lewat domain sendiri
 
-Admin login memakai popup. Kalau popup diblokir, halaman pindah ke cara redirect. Cara redirect ini bisa gagal diam-diam di Safari, Firefox, dan browser lain yang memblokir storage pihak ketiga, karena halaman login ada di domain `firebaseapp.com`, bukan domain situs. Gejalanya: setelah memilih akun, kamu kembali ke halaman admin dalam keadaan belum login.
+Admin login memakai popup. Kalau popup diblokir, halaman pindah ke cara redirect. Cara redirect ini sering gagal di Safari, Firefox, Chrome, dan browser lain yang memblokir storage pihak ketiga, karena halaman login ada di domain `firebaseapp.com`, bukan domain situs. Gejalanya: setelah memilih akun, kamu kembali ke halaman admin dalam keadaan belum login, dengan pesan "Login lewat halaman Google tidak selesai di browser ini". Di jendela Incognito, popup pun bisa ditolak dengan pesan "Browser ini memblokir data pihak ketiga".
 
 Solusi termudah: izinkan popup untuk situs ini. Kalau mau benar-benar beres, sajikan halaman login dari domain situs sendiri:
 
@@ -178,9 +190,11 @@ Project ID yang diawali `demo-` membuat emulator tidak menyentuh project sungguh
 | Login: "Domain ini belum ada di Authorized domains" | Langkah 6 belum, atau domainnya salah ketik. |
 | Login: "Login Google belum diaktifkan" | Langkah 2 belum. |
 | Setelah login selalu "Belum bisa masuk" | Document ID di `admins` tidak sama persis dengan UID. Salin ulang dengan tombol **Salin UID**. |
-| "Status admin tidak bisa dicek" | Rules belum di-deploy (langkah 5). |
+| "Status admin tidak bisa dicek" | Rules belum di-deploy (langkah 5). Kalau pesannya "Gagal tersambung ke server", masalahnya koneksi, bukan rules. |
 | Simpan: "Server menolak" | Rules belum di-deploy, atau akun ini bukan admin lagi. |
 | Riwayat: "Index Firestore belum siap" | Tunggu beberapa menit setelah langkah 5. |
-| Setelah pilih akun Google, kembali ke admin tanpa login | Popup diblokir dan cara redirect gagal. Izinkan popup, atau lihat bagian login lewat domain sendiri. |
+| Login: "Login lewat halaman Google tidak selesai di browser ini" | Popup diblokir dan cara redirect gagal. Izinkan popup untuk situs ini lalu klik Masuk lagi, atau lihat bagian login lewat domain sendiri. |
+| Login: "Browser ini memblokir data pihak ketiga" | Biasanya jendela Incognito atau setelan blokir cookie pihak ketiga. Pakai jendela biasa, atau izinkan cookie pihak ketiga untuk situs ini. |
+| "Login gagal dicek" | Token login lama tidak bisa diperbarui, biasanya karena koneksi. Cek internet lalu klik **Coba lagi**. |
 | Admin jalan tapi portal tidak berubah | Buka console browser di portal. Pesan `[content] Could not fetch` dengan HTTP 403 biasanya berarti pembatasan API key (langkah 7) belum memuat domain situs. |
 | Portal tidak berubah, tanpa pesan apa pun | `firebase-config.js` masih `null` di versi yang ter-deploy. Cek Netlify sudah build commit terbaru. |

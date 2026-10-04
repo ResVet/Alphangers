@@ -64,7 +64,7 @@ export function renderSignIn(root, backend, error) {
   btn.focus();
 }
 
-export function renderNotAdmin(root, backend, user, reason) {
+export function renderNotAdmin(root, backend, user, reason, error = null) {
   const uidBox = h('input', { type: 'text', readOnly: true, value: user.uid, class: 'mono uid', id: 'uid-box' });
   const copyBtn = h('button', { type: 'button', class: 'btn' }, 'Salin UID');
   copyBtn.addEventListener('click', async () => {
@@ -77,7 +77,9 @@ export function renderNotAdmin(root, backend, user, reason) {
       : reason === 'provider'
         ? 'Admin harus masuk lewat Google.'
         : reason === 'error'
-          ? 'Status admin tidak bisa dicek. Pastikan rules Firestore sudah di-deploy.'
+          ? String(error?.code || '').endsWith('permission-denied')
+            ? 'Status admin tidak bisa dicek. Pastikan rules Firestore sudah di-deploy.'
+            : explain(error)
           : 'Akun ini belum terdaftar sebagai admin.';
   replace(
     root,

@@ -30,9 +30,28 @@ function quietLog() {
   return { calls, warn: (...a) => calls.warn.push(a.join(' ')), error: (...a) => calls.error.push(a.join(' ')) };
 }
 
-function firestoreDoc(data, rev = 3) {
-  return { fields: { json: { stringValue: JSON.stringify(data) }, rev: { integerValue: String(rev) } } };
+function firestoreDoc(data, rev = 3, updateTime = '2026-10-04T07:00:00.000000Z') {
+  return { fields: { json: { stringValue: JSON.stringify(data) }, rev: { integerValue: String(rev) } }, updateTime };
 }
+
+// What a GET with mask.fieldPaths=rev returns: no json, but the update time is still there.
+function firestoreHead(rev = 3, updateTime = '2026-10-04T07:00:00.000000Z') {
+  return { fields: { rev: { integerValue: String(rev) } }, updateTime };
+}
+
+// Answers each request from a list, in order, and records what was asked.
+function scriptedFetch(...answers) {
+  const calls = [];
+  const fetchImpl = async (url, opts) => {
+    calls.push({ url, opts });
+    return answers.shift() ?? new Promise(() => {});
+  };
+  return { fetchImpl, calls };
+}
+
+const T1 = '2026-10-04T07:00:00.000000Z';
+const T2 = '2026-10-05T08:30:00.000000Z';
+const cacheEntry = (data, updateTime, rev = 3) => JSON.stringify({ rev, json: JSON.stringify(data), updateTime });
 
 function respond(status, body) {
   return { status, ok: status >= 200 && status < 300, json: async () => body };
@@ -315,4 +334,126 @@ test('a config with a bad projectId is refused and makes no requests', async () 
   await tick();
   assert.equal(fetched, 0);
   assert.equal(log.calls.warn.length, 1);
+});
+
+test('first visit stores the update time with the cached copy', async () => {
+  const storage = memoryStorage();
+  const f = scriptedFetch(respond(200, firestoreDoc(newerLinks(), 7, T1)));
+  const store = createContentStore({ config: CONFIG, fetchImpl: f.fetchImpl, storage, bundled: BUNDLED, log: quietLog() });
+  await store.load('links');
+  await tick();
+  assert.equal(f.calls.length, 1);
+  assert.equal(JSON.parse(storage.get('alpha.c.v1.links')).updateTime, T1);
+});
+
+test('unchanged since the cached copy: one rev-only request, no download, no notification', async () => {
+  const storage = memoryStorage();
+  storage.set('alpha.c.v1.links', cacheEntry(newerLinks(), T1));
+  const f = scriptedFetch(respond(200, firestoreHead(3, T1)));
+  const store = createContentStore({ config: CONFIG, fetchImpl: f.fetchImpl, storage, bundled: BUNDLED, log: quietLog() });
+  const first = await store.load('links');
+  assert.equal(first.channels[0].url, 'https://drive.google.com/drive/folders/NEWER');
+  const got = [];
+  store.subscribe('links', (d) => got.push(d));
+  await tick();
+  await tick();
+  assert.equal(f.calls.length, 1, 'only the small check');
+  assert.match(f.calls[0].url, /mask\.fieldPaths=rev$/);
+  assert.doesNotMatch(f.calls[0].url, /fieldPaths=json/);
+  assert.equal(got.length, 0);
+  assert.equal(JSON.parse(storage.get('alpha.c.v1.links')).updateTime, T1);
+  // later loads in the same page use that copy without asking again
+  assert.equal((await store.load('links')).channels[0].url, 'https://drive.google.com/drive/folders/NEWER');
+  assert.equal(f.calls.length, 1);
+});
+
+test('changed since the cached copy: the full document is downloaded and delivered', async () => {
+  const storage = memoryStorage();
+  storage.set('alpha.c.v1.links', cacheEntry(read('links'), T1));
+  const newer = newerLinks();
+  const f = scriptedFetch(respond(200, firestoreHead(4, T2)), respond(200, firestoreDoc(newer, 4, T2)));
+  const store = createContentStore({ config: CONFIG, fetchImpl: f.fetchImpl, storage, bundled: BUNDLED, log: quietLog() });
+  await store.load('links');
+  const got = [];
+  store.subscribe('links', (d) => got.push(d));
+  await tick();
+  await tick();
+  assert.equal(f.calls.length, 2);
+  assert.match(f.calls[1].url, /mask\.fieldPaths=json&mask\.fieldPaths=rev$/);
+  assert.equal(got.length, 1);
+  assert.equal(got[0].channels[0].url, 'https://drive.google.com/drive/folders/NEWER');
+  const cached = JSON.parse(storage.get('alpha.c.v1.links'));
+  assert.equal(cached.updateTime, T2);
+  assert.equal(cached.rev, 4);
+});
+
+test('a cached copy from before update times were kept is downloaded in full once', async () => {
+  const storage = memoryStorage();
+  storage.set('alpha.c.v1.links', JSON.stringify({ rev: 2, json: JSON.stringify(newerLinks()) }));
+  const f = scriptedFetch(respond(200, firestoreDoc(newerLinks(), 2, T1)));
+  const store = createContentStore({ config: CONFIG, fetchImpl: f.fetchImpl, storage, bundled: BUNDLED, log: quietLog() });
+  await store.load('links');
+  await tick();
+  assert.equal(f.calls.length, 1);
+  assert.match(f.calls[0].url, /fieldPaths=json/);
+  assert.equal(JSON.parse(storage.get('alpha.c.v1.links')).updateTime, T1);
+});
+
+test('reset while a copy is cached: the rev check finds nothing, back to bundled', async () => {
+  const storage = memoryStorage();
+  storage.set('alpha.c.v1.links', cacheEntry(newerLinks(), T1));
+  const f = scriptedFetch(respond(404, { error: { code: 404 } }));
+  const store = createContentStore({ config: CONFIG, fetchImpl: f.fetchImpl, storage, bundled: BUNDLED, log: quietLog() });
+  await store.load('links');
+  const got = [];
+  store.subscribe('links', (d) => got.push(d));
+  await tick();
+  await tick();
+  assert.equal(f.calls.length, 1);
+  assert.equal(storage.get('alpha.c.v1.links'), null);
+  assert.equal(got.length, 1);
+  assert.deepEqual(got[0], read('links'));
+});
+
+test('a rev check without an update time falls back to the full download', async () => {
+  const storage = memoryStorage();
+  storage.set('alpha.c.v1.links', cacheEntry(read('links'), T1));
+  const f = scriptedFetch(respond(200, { fields: { rev: { integerValue: '3' } } }), respond(200, firestoreDoc(newerLinks(), 3, T2)));
+  const store = createContentStore({ config: CONFIG, fetchImpl: f.fetchImpl, storage, bundled: BUNDLED, log: quietLog() });
+  await store.load('links');
+  const got = [];
+  store.subscribe('links', (d) => got.push(d));
+  await tick();
+  await tick();
+  assert.equal(f.calls.length, 2);
+  assert.equal(got.length, 1);
+});
+
+test('a subscriber that names the copy it shows still gets a newer copy another caller already saw', async () => {
+  const f = deferredFetch();
+  const store = createContentStore({ config: CONFIG, fetchImpl: f.fetchImpl, storage: memoryStorage(), bundled: BUNDLED, log: quietLog() });
+  const shownByA = await store.load('links'); // section A renders the bundled copy, then waits for its module
+  f.answer(respond(200, firestoreDoc(newerLinks())));
+  await tick();
+  const shownByB = await store.load('links'); // section B loads after the remote copy landed
+  assert.equal(shownByB.channels[0].url, 'https://drive.google.com/drive/folders/NEWER');
+  const gotA = [];
+  const gotB = [];
+  store.subscribe('links', (d) => gotA.push(d), shownByA);
+  store.subscribe('links', (d) => gotB.push(d), shownByB);
+  await tick();
+  assert.equal(gotA.length, 1, 'A is behind and catches up');
+  assert.equal(gotB.length, 0, 'B already shows it');
+});
+
+test('subscribing after load with the shown copy: a remote copy equal to it changes nothing', async () => {
+  const f = deferredFetch();
+  const store = createContentStore({ config: CONFIG, fetchImpl: f.fetchImpl, storage: memoryStorage(), bundled: BUNDLED, log: quietLog() });
+  const shown = await store.load('links');
+  const got = [];
+  store.subscribe('links', (d) => got.push(d), shown);
+  f.answer(respond(404, { error: { code: 404 } }));
+  await tick();
+  await tick();
+  assert.equal(got.length, 0);
 });
