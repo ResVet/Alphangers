@@ -70,8 +70,10 @@ async function readDownload(page, click) {
   return { name: download.suggestedFilename(), body: readFileSync(await download.path(), 'utf8') };
 }
 
+// The list folds after a few rows and builds the rest only once it can be seen. Open it fully.
 async function dosenRendered(page) {
   await page.evaluate(() => document.querySelector('.dz').scrollIntoView());
+  await page.evaluate(() => { const b = document.querySelector('.dz-more:not([hidden]) .dz-more-b'); if (b) b.click(); });
   await page.waitForFunction(() => document.querySelectorAll('.dz-row').length === 476);
 }
 
@@ -401,17 +403,39 @@ describe('dosen', () => {
     assert.equal(await chip('[data-blok="b2"]').textContent(), 'Blok 2 12');
     const groupCounts = await page.$$eval('.dz-chips-spec .dz-chip-n', (els) => els.map((e) => +e.textContent));
     assert.equal(groupCounts.reduce((a, b) => a + b, 0), 476, 'every person is in exactly one specialty group');
-    await chip('[data-blok="b2"]').click();
-    assert.equal((await visibleRows(page)).length, 12);
-    assert.equal(await chip('[data-blok="b2"]').getAttribute('aria-pressed'), 'true');
-    assert.equal(await chip('[data-group="nondokter"]').textContent(), 'Non-dokter 6');
+    await chip('[data-blok="b1"]').click();
+    assert.equal((await visibleRows(page)).length, 18);
+    assert.equal(await chip('[data-blok="b1"]').getAttribute('aria-pressed'), 'true');
+    assert.equal(await chip('[data-group="nondokter"]').textContent(), 'Non-dokter 5');
     await chip('[data-group="nondokter"]').click();
-    assert.equal((await visibleRows(page)).length, 6);
-    await chip('[data-blok="b3"]').click();
-    assert.equal((await visibleRows(page)).length, 12, 'blok chips combine with OR');
+    assert.equal((await visibleRows(page)).length, 5, 'blok 1 and non-dokter: only people with both tags');
+    assert.equal(await chip('[data-blok="b2"]').textContent(), 'Blok 2 2', 'the count says what adding the chip leaves');
+    await chip('[data-blok="b2"]').click();
+    assert.deepEqual((await visibleRows(page)).sort(), ['Catherine Dwi Augusthi Putri, SKM., M.KM', 'Drs. Sadakata Sinulingga, Apt., M.Kes'], 'blok chips combine with AND');
+    assert.match(await text(page, '.dz-active'), /Blok 1 dan Blok 2.*Non-dokter/);
+    await chip('[data-group="dokter"]').click();
+    assert.equal(await chip('[data-group="nondokter"]').getAttribute('aria-pressed'), 'false', 'one specialty at a time');
+    assert.equal((await visibleRows(page)).length, 3);
+    assert.equal(await chip('[data-blok="b3"]').isDisabled(), true, 'nobody teaches in all three bloks, so the chip is off');
     await page.click('.dz-clear');
     assert.equal((await visibleRows(page)).length, 476);
     assert.equal(await page.isHidden('.dz-clear'), true);
+    await context.close();
+  });
+
+  test('the full list folds back with Ringkas', async () => {
+    const { page, context } = await open('/dev/dosen.html', { reducedMotion: 'reduce' });
+    await page.evaluate(() => document.querySelector('.dz').scrollIntoView());
+    assert.equal(await page.isVisible('.dz-more-b'), true);
+    assert.ok((await page.locator('.dz-row').count()) < 476, 'rows past the fold are not built yet');
+    await page.click('.dz-more-b');
+    await page.waitForFunction(() => document.querySelectorAll('.dz-row').length === 476);
+    assert.equal(await page.isVisible('.dz-less-b'), true);
+    await page.evaluate(() => document.querySelector('.dz-less-b').scrollIntoView());
+    await page.click('.dz-less-b');
+    assert.equal(await page.evaluate(() => document.querySelector('.dz').classList.contains('dz-folded')), true);
+    const tools = await page.locator('.dz-tools').boundingBox();
+    assert.ok(tools.y > -10 && tools.y < 400, 'back at the search box');
     await context.close();
   });
 

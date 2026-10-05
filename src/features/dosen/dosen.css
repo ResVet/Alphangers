@@ -110,14 +110,32 @@
 .dz-empty-t em{font-family:var(--ser);font-style:italic;font-weight:400;color:var(--grx);letter-spacing:0}
 .dz-empty-s{margin-top:8px;color:var(--mut)}
 
-/* sticks to the bottom edge while the list is on screen, once the search box has scrolled away */
-.dz-jump{position:sticky;bottom:calc(16px + env(safe-area-inset-bottom));z-index:3;display:flex;align-items:center;width:max-content;min-height:46px;
-  margin:18px 0 0 auto;padding:0 20px;border-radius:999px;background:var(--ink);color:#07100a;
-  font-family:var(--disp);font-weight:700;font-size:12.5px;letter-spacing:.12em;text-transform:uppercase;
-  box-shadow:0 14px 34px -12px rgba(0,0,0,.8);visibility:hidden;opacity:0;translate:0 10px;
-  transition:opacity .3s,translate .4s var(--eo),visibility 0s linear .4s,background-color .2s}
-.dz.dz-far .dz-jump{visibility:visible;opacity:1;translate:0 0;transition:opacity .3s,translate .4s var(--eo),visibility 0s,background-color .2s}
-@media (hover:hover) and (pointer:fine){.dz-jump:hover{background:var(--grx)}}
+/* the dock sticks to the bottom edge while the list is on screen and the search box has scrolled away */
+.dz-dock{position:sticky;bottom:calc(16px + env(safe-area-inset-bottom));z-index:3;display:flex;flex-wrap:wrap;justify-content:flex-end;gap:8px;max-width:100%;margin-top:18px;
+  pointer-events:none;visibility:hidden;opacity:0;translate:0 10px;transition:opacity .3s,translate .4s var(--eo),visibility 0s linear .4s}
+.dz.dz-far .dz-dock{visibility:visible;opacity:1;translate:0 0;transition:opacity .3s,translate .4s var(--eo),visibility 0s}
+.dz-dock>*{pointer-events:auto}
+.dz-jump,.dz-dock-b{display:inline-flex;align-items:center;gap:8px;min-height:46px;padding:0 18px;border-radius:999px;
+  font-family:var(--disp);font-weight:700;font-size:12.5px;letter-spacing:.12em;text-transform:uppercase;white-space:nowrap;
+  box-shadow:0 14px 34px -12px rgba(0,0,0,.8);transition:background-color .2s,color .2s,border-color .2s}
+.dz-jump{background:var(--ink);color:#07100a}
+.dz-dock-b{background:rgba(7,13,8,.92);color:var(--ink);border:1px solid var(--line2)}
+.dz-dock-b[data-less]{display:none}
+.dz.dz-open .dz-dock-b[data-less]{display:inline-flex}
+@media (hover:hover) and (pointer:fine){.dz-jump:hover{background:var(--grx)}.dz-dock-b:hover{border-color:var(--grx);color:var(--grx)}}
+@container dz (max-width:479.98px){.dz-dock{justify-content:center;gap:6px}.dz-jump,.dz-dock-b{min-height:42px;padding:0 12px;font-size:11px;letter-spacing:.06em}}
+.dz-end{display:block;height:1px}
+
+/* fold back, under an expanded list */
+.dz-less{display:flex;justify-content:center;margin-top:22px}
+.dz-less[hidden],.dz-active[hidden]{display:none}
+.dz-less-b{min-height:48px;padding:0 24px;border:1px solid var(--line2);border-radius:999px;font-family:var(--mono);font-size:11px;letter-spacing:.18em;
+  text-transform:uppercase;color:var(--ink);transition:border-color .2s,color .2s}
+@media (hover:hover) and (pointer:fine){.dz-less-b:hover{border-color:var(--grx);color:var(--grx)}}
+
+/* what the filters narrowed the list to, in words */
+.dz-active{margin-top:clamp(16px,2.6cqi,24px);font-family:var(--mono);font-size:11px;letter-spacing:.14em;text-transform:uppercase;color:var(--grx)}
+.dz-active + .dz-list{margin-top:10px}
 
 /* detail dialog */
 .dz-dlg{width:min(680px,calc(100vw - 48px));max-width:none;max-height:min(88dvh,920px);margin:auto;padding:0;overflow:hidden;

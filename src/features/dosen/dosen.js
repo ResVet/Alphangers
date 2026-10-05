@@ -6,6 +6,7 @@ import { esc, phonesHTML, bindCopy, makeAnnouncer, prefersReducedMotion, makeClo
 
 const CHUNK = 60;
 const FOLD_MIN = 6; // rows visible above the fold before "Lihat semua"
+const FOLD_FILTERED = 30; // a filtered result up to this size shows in full
 let mounts = 0;
 
 // 33 specialty labels in the data, folded into groups a student would filter by.
@@ -108,7 +109,9 @@ export function mountDosen(root, { schedule, dosen, now } = {}) {
   let byId = new Map(people.map((x) => [x.id, x]));
   let knownCodes = new Set(people.flatMap((x) => [...x.codeSet]));
 
-  const filter = { q: { kind: 'all' }, bloks: new Set(), groups: new Set() };
+  // Filters are strict: a lecturer shows only when every selected tag applies. Every chosen blok
+  // must be one they teach in, and specialty is one choice at a time (a person has exactly one).
+  const filter = { q: { kind: 'all' }, bloks: new Set(), group: null };
   const rows = new Map();
   let rendered = 0;
   let renderHandle = 0;
@@ -120,7 +123,10 @@ export function mountDosen(root, { schedule, dosen, now } = {}) {
   let inputFrame = 0;
   // The full list is a few hundred rows. Until someone searches, filters, jumps to a letter or
   // asks for everything, only the top of it shows, so the sections below stay within reach.
+  // "Ringkas" folds it back, from the button under the list or the bar that follows the reader.
   let expanded = false;
+  // Rows past the first slice are built only once they can be seen: expanded, filtered or searched.
+  let wantAll = false;
 
   root.classList.add('dz');
   root.innerHTML = shellHTML(uid);
@@ -138,7 +144,11 @@ export function mountDosen(root, { schedule, dosen, now } = {}) {
     empty: $('.dz-empty'),
     more: $('.dz-more'),
     moreB: $('.dz-more-b'),
+    less: $('.dz-less'),
     jump: $('.dz-jump'),
+    dock: $('.dz-dock'),
+    active: $('.dz-active'),
+    end: $('.dz-end'),
     dlg: $('.dz-dlg'),
     dlgBody: $('.dz-dlg-in'),
     live: $('.dz-live'),
@@ -197,7 +207,7 @@ export function mountDosen(root, { schedule, dosen, now } = {}) {
       el.list.querySelector('.dz-g[data-letter="' + L + '"] .dz-rows')?.append(tpl.content);
     }
     rendered = end;
-    if (rendered < people.length) renderHandle = idle(renderChunk);
+    if (rendered < people.length && wantAll) renderHandle = idle(renderChunk);
   }
 
   function flushRender() {
@@ -210,17 +220,30 @@ export function mountDosen(root, { schedule, dosen, now } = {}) {
   }
 
   function startRender() {
-    if (started) return;
-    started = true;
-    renderChunk();
+    if (!started) {
+      started = true;
+      renderChunk();
+    }
+  }
+
+  /** The rest of the rows, in idle slices, once more than the folded top can be seen. */
+  function renderRest() {
+    startRender();
+    if (wantAll) return;
+    wantAll = true;
+    if (rendered < people.length && !renderHandle) renderHandle = idle(renderChunk);
   }
 
   // ---------- filtering ----------
 
   function isVisible(x) {
-    if (filter.bloks.size && ![...filter.bloks].some((b) => x.bloks.has(b))) return false;
-    if (filter.groups.size && !filter.groups.has(x.group.id)) return false;
+    for (const b of filter.bloks) if (!x.bloks.has(b)) return false;
+    if (filter.group && x.group.id !== filter.group) return false;
     return matchesQuery(x, filter.q);
+  }
+
+  function isActive() {
+    return filter.q.kind !== 'all' || filter.bloks.size > 0 || !!filter.group;
   }
 
   function applyFilter() {
@@ -238,32 +261,53 @@ export function mountDosen(root, { schedule, dosen, now } = {}) {
     for (const g of el.list.children) g.hidden = !perLetter.get(g.dataset.letter);
     for (const b of el.az.children) b.disabled = !perLetter.get(b.dataset.letter);
     el.empty.hidden = shown > 0;
-    const active = filter.q.kind !== 'all' || filter.bloks.size || filter.groups.size;
+    const active = isActive();
+    if (active) renderRest();
     el.clear.hidden = !active;
     el.count.textContent = active ? shown + ' dari ' + people.length + ' dosen' : people.length + ' dosen';
-    const folded = !expanded && !active && shown > FOLD_MIN;
+    el.active.textContent = activeLabel();
+    el.active.hidden = !el.active.textContent;
+    const folded = !expanded && shown > (active ? FOLD_FILTERED : FOLD_MIN);
     root.classList.toggle('dz-folded', folded);
+    root.classList.toggle('dz-open', expanded && shown > FOLD_MIN);
     el.more.hidden = !folded;
+    el.less.hidden = !(expanded && shown > FOLD_MIN);
     if (folded) el.moreB.textContent = 'Lihat semua ' + shown + ' dosen';
     renderChips();
     clearTimeout(countTimer);
     if (active) countTimer = setTimeout(() => announce(shown ? shown + ' dosen ketemu.' : 'Nggak ketemu.'), 700);
   }
 
-  /** Chip counts are facets: each one says how many you would see if you added it. */
+  /** "Blok 1 + Blok 2 · Non-dokter": what the list is narrowed to, in words. */
+  function activeLabel() {
+    const parts = [...filter.bloks].map((b) => model.blokById(b)?.name || b);
+    const g = filter.group && SPEC_GROUPS.find((x) => x.id === filter.group);
+    const words = [];
+    if (parts.length) words.push('ngajar di ' + parts.join(' dan '));
+    if (g) words.push(g.label);
+    return words.length ? 'Cuma yang ' + words.join(', spesialis ') : '';
+  }
+
+  /**
+   * Chip counts say what you would get after pressing the chip. A blok chip adds that blok to the
+   * ones already chosen (everyone left must teach in all of them); a specialty chip replaces the
+   * current specialty. A pressed chip shows the size of the current result.
+   */
   function renderChips() {
-    const base = (x, skip) => {
-      if (skip !== 'bloks' && filter.bloks.size && ![...filter.bloks].some((b) => x.bloks.has(b))) return false;
-      if (skip !== 'groups' && filter.groups.size && !filter.groups.has(x.group.id)) return false;
-      return matchesQuery(x, filter.q);
+    const withBloks = (x, bloks) => {
+      for (const b of bloks) if (!x.bloks.has(b)) return false;
+      return true;
     };
+    const visibleQ = people.filter((x) => matchesQuery(x, filter.q));
     el.blokChips.innerHTML = model.bloks.map((b) => {
-      const n = people.reduce((s, x) => s + (x.bloks.has(b.id) && base(x, 'bloks') ? 1 : 0), 0);
-      return chipHTML('blok', b.id, b.name, n, filter.bloks.has(b.id));
+      const on = filter.bloks.has(b.id);
+      const bloks = on ? filter.bloks : new Set([...filter.bloks, b.id]);
+      const n = visibleQ.reduce((s, x) => s + (withBloks(x, bloks) && (!filter.group || x.group.id === filter.group) ? 1 : 0), 0);
+      return chipHTML('blok', b.id, b.name, n, on);
     }).join('');
     el.groupChips.innerHTML = SPEC_GROUPS.map((g) => {
-      const n = people.reduce((s, x) => s + (x.group === g && base(x, 'groups') ? 1 : 0), 0);
-      return chipHTML('group', g.id, g.label, n, filter.groups.has(g.id));
+      const n = visibleQ.reduce((s, x) => s + (x.group === g && withBloks(x, filter.bloks) ? 1 : 0), 0);
+      return chipHTML('group', g.id, g.label, n, filter.group === g.id);
     }).join('');
   }
 
@@ -276,7 +320,7 @@ export function mountDosen(root, { schedule, dosen, now } = {}) {
     cancelAnimationFrame(inputFrame);
     inputFrame = 0;
     filter.bloks.clear();
-    filter.groups.clear();
+    filter.group = null;
     filter.q = { kind: 'all' };
     el.q.value = '';
     applyFilter();
@@ -305,10 +349,22 @@ export function mountDosen(root, { schedule, dosen, now } = {}) {
 
   /** Opens a person's detail. Focus goes back to `from` on close, else to whatever had focus, else their row. */
   function expand() {
+    renderRest();
     if (expanded) return;
     expanded = true;
-    root.classList.remove('dz-folded');
-    el.more.hidden = true;
+    applyFilter();
+  }
+
+  /** Folds the list back and puts the reader at its top, where the search box is. */
+  function collapse() {
+    if (!expanded) return;
+    expanded = false;
+    applyFilter();
+    const top = el.tools.getBoundingClientRect().top + window.scrollY;
+    const bar = parseFloat(getComputedStyle(root).getPropertyValue('--dz-top')) || 64;
+    window.scrollTo({ top: Math.max(0, top - bar - 12), behavior: 'auto' });
+    el.moreB.focus({ preventScroll: true });
+    announce('Daftar diringkas.');
   }
 
   function onListFocus(event) {
@@ -407,10 +463,13 @@ export function mountDosen(root, { schedule, dosen, now } = {}) {
     }
     const chip = t.closest('.dz-chip');
     if (chip) {
-      const set = chip.dataset.blok ? filter.bloks : filter.groups;
       const id = chip.dataset.blok || chip.dataset.group;
-      if (set.has(id)) set.delete(id);
-      else set.add(id);
+      if (chip.dataset.blok) {
+        if (filter.bloks.has(id)) filter.bloks.delete(id);
+        else filter.bloks.add(id);
+      } else {
+        filter.group = filter.group === id ? null : id;
+      }
       startRender();
       applyFilter();
       root.querySelector('.dz-chip[data-' + (chip.dataset.blok ? 'blok' : 'group') + '="' + CSS.escape(id) + '"]')?.focus();
@@ -428,11 +487,21 @@ export function mountDosen(root, { schedule, dosen, now } = {}) {
       next?.focus({ preventScroll: true });
       return;
     }
+    if (t.closest('[data-less]')) {
+      collapse();
+      return;
+    }
     const letter = t.closest('.dz-az-b');
     if (letter) return jumpTo(letter.dataset.letter);
     if (t.closest('.dz-jump')) {
       el.tools.scrollIntoView({ behavior: prefersReducedMotion() ? 'auto' : 'smooth', block: 'start' });
       el.q.focus({ preventScroll: true });
+      return;
+    }
+    if (t.closest('[data-skip]')) {
+      // past the list to whatever section follows it
+      const next = root.closest('section')?.nextElementSibling;
+      if (next) next.scrollIntoView({ behavior: prefersReducedMotion() ? 'auto' : 'smooth', block: 'start' });
     }
   }
 
@@ -477,10 +546,18 @@ export function mountDosen(root, { schedule, dosen, now } = {}) {
       }
     }, { rootMargin: '1500px 0px' });
     io.observe(root);
-    toolsIo = new IntersectionObserver(([e]) => {
-      root.classList.toggle('dz-far', !e.isIntersecting && e.boundingClientRect.top < 0);
+    // the dock shows while the search box is above the screen and the list end is below it
+    let toolsAbove = false, endBelow = true;
+    const dock = () => root.classList.toggle('dz-far', toolsAbove && endBelow);
+    toolsIo = new IntersectionObserver((entries) => {
+      for (const e of entries) {
+        if (e.target === el.tools) toolsAbove = !e.isIntersecting && e.boundingClientRect.top < 0;
+        else endBelow = !e.isIntersecting && e.boundingClientRect.top > 0;
+      }
+      dock();
     });
     toolsIo.observe(el.tools);
+    toolsIo.observe(el.end);
   } else {
     startRender();
   }
@@ -546,7 +623,7 @@ function cancelIdle(handle) {
 function shellHTML(uid) {
   return '<div class="dz-in">' +
     '<header class="dz-head">' +
-      '<h2 class="dz-h" id="' + uid + '-h">dosennya <em>siapa?</em></h2>' +
+      '<h2 class="dz-h" id="' + uid + '-h"><span data-k="dosen.h1">dosennya</span> <em data-k="dosen.h2">siapa?</em></h2>' +
       '<p class="dz-count"></p>' +
     '</header>' +
     '<div class="dz-tools">' +
@@ -561,10 +638,17 @@ function shellHTML(uid) {
         '<button type="button" class="dz-clear" hidden>Hapus filter</button>' +
       '</div>' +
     '</div>' +
+    '<p class="dz-active" hidden></p>' +
     '<div class="dz-list"></div>' +
     '<div class="dz-more" hidden><button type="button" class="dz-more-b"></button></div>' +
+    '<div class="dz-less" hidden><button type="button" class="dz-less-b" data-less>Ringkas daftar <span aria-hidden="true">↑</span></button></div>' +
     '<div class="dz-empty" hidden><p class="dz-empty-t">Nggak <em>ketemu.</em></p><p class="dz-empty-s">Coba kata lain, atau hapus filternya.</p></div>' +
-    '<button type="button" class="dz-jump">Cari dosen</button>' +
+    '<i class="dz-end" aria-hidden="true"></i>' +
+    '<div class="dz-dock" role="group" aria-label="Pintasan daftar dosen">' +
+      '<button type="button" class="dz-jump">Cari dosen</button>' +
+      '<button type="button" class="dz-dock-b" data-less>Ringkas</button>' +
+      '<button type="button" class="dz-dock-b" data-skip>Lewati daftar <span aria-hidden="true">↓</span></button>' +
+    '</div>' +
     '<dialog class="dz-dlg" aria-labelledby="' + uid + '-dn"><div class="dz-dlg-in"></div></dialog>' +
     '<p class="dz-live dz-sr" aria-live="polite"></p>' +
   '</div>';
