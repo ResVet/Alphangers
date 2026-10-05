@@ -97,6 +97,7 @@ export function describe(session) {
   const lines = [session.kindLabel + ', ' + blok.name + (blok.title ? ' (' + blok.title + ')' : '')];
   const who = lecturerLine(session);
   if (who) lines.push(who);
+  if (session.cancelled) lines.push('Sesi ini dibatalkan' + (session.cancelReason ? ': ' + session.cancelReason : '.'));
   if (session.note) lines.push('Catatan: ' + session.note);
   if (session.openEnd) {
     lines.push('Di jadwal tertulis ' + formatTime(session.start) + ' sampai selesai. Di kalender dibuat ' + OPEN_END_MINUTES / 60 + ' jam.');
@@ -112,7 +113,9 @@ function eventLines(session, stamp) {
     'DTSTAMP:' + utcStamp(stamp),
     'DTSTART;TZID=' + TZID + ':' + localStamp(session.date, session.start),
     'DTEND;TZID=' + TZID + ':' + localStamp(session.date, endTime(session)),
-    'SUMMARY:' + escapeText(session.title),
+    'SUMMARY:' + escapeText((session.cancelled ? 'DIBATALKAN: ' : '') + session.title),
+    // calendar apps show a cancelled event struck through instead of dropping it
+    session.cancelled ? 'STATUS:CANCELLED' : null,
     session.blok.loc ? 'LOCATION:' + escapeText(session.blok.loc) : null,
     'DESCRIPTION:' + escapeText(describe(session)),
     'CATEGORIES:' + escapeText(session.kindLabel),

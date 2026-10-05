@@ -159,6 +159,7 @@ export function mountJadwal(root, { schedule, dosen, now } = {}) {
   function chipHTML(d) {
     const info = model.dayInfo(d);
     const n = info.sessions.length;
+    const allOff = n > 0 && info.sessions.every((s) => s.cancelled);
     const w = weekdayOf(d);
     const { m, d: day } = parseISO(d);
     const exam = info.sessions.some((s) => s.kind === 'ujian');
@@ -167,8 +168,9 @@ export function mountJadwal(root, { schedule, dosen, now } = {}) {
     if (exam) cls.push('exam');
     if (w === 0 || w === 6) cls.push('wkend');
     if (w === 0) cls.push('sun');
+    if (allOff) cls.push('off');
     if (d === state.today) cls.push('today');
-    const sr = DAYS[w] + ', ' + day + ' ' + MONTHS[m - 1] + (n ? ', ' + n + ' sesi' : info.libur ? ', libur' : ', kosong') +
+    const sr = DAYS[w] + ', ' + day + ' ' + MONTHS[m - 1] + (n ? ', ' + n + ' sesi' + (allOff ? ', semua dibatalkan' : '') : info.libur ? ', libur' : ', kosong') +
       (exam ? ', ada ujian' : '') + (d === state.today ? ', hari ini' : '');
     return '<button type="button" class="' + cls.join(' ') + '" data-date="' + d + '" aria-pressed="false" tabindex="-1">' +
       '<span class="jw-chip-w" aria-hidden="true">' + DAYS_SHORT[w] + '</span>' +
@@ -230,7 +232,9 @@ export function mountJadwal(root, { schedule, dosen, now } = {}) {
     if (info.sessions.length) {
       const first = info.sessions[0];
       const last = info.sessions[info.sessions.length - 1];
-      el.sum.textContent = info.sessions.length + ' sesi, ' + formatTime(first.start) + ' - ' + (last.end ? formatTime(last.end) : 'selesai');
+      const off = info.sessions.filter((x) => x.cancelled).length;
+      el.sum.textContent = info.sessions.length + ' sesi, ' + formatTime(first.start) + ' - ' + (last.end ? formatTime(last.end) : 'selesai') +
+        (off ? (off === info.sessions.length ? ', semua dibatalkan' : ', ' + off + ' dibatalkan') : '');
       el.list.innerHTML = '<ol class="jw-tl">' + info.sessions.map((s, i) => sessionHTML(s, i)).join('') + '</ol>';
     } else {
       el.sum.textContent = '';
@@ -251,14 +255,16 @@ export function mountJadwal(root, { schedule, dosen, now } = {}) {
 
   function sessionHTML(s, i) {
     const menuId = uid + '-add-' + i;
-    return '<li class="jw-s" data-uid="' + esc(s.uid) + '" data-kind="' + esc(s.kind) + '" style="--i:' + i + '">' +
+    const ref = s.ref.blokId + '|' + s.ref.date + '|' + s.ref.index;
+    return '<li class="jw-s' + (s.cancelled ? ' is-batal' : '') + '" data-uid="' + esc(s.uid) + '" data-ref="' + esc(ref) + '" data-kind="' + esc(s.kind) + '" style="--i:' + i + '">' +
       '<div class="jw-s-time"><span class="jw-s-from">' + formatTime(s.start) + '</span>' +
         '<span class="jw-s-to"><span class="jw-sr">sampai </span>' + (s.end ? formatTime(s.end) : 'selesai') + '</span></div>' +
       '<div class="jw-s-body">' +
-        '<p class="jw-s-meta"><span class="jw-kind">' + esc(s.kindLabel) + '</span>' +
+        '<p class="jw-s-meta">' + (s.cancelled ? '<span class="jw-batal">Dibatalkan</span>' : '') + '<span class="jw-kind">' + esc(s.kindLabel) + '</span>' +
           (s.blok.loc ? '<span class="jw-loc">' + esc(s.blok.loc) + '</span>' : '') +
           '<span class="jw-now-tag">lagi jalan</span></p>' +
         '<h4 class="jw-s-t">' + esc(s.title) + '</h4>' +
+        (s.cancelled && s.cancelReason ? '<p class="jw-s-why">' + esc(s.cancelReason) + '</p>' : '') +
         (s.note ? '<p class="jw-s-note">' + esc(s.note) + '</p>' : '') +
         peopleHTML(s) +
         '<div class="jw-s-add">' +
@@ -268,7 +274,17 @@ export function mountJadwal(root, { schedule, dosen, now } = {}) {
             '<button type="button" class="jw-mini" data-ics="session" data-uid="' + esc(s.uid) + '">File .ics</button>' +
           '</span>' +
         '</div>' +
-      '</div></li>';
+      '</div>' +
+      (s.cancelled ? slashHTML() : '') +
+      '</li>';
+  }
+
+  // The red tape across a cancelled session. Purely decorative; the "Dibatalkan" tag says it in words.
+  function slashHTML() {
+    const run = '<span>Dibatalkan</span><i></i>'.repeat(6);
+    return '<div class="jw-x" aria-hidden="true"><div class="jw-x-tilt"><div class="jw-x-bar">' +
+      '<div class="jw-x-face"><div class="jw-x-run">' + run + run + '</div></div>' +
+      '<div class="jw-x-edge"></div></div></div></div>';
   }
 
   function peopleHTML(s) {
@@ -328,6 +344,7 @@ export function mountJadwal(root, { schedule, dosen, now } = {}) {
     for (const li of el.list.querySelectorAll('.jw-s')) {
       const s = sessionByUid(li.dataset.uid);
       if (!s) continue;
+      if (s.cancelled) continue;
       li.classList.toggle('is-now', isToday && s.startAt <= t && t < s.endAt);
       li.classList.toggle('is-past', isToday && t >= s.endAt);
     }
@@ -743,6 +760,34 @@ export function mountJadwal(root, { schedule, dosen, now } = {}) {
     io.observe(root);
   }
 
+  // The tape leans toward the pointer. One listener for the whole list, one style write per frame.
+  let tiltFrame = 0, tiltLi = null, tiltX = 0, tiltY = 0;
+  function onSlashMove(e) {
+    const li = e.target.closest?.('.jw-s.is-batal');
+    if (li !== tiltLi) {
+      if (tiltLi) tiltLi.style.removeProperty('--tx'), tiltLi.style.removeProperty('--ty');
+      tiltLi = li;
+    }
+    if (!li) return;
+    const r = li.getBoundingClientRect();
+    tiltX = ((e.clientX - r.left) / r.width) * 2 - 1;
+    tiltY = ((e.clientY - r.top) / r.height) * 2 - 1;
+    if (!tiltFrame) tiltFrame = requestAnimationFrame(() => {
+      tiltFrame = 0;
+      if (!tiltLi) return;
+      tiltLi.style.setProperty('--tx', tiltX.toFixed(3));
+      tiltLi.style.setProperty('--ty', tiltY.toFixed(3));
+    });
+  }
+  function onSlashLeave() {
+    if (tiltLi) tiltLi.style.removeProperty('--tx'), tiltLi.style.removeProperty('--ty');
+    tiltLi = null;
+  }
+  if (matchMedia('(hover: hover) and (pointer: fine)').matches && !prefersReducedMotion()) {
+    el.list.addEventListener('pointermove', onSlashMove, { passive: true });
+    el.list.addEventListener('pointerleave', onSlashLeave);
+  }
+
   root.addEventListener('click', onClick);
   el.strip.addEventListener('keydown', onStripKey);
   el.list.addEventListener('touchstart', onTouchStart, { passive: true });
@@ -778,6 +823,10 @@ export function mountJadwal(root, { schedule, dosen, now } = {}) {
     go(date) {
       goDate(date);
     },
+    /** The date on screen and today's, for the live editor. */
+    current() {
+      return { date: state.date, today: state.today };
+    },
     destroy() {
       clearTimeout(tickTimer);
       clearTimeout(flashTimer);
@@ -801,7 +850,7 @@ function shellHTML(uid) {
   const weekdays = [1, 2, 3, 4, 5, 6, 0].map((w) => '<th scope="col" abbr="' + DAYS[w] + '">' + DAYS_SHORT[w] + '</th>').join('');
   return '<div class="jw-in">' +
     '<header class="jw-head">' +
-      '<h2 class="jw-h" id="' + uid + '-h">hari ini <em>kuliah apa?</em></h2>' +
+      '<h2 class="jw-h" id="' + uid + '-h"><span data-k="jadwal.h1">hari ini</span> <em data-k="jadwal.h2">kuliah apa?</em></h2>' +
       '<div class="jw-bloks" role="group" aria-label="Pilih blok"></div>' +
     '</header>' +
     '<div class="jw-grid">' +

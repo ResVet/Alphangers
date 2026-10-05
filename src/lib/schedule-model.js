@@ -246,7 +246,7 @@ function resolveLecturers(codes, blok, dosenById) {
   });
 }
 
-function resolveSession(raw, blok, date, dosenById) {
+function resolveSession(raw, blok, date, dosenById, index = 0) {
   const start = typeof raw.s === 'string' && raw.s ? raw.s : '00:00';
   const end = typeof raw.e === 'string' && raw.e ? raw.e : null;
   const startAt = wibToMs(date, start);
@@ -269,13 +269,18 @@ function resolveSession(raw, blok, date, dosenById) {
     note: raw.n ? String(raw.n) : '',
     pj: !!raw.pj,
     tim: !!raw.tim,
+    // still listed, struck through on the page, skipped by "now / next" and the exam countdown
+    cancelled: !!raw.batal,
+    cancelReason: raw.batal && raw.alasan ? String(raw.alasan) : '',
     lecturers: resolveLecturers(raw.dz, blok, dosenById),
+    // where the session sits in the schedule document, for the live editor
+    ref: { blokId: blok.id, date, index },
   };
 }
 
 function sessionHaystack(s) {
   const people = s.lecturers.map((l) => (l.dosen ? l.dosen.name : '') + ' ' + l.code).join(' ');
-  return compact([s.title, s.kindLabel, s.note, people, s.blok.name, s.tim ? 'tim' : ''].join('|'));
+  return compact([s.title, s.kindLabel, s.note, people, s.blok.name, s.tim ? 'tim' : '', s.cancelled ? 'batal dibatalkan' : ''].join('|'));
 }
 
 /**
@@ -311,9 +316,11 @@ export function createModel(schedule, dosenData) {
       if (!day || !isISODate(day.d)) continue;
       const info = days.get(day.d) || { date: day.d, blok, libur: '', sessions: [] };
       if (day.libur) info.libur = String(day.libur);
-      for (const raw of Array.isArray(day.s) ? day.s : []) {
+      const list = Array.isArray(day.s) ? day.s : [];
+      for (let i = 0; i < list.length; i++) {
+        const raw = list[i];
         if (!raw) continue;
-        const s = resolveSession(raw, blok, day.d, dosenById);
+        const s = resolveSession(raw, blok, day.d, dosenById, i);
         // built from what the session is, not where it sits in the file, so a rebuilt
         // schedule keeps the same UID and calendar apps update the event instead of duplicating it
         const base = 'alpha-' + blok.id + '-' + day.d.replaceAll('-', '') + 't' + s.start.replace(':', '') + '-' + hashString(s.title);
@@ -395,6 +402,7 @@ export function createModel(schedule, dosenData) {
     const running = [];
     let next = null;
     for (const s of sessions) {
+      if (s.cancelled) continue;
       if (s.startAt <= t && t < s.endAt) running.push(s);
       else if (s.startAt > t) {
         next = s;
@@ -407,7 +415,7 @@ export function createModel(schedule, dosenData) {
   /** The first exam that has not finished yet, optionally within one blok. */
   function nextUjian(now, blokId) {
     const t = toMs(now);
-    return sessions.find((s) => s.kind === 'ujian' && s.endAt > t && (!blokId || s.blokId === blokId)) || null;
+    return sessions.find((s) => s.kind === 'ujian' && !s.cancelled && s.endAt > t && (!blokId || s.blokId === blokId)) || null;
   }
 
   function nextUjianPerBlok(now) {
