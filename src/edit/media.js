@@ -225,7 +225,11 @@ async function uploadOne(blob, label, token) {
   });
   let body = null;
   try { body = await res.json(); } catch { /* not JSON */ }
-  if (!res.ok) throw new Error(body?.error || 'Unggah gagal (' + res.status + ').');
+  if (!res.ok) {
+    const err = new Error(body?.error || 'Unggah gagal (' + res.status + ').');
+    err.status = res.status;
+    throw err;
+  }
   return body.url;
 }
 
@@ -236,7 +240,8 @@ async function uploadOne(blob, label, token) {
 export async function uploadPhoto(file, { token, onStep = () => {}, alt = '' }) {
   onStep('Menyiapkan foto');
   const { files, meta } = await prepare(file);
-  const t = typeof token === 'function' ? await token() : token;
+  const getToken = (force) => (typeof token === 'function' ? token(force) : token);
+  let t = await getToken(false);
   let done = 0;
   const total = files.filter((f) => !f.same).length;
   onStep('Mengunggah 0/' + total);
@@ -245,7 +250,14 @@ export async function uploadPhoto(file, { token, onStep = () => {}, alt = '' }) 
   const worker = async () => {
     while (queue.length) {
       const f = queue.shift();
-      urls[f.label] = await uploadOne(f.blob, f.label, t);
+      try {
+        urls[f.label] = await uploadOne(f.blob, f.label, t);
+      } catch (e) {
+        // an ID token past its hour: ask Firebase for a fresh one and try that file once more
+        if (e.status !== 401) throw e;
+        t = await getToken(true);
+        urls[f.label] = await uploadOne(f.blob, f.label, t);
+      }
       onStep('Mengunggah ' + ++done + '/' + total);
     }
   };

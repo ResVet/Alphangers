@@ -77,7 +77,10 @@ async function dosenRendered(page) {
   await page.waitForFunction(() => document.querySelectorAll('.dz-row').length === 476);
 }
 
-const visibleRows = (page) => page.$$eval('.dz-row:not([hidden])', (rows) => rows.map((r) => r.querySelector('.dz-name').textContent));
+// rows the person can actually see: a hidden attribute that CSS overrides does not count
+const visibleRows = (page) => page.$$eval('.dz-row', (rows) => rows
+  .filter((r) => r.checkVisibility() && getComputedStyle(r).display !== 'none')
+  .map((r) => r.querySelector('.dz-name').textContent));
 
 async function noOverflow(page) {
   return page.evaluate(() => document.documentElement.scrollWidth <= document.documentElement.clientWidth);

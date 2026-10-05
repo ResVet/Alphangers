@@ -401,6 +401,13 @@ html.js #curtain{display:block}
 
 /* cursor */
 #cd,#cr{position:fixed;left:0;top:0;border-radius:50%;pointer-events:none;z-index:190;display:none}
+#cd,#cr{inset:auto;left:0;top:0;padding:0;overflow:visible;color:inherit;background-color:transparent}
+#cd{border:0}
+/* browsers without popovers: the native cursor comes back while a dialog is open */
+@supports not selector(:popover-open){
+  html.fine:has(dialog:modal),html.fine:has(dialog:modal) *{cursor:auto!important}
+  html.fine:has(dialog:modal) #cd,html.fine:has(dialog:modal) #cr{display:none}
+}
 html.fine #cd,html.fine #cr{display:block}
 #cd{width:6px;height:6px;margin:-3px 0 0 -3px;background:var(--grx)}
 #cr{width:36px;height:36px;margin:-18px 0 0 -18px;border:1px solid rgba(238,242,232,.35);display:none;align-items:center;justify-content:center;

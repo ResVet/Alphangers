@@ -116,7 +116,7 @@ async function run({ portal, texts, views, bundledDivisi, signIn: wantSignIn }) 
       texts,
       toast,
       bundledDivisi: await bundledDivisi(),
-      token: () => backend.token(),
+      token: (force) => backend.token(force),
       progress(text) {
         prog.textContent = text || '';
         prog.hidden = !text;

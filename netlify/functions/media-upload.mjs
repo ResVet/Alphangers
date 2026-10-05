@@ -23,8 +23,10 @@ export default async (req, context) => {
   try {
     uid = await requireAdmin(req);
   } catch (e) {
-    if (e instanceof AuthError) return json(e.status, { error: e.status === 403 ? 'Akun ini bukan admin.' : 'Login admin dulu.' });
-    return json(503, { error: 'Cek login gagal, coba lagi sebentar.' });
+    if (e instanceof AuthError && e.status === 403) return json(403, { error: 'Akun ini bukan admin.' });
+    if (e instanceof AuthError && e.status === 401) return json(401, { error: 'Sesi login habis. Muat ulang halaman lalu coba lagi.' });
+    console.error('admin check', e);
+    return json(503, { error: 'Cek admin gagal, coba lagi sebentar.' });
   }
   if (throttled(uid)) return json(429, { error: 'Terlalu banyak unggahan. Tunggu beberapa menit.' }, { 'retry-after': '120' });
   const store = getStore({ name: STORE, consistency: 'strong' });

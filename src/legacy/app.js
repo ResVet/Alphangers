@@ -125,7 +125,7 @@ function beatStep(dt, sv){
 
 // hero line: one of the endings, same odds on every load. The empty one is the Polyester button.
 // The live editor can replace the list (text key "hero.ends", one ending per line).
-var ENDS = ['Semangat belajarnya!', 'Jangan tanya apa kepanjangan Resvet.', ''];
+var ENDS = ['And yes this website is a bit vibecoded\u00a0:D', 'Semangat belajarnya!', 'Jangan tanya apa kepanjangan Resvet.', ''];
 var ledeEnd = $('#ledeEnd'), endK = Math.floor(Math.random() * ENDS.length), polyBtn = null;
 function setEnding(list){
   if(!ledeEnd) return;
@@ -1895,6 +1895,21 @@ if(FINE && !RM){
   document.addEventListener('pointerenter', function(){ cd.style.opacity = cr.style.opacity = '1'; });
 }
 bindCursor(document);
+// Modal dialogs (photo viewer, lecturer card, search) and full screen live in the browser's top
+// layer, above every z-index, so the cursor drawn in the page vanished behind them. The dot and
+// ring are popovers instead, raised back on top whenever a dialog or full screen opens.
+if(FINE && !RM && cd && cd.showPopover){
+  var raiseCursor = function(){
+    [cd, cr].forEach(function(e){
+      try { if(e.matches(':popover-open')) e.hidePopover(); e.showPopover(); } catch(_){}
+    });
+  };
+  cd.setAttribute('popover', 'manual'); cr.setAttribute('popover', 'manual');
+  raiseCursor();
+  var showModal0 = HTMLDialogElement.prototype.showModal;
+  HTMLDialogElement.prototype.showModal = function(){ showModal0.apply(this, arguments); raiseCursor(); };
+  document.addEventListener('fullscreenchange', raiseCursor);
+}
 // true while the ring is still catching up with the pointer
 function cursorFrame(dt){
   if(!FINE || RM) return false;

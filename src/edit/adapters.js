@@ -728,7 +728,7 @@ export async function textsPanel(ctx) {
     { name: 'hero.ends', label: 'Akhiran kalimat pembuka, satu per baris (baris kosong = tombol 100% Polyester)', type: 'textarea', rows: 4, wide: true },
     ...[...keys].map(([k, def]) => ({ name: k, label: k, wide: true, max: 4000, placeholder: def })),
   ];
-  const value = Object.fromEntries(fields.map((f) => [f.name, t[f.name] ?? (f.name === 'hero.ends' ? 'Semangat belajarnya!\nJangan tanya apa kepanjangan Resvet.\n' : keys.get(f.name))]));
+  const value = Object.fromEntries(fields.map((f) => [f.name, t[f.name] ?? (f.name === 'hero.ends' ? ENDS_DEFAULT : keys.get(f.name))]));
   await openForm({
     title: 'Teks halaman',
     sub: 'Semua teks yang bisa diubah. Kosongkan untuk kembali ke teks bawaan.',
@@ -738,12 +738,15 @@ export async function textsPanel(ctx) {
       d.site = d.site || { t: {} };
       d.site.t = d.site.t || {};
       for (const [k, val] of Object.entries(v)) {
-        const def = k === 'hero.ends' ? null : keys.get(k);
+        const def = k === 'hero.ends' ? ENDS_DEFAULT : keys.get(k);
         if (!String(val).trim() || val === def) delete d.site.t[k];
         else d.site.t[k] = val;
       }
     }, 'Teks halaman')),
   });
 }
+
+// the hero endings as the page ships them (src/legacy/app.js); the empty last line is the Polyester button
+const ENDS_DEFAULT = 'And yes this website is a bit vibecoded :D\nSemangat belajarnya!\nJangan tanya apa kepanjangan Resvet.\n';
 
 export const ADAPTERS = [print, kelas, jadwal, blokPill, dosen, channel, info, heartPart, divisi];

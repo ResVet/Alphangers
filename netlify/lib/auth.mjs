@@ -81,7 +81,7 @@ export async function verifyIdToken(token, { now = Date.now() / 1000, projectId 
 export async function isAdmin(token, uid, { projectId = PROJECT_ID } = {}) {
   const hit = adminCache.get(uid);
   if (hit && hit.until > Date.now()) return hit.admin;
-  const url = `https://firestore.googleapis.com/v1/projects/${projectId}/databases/(default)/documents/admins/${encodeURIComponent(uid)}?mask.fieldPaths=__none__`;
+  const url = `https://firestore.googleapis.com/v1/projects/${projectId}/databases/(default)/documents/admins/${encodeURIComponent(uid)}`;
   const res = await fetch(url, { headers: { Authorization: 'Bearer ' + token } });
   let admin;
   if (res.ok) admin = true;

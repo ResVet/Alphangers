@@ -28,5 +28,7 @@ export default async (req, context) => {
 
 export const config = {
   path: '/media/:key',
+  // files that ship with the site under /media (the Polyester clip and its sound) win over this
+  preferStatic: true,
   method: ['GET', 'HEAD'],
 };
