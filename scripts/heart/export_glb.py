@@ -182,7 +182,7 @@ def write_glb(path, meshes):
         nodes.append({'name': name, 'mesh': len(gmeshes) - 1})
 
     gltf = {
-        'asset': {'version': '2.0', 'generator': 'alphangers heart builder', 'copyright': 'Khalid (Resvet). All rights reserved.'},
+        'asset': {'version': '2.0', 'generator': 'alphangers heart builder', 'copyright': 'Raffa Gamadan Rifandi (ResVet). All rights reserved.'},
         'scene': 0,
         'scenes': [{'name': 'heart', 'nodes': list(range(len(nodes)))}],
         'nodes': nodes, 'meshes': gmeshes, 'accessors': accessors, 'bufferViews': views,

@@ -5,7 +5,7 @@
   "description": "Class portal for Class Alpha, PSPD FK Universitas Sriwijaya 2026.",
   "type": "module",
   "license": "SEE LICENSE IN LICENSE",
-  "author": "Khalid (Resvet)",
+  "author": "Raffa Gamadan Rifandi (ResVet)",
   "scripts": {
     "dev": "vite",
     "build": "vite build",

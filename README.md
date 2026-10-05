@@ -90,4 +90,4 @@ The heart notes are a study summary written for first-year medical students and 
 
 ## License
 
-Copyright © 2026 Khalid (Resvet). All rights reserved. See [LICENSE](LICENSE). Third-party software keeps its own license; see [NOTICE](NOTICE).
+Copyright © 2026 Raffa Gamadan Rifandi (ResVet). All rights reserved. See [LICENSE](LICENSE). Third-party software keeps its own license; see [NOTICE](NOTICE).
