@@ -29,22 +29,33 @@ function HeartGL(canvas, opt){
     'vec3 r=q-vec3(-.36,.6,.24);r.xy=r2(-.6)*r.xy;d=smin(d,sdEl(r,vec3(.19,.09,.1)),.12);' +
     'vec3 l=q-vec3(.46,.5,.06);l.xy=r2(.35)*l.xy;d=smin(d,sdEl(l,vec3(.16,.08,.11)),.1);' +
     'return d*s;}\n' +
-  'float vess(vec3 p){' +
-    'float d=sdCa(p,vec3(-.12,.42,.05),vec3(-.14,.98,.02),.16);' +
+  /* the vessels in groups, each with a bounding sphere: ascending aorta and arch, arch branches,
+     pulmonary branches, venae cavae; the descending aorta and pulmonary trunk are single capsules */
+  'float gAs(vec3 p){float d=sdCa(p,vec3(-.12,.42,.05),vec3(-.14,.98,.02),.16);' +
     'd=smin(d,sdCa(p,vec3(-.14,.98,.02),vec3(.06,1.16,-.1),.15),.05);' +
     'd=smin(d,sdCa(p,vec3(.06,1.16,-.1),vec3(.3,1.06,-.28),.14),.05);' +
-    'd=smin(d,sdCa(p,vec3(.3,1.06,-.28),vec3(.36,.78,-.38),.13),.05);' +
-    'd=smin(d,sdCa(p,vec3(.36,.78,-.38),vec3(.3,-.3,-.5),.12),.05);' +
-    'd=smin(d,sdCa(p,vec3(-.08,1.08,-.02),vec3(-.22,1.48,0.),.062),.04);' +
+    'return smin(d,sdCa(p,vec3(.3,1.06,-.28),vec3(.36,.78,-.38),.13),.05);}\n' +
+  'float gDa(vec3 p){return sdCa(p,vec3(.36,.78,-.38),vec3(.3,-.3,-.5),.12);}\n' +
+  'float gBr(vec3 p){float d=sdCa(p,vec3(-.08,1.08,-.02),vec3(-.22,1.48,0.),.062);' +
     'd=smin(d,sdCa(p,vec3(.08,1.14,-.12),vec3(.1,1.54,-.12),.046),.04);' +
-    'd=smin(d,sdCa(p,vec3(.24,1.1,-.22),vec3(.37,1.48,-.24),.052),.04);' +
-    'd=smin(d,sdCa(p,vec3(-.02,.26,.34),vec3(.2,.84,.2),.14),.1);' +
-    'd=smin(d,sdCa(p,vec3(.2,.82,.2),vec3(.64,.88,-.04),.09),.05);' +
-    'd=smin(d,sdCa(p,vec3(.18,.8,.13),vec3(-.56,.86,-.22),.09),.04);' +
-    'd=smin(d,sdCa(p,vec3(-.6,.52,-.02),vec3(-.53,1.28,-.08),.12),.05);' +
-    'd=smin(d,sdCa(p,vec3(-.62,.16,-.12),vec3(-.59,-.14,-.16),.12),.05);' +
-    'return d;}\n' +
-  'float map(vec3 p){return smin(smin(vent(p),atri(p),.07),vess(p),.06);}\n' +
+    'return smin(d,sdCa(p,vec3(.24,1.1,-.22),vec3(.37,1.48,-.24),.052),.04);}\n' +
+  'float gPt(vec3 p){return sdCa(p,vec3(-.02,.26,.34),vec3(.2,.84,.2),.14);}\n' +
+  'float gPb(vec3 p){return smin(sdCa(p,vec3(.2,.82,.2),vec3(.64,.88,-.04),.09),sdCa(p,vec3(.18,.8,.13),vec3(-.56,.86,-.22),.09),.04);}\n' +
+  'float gCv(vec3 p){return smin(sdCa(p,vec3(-.6,.52,-.02),vec3(-.53,1.28,-.08),.12),sdCa(p,vec3(-.62,.16,-.12),vec3(-.59,-.14,-.16),.12),.05);}\n' +
+  /* exact union, used for colouring the surface */
+  'float vess(vec3 p){float d=smin(gAs(p),gDa(p),.05);d=smin(d,gBr(p),.04);d=smin(d,gPt(p),.1);d=smin(d,gPb(p),.05);return smin(d,gCv(p),.05);}\n' +
+  /* While marching, a group is added only when its bounding sphere is close enough to change
+     the blend: nearer than the vessels so far plus the blend radius, and, once the chambers are
+     clearly the nearest surface, near enough to reach past them. Farther groups cannot change
+     the result, so skipping them returns the same distance. */
+  '#define ADD(G,C,R,K) {float b_=length(p-C)-R;if(b_<v+K&&(v<d+.06||b_<d+.06+K*.25))v=smin(v,G(p),K);}\n' +
+  'float map(vec3 p){float d=smin(vent(p),atri(p),.07);float v=gDa(p);' +
+    'ADD(gAs,vec3(.08,.82,-.12),.7,.05)' +
+    'ADD(gBr,vec3(.08,1.31,-.13),.5,.04)' +
+    'ADD(gPt,vec3(.09,.55,.27),.47,.1)' +
+    'ADD(gPb,vec3(.04,.85,-.04),.77,.05)' +
+    'ADD(gCv,vec3(-.58,.57,-.08),.9,.05)' +
+    'return smin(d,v,.06);}\n' +
   'vec3 nrm(vec3 p){const vec2 k=vec2(1.,-1.);const float h=.002;return normalize(k.xyy*map(p+k.xyy*h)+k.yyx*map(p+k.yyx*h)+k.yxy*map(p+k.yxy*h)+k.xxx*map(p+k.xxx*h));}\n' +
   'vec3 rs(vec3 ro,vec3 rd,vec3 a,vec3 b){vec3 ba=b-a,oa=ro-a;float d0=dot(rd,ba),d1=dot(rd,oa),d2=dot(ba,ba),d3=dot(ba,oa);' +
     'float s=clamp((d3-d0*d1)/max(d2-d0*d0,1e-5),0.,1.);float t=max(d0*s-d1,0.);return vec3(length(oa+rd*t-ba*s),s,t);}\n' +

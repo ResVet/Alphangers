@@ -87,23 +87,40 @@ function ECG3D(canvas){
         gr.addColorStop(1, 'rgba(126,240,90,' + (0.07 * fog(sg[1][2], s) * A) + ')');
         ctx.strokeStyle = gr; ctx.beginPath(); ctx.moveTo(sg[0][0], sg[0][1]); ctx.lineTo(sg[1][0], sg[1][1]); ctx.stroke();
       }
+      var fb = {};
       for(var fx = fx0; fx <= fx1; fx += 5){
         var sg2 = seg([fx, FLOOR, -40], [fx, FLOOR, 30]); if(!sg2) continue;
         var mz = (sg2[0][2] + sg2[1][2]) / 2;
-        ctx.strokeStyle = 'rgba(126,240,90,' + (0.05 * fog(mz, s) * A) + ')';
-        ctx.beginPath(); ctx.moveTo(sg2[0][0], sg2[0][1]); ctx.lineTo(sg2[1][0], sg2[1][1]); ctx.stroke();
+        var fa = Math.round(0.05 * fog(mz, s) * A * 400); if(fa <= 0) continue;
+        (fb[fa] || (fb[fa] = [])).push(sg2);
+      }
+      for(var fk in fb){
+        ctx.strokeStyle = 'rgba(126,240,90,' + (fk / 400) + ')';
+        ctx.beginPath();
+        for(var fi = 0; fi < fb[fk].length; fi++){ var f2 = fb[fk][fi]; ctx.moveTo(f2[0][0], f2[0][1]); ctx.lineTo(f2[1][0], f2[1][1]); }
+        ctx.stroke();
       }
 
-      // paper grid on the strip plane (1 mm and 5 mm), only where paper exists
-      var gx0 = Math.floor(Math.max(x0 - 8, headX - 95)), gx1 = headX + 12;
+      // paper grid on the strip plane (1 mm and 5 mm), only where paper exists. The vertical
+      // lines are grouped by quantised opacity so ~100 lines cost a handful of strokes.
+      var gx0 = Math.floor(Math.max(x0 - 8, headX - 95)), gx1 = headX + 12, buckets = {};
       for(var gx = gx0; gx <= gx1; gx += 1){
         var big = (Math.round(gx) % 5 === 0);
         var sg3 = seg([gx, -8, 0], [gx, 16, 0]); if(!sg3) continue;
         var fz = fog((sg3[0][2] + sg3[1][2]) / 2, s);
         var ahead = gx > headX ? Math.max(0, 1 - (gx - headX) / 12) : 1;
-        ctx.strokeStyle = 'rgba(126,240,90,' + ((big ? 0.16 : 0.055) * fz * A * ahead) + ')';
-        ctx.lineWidth = big ? 1 : 0.7;
-        ctx.beginPath(); ctx.moveTo(sg3[0][0], sg3[0][1]); ctx.lineTo(sg3[1][0], sg3[1][1]); ctx.stroke();
+        var al3 = Math.round((big ? 0.16 : 0.055) * fz * A * ahead * 400);
+        if(al3 <= 0) continue;
+        var bk = (big ? 'b' : 's') + al3;
+        (buckets[bk] || (buckets[bk] = [])).push(sg3);
+      }
+      for(var bkey in buckets){
+        var segs = buckets[bkey];
+        ctx.strokeStyle = 'rgba(126,240,90,' + (+bkey.slice(1) / 400) + ')';
+        ctx.lineWidth = bkey.charAt(0) === 'b' ? 1 : 0.7;
+        ctx.beginPath();
+        for(var bi = 0; bi < segs.length; bi++){ ctx.moveTo(segs[bi][0][0], segs[bi][0][1]); ctx.lineTo(segs[bi][1][0], segs[bi][1][1]); }
+        ctx.stroke();
       }
       for(var gy = -8; gy <= 16; gy += 1){
         var big2 = (gy % 5 === 0);
@@ -118,7 +135,7 @@ function ECG3D(canvas){
       }
 
       // sample the trace
-      var pts = [], step = 0.004;
+      var pts = [], step = 0.005;
       var tStart = Math.max(s.head - s.span, s.t0);
       for(var t = tStart; t <= s.head + 1e-6; t += step){
         var v = (t < 0 ? 0 : ecgV(t)) + ecgN(t);
@@ -136,8 +153,8 @@ function ECG3D(canvas){
       }
       ctx.stroke();
 
-      // particles (cells drifting in the dark)
-      var span = 110;
+      // particles (cells drifting in the dark), filled in a few batches by opacity
+      var span = 110, pb = {};
       for(var q = 0; q < parts.length; q++){
         var P = parts[q];
         var px = headX - 90 + ((P[0] * span + s.time * 1.2 * (0.3 + P[3])) % span);
@@ -147,14 +164,21 @@ function ECG3D(canvas){
         var fz2 = fog(pp[2], s); if(fz2 <= 0) continue;
         var rad = Math.max(0.4, 26 / pp[2]) * (0.6 + P[3]);
         var tw = 0.5 + 0.5 * Math.sin(s.time * (1 + P[3] * 2) + P[0] * 40);
-        ctx.fillStyle = 'rgba(170,250,140,' + (0.28 * fz2 * A * (0.4 + 0.6 * tw)) + ')';
-        ctx.beginPath(); ctx.arc(pp[0], pp[1], rad, 0, 6.283); ctx.fill();
+        var pa = Math.round(0.28 * fz2 * A * (0.4 + 0.6 * tw) * 60); if(pa <= 0) continue;
+        (pb[pa] || (pb[pa] = [])).push(pp[0], pp[1], rad);
+      }
+      for(var pk in pb){
+        var L = pb[pk];
+        ctx.fillStyle = 'rgba(170,250,140,' + (pk / 60) + ')';
+        ctx.beginPath();
+        for(var li = 0; li < L.length; li += 3){ ctx.moveTo(L[li] + L[li + 2], L[li + 1]); ctx.arc(L[li], L[li + 1], L[li + 2], 0, 6.283); }
+        ctx.fill();
       }
 
       // the trace in depth-sorted chunks, three passes each (glow, body, core)
       var P2 = [];
       for(var m = 0; m < pts.length; m++){ var pj = proj(pts[m]); P2.push(pj); }
-      var CH = 6;
+      var CH = 10;
       for(var pass = 0; pass < 3; pass++){
         var baseW = pass === 0 ? 7 : (pass === 1 ? 2.6 : 1.1);
         var col = pass === 2 ? '236,255,222' : '126,240,90';

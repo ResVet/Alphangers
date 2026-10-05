@@ -40,6 +40,14 @@ const el = (tag, cls, text) => {
 };
 const fold = (s) => String(s || '').normalize('NFKD').replace(/[̀-ͯ]/g, '').toLowerCase();
 
+// Pulls the 3D code, the model and its notes into the HTTP cache while the reader is still a few
+// sections away, so the heart is ready by the time it scrolls into view. Skipped on Save-Data.
+export function prefetchHeart() {
+  if (navigator.connection?.saveData || !webglOK()) return;
+  import('./scene.js').catch(() => {});
+  for (const u of [MODEL_URL, META_URL]) fetch(u, { priority: 'low' }).catch(() => {});
+}
+
 function webglOK() {
   try {
     const c = document.createElement('canvas');
@@ -157,7 +165,8 @@ export function mountAnatomi(root, { heart, portal }) {
   fsB.innerHTML = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 9V4h5M20 9V4h-5M4 15v5h5M20 15v5h-5"/></svg>';
   if (!wrap.requestFullscreen) fsB.hidden = true;
 
-  const hint = el('p', 'hx-hint lbl', matchMedia('(hover: hover)').matches ? 'Seret buat muter, scroll buat zoom, klik bagian mana aja' : 'Geser buat muter, cubit buat zoom, ketuk bagian mana aja');
+  const TOUCH = !matchMedia('(hover: hover) and (pointer: fine)').matches;
+  const hint = el('p', 'hx-hint lbl', TOUCH ? 'Geser ke samping buat muter, dua jari buat zoom, ketuk bagiannya' : 'Seret buat muter, scroll buat zoom, klik bagian mana aja');
   const peek = el('div', 'hx-peek');
   peek.hidden = true;
   const peekN = el('b', 'hx-peek-n');
@@ -237,6 +246,7 @@ export function mountAnatomi(root, { heart, portal }) {
     const p = parts.get(id) || parts.get('heart');
     info.textContent = '';
     if (!p) return;
+    info.dataset.id = p.id;
     const head = el('header', 'hx-ih');
     head.append(el('p', 'hx-kick kick', GROUPS[p.group] || p.group));
     head.append(el('h3', 'hx-name', p.name));
@@ -472,7 +482,9 @@ export function mountAnatomi(root, { heart, portal }) {
     else wrap.requestFullscreen?.().catch(() => {});
   });
   const onFs = () => {
-    wrap.classList.toggle('fs', document.fullscreenElement === wrap);
+    const fs = document.fullscreenElement === wrap;
+    wrap.classList.toggle('fs', fs);
+    scene?.setTouchScroll(!fs);
     requestAnimationFrame(() => scene?.resize());
   };
   document.addEventListener('fullscreenchange', onFs);
@@ -486,14 +498,17 @@ export function mountAnatomi(root, { heart, portal }) {
     const quick = performance.now() - down.t < 450;
     down = null;
     if (moved > 7 || !quick) return;
-    const i = scene.pick(e.clientX, e.clientY);
-    if (i > 0) select(PARTS[i], { fromModel: true });
-    else if (current !== 'heart') select('heart', { fromModel: true });
+    scene.pick(e.clientX, e.clientY).then((i) => {
+      if (i > 0) select(PARTS[i], { fromModel: true });
+      else if (current !== 'heart') select('heart', { fromModel: true });
+    });
   });
+  canvas.addEventListener('pointercancel', () => { down = null; });
   canvas.addEventListener('dblclick', (e) => {
     if (!scene) return;
-    const i = scene.pick(e.clientX, e.clientY);
-    if (i > 0) { select(PARTS[i], { fromModel: true }); scene.focus(PARTS[i]); }
+    scene.pick(e.clientX, e.clientY).then((i) => {
+      if (i > 0) { select(PARTS[i], { fromModel: true }); scene.focus(PARTS[i]); }
+    });
   });
   const cr = document.getElementById('cr'), crt = document.getElementById('crt');
   function showHover(i, e) {
@@ -509,16 +524,35 @@ export function mountAnatomi(root, { heart, portal }) {
     tip.style.transform = `translate(${Math.round(e.clientX - r.left + 14)}px, ${Math.round(e.clientY - r.top + 14)}px)`;
     tip.classList.add('on');
   }
+  // hover: one pick in flight at most, at least 60 ms apart, always for the newest position
+  let hoverBusy = false, hoverNext = null, hoverTimer = 0, inside = false;
+  function hoverPick(e) {
+    if (e) hoverNext = e;
+    if (!hoverNext || hoverBusy || hoverTimer) return;
+    const wait = 60 - (performance.now() - hoverT);
+    if (wait > 0) { hoverTimer = setTimeout(() => { hoverTimer = 0; hoverPick(); }, wait); return; }
+    const ev = hoverNext;
+    hoverNext = null;
+    hoverBusy = true;
+    hoverT = performance.now();
+    scene.pick(ev.clientX, ev.clientY).then((i) => {
+      hoverBusy = false;
+      if (!inside) return;
+      if (i !== lastHover) { lastHover = i; scene.setHover(i > 0 ? i : -1); }
+      showHover(i, ev);
+      hoverPick();
+    });
+  }
   canvas.addEventListener('pointermove', (e) => {
     if (!scene || e.pointerType !== 'mouse' || e.buttons) return;
-    const now = performance.now();
-    if (now - hoverT < 70) return;
-    hoverT = now;
-    const i = scene.pick(e.clientX, e.clientY);
-    if (i !== lastHover) { lastHover = i; scene.setHover(i > 0 ? i : -1); }
-    showHover(i, e);
+    inside = true;
+    hoverPick(e);
   });
   canvas.addEventListener('pointerleave', () => {
+    inside = false;
+    hoverNext = null;
+    clearTimeout(hoverTimer);
+    hoverTimer = 0;
     lastHover = -2;
     scene?.setHover(-1);
     tip.classList.remove('on');
@@ -581,6 +615,7 @@ export function mountAnatomi(root, { heart, portal }) {
         url: MODEL_URL,
         reducedMotion: RM,
         lowPower: !!LOW,
+        touch: TOUCH,
         onProgress: (f) => { loadBar.style.transform = `scaleX(${f.toFixed(3)})`; },
       }))
       .then((s) => {
@@ -616,6 +651,7 @@ export function mountAnatomi(root, { heart, portal }) {
       renderInfo(current);
     },
     select: (id) => select(id, { fly: true }),
+    current: () => current,
     destroy() {
       disposed = true;
       io?.disconnect();

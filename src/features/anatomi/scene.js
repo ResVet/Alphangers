@@ -35,23 +35,30 @@ function shared(meta) {
   };
 }
 
+const KINDS = { body: 0, coronary: 1, valves: 2, conduction: 3 };
+
 // MeshPhysicalMaterial with per-part colour, highlight, x-ray and the depolarisation wave patched in.
-function tissue(U, kind) {
+// The four meshes share one shader program: what differs per mesh (the cut face and x-ray of the
+// body, the softer occlusion on the coronaries, the glow of the conduction system) is chosen by
+// the uKind uniform, not by #defines, so the browser compiles one program instead of four.
+// On phones and low-power machines the sheen lobe is left out: it is the most expensive term in
+// the shader and the least visible at that screen size. Clearcoat stays, it carries the wet look.
+function tissue(U, kind, lite) {
   const m = new THREE.MeshPhysicalMaterial({
     roughness: kind === 'valves' ? 0.6 : 0.52,
     metalness: 0,
     clearcoat: kind === 'conduction' ? 0.15 : 0.32,
     clearcoatRoughness: 0.42,
-    sheen: 0.32,
+    sheen: lite ? 0 : 0.32,
     sheenRoughness: 0.6,
     sheenColor: new THREE.Color('#ffe2da'),
-    side: kind === 'coronary' || kind === 'conduction' ? THREE.FrontSide : THREE.DoubleSide,
+    side: THREE.DoubleSide,
   });
   m.userData.kind = kind;
-  const flag = '#define KIND_' + kind.toUpperCase() + '\n';
+  const uKind = { value: KINDS[kind] ?? 2 };
   m.onBeforeCompile = (sh) => {
-    Object.assign(sh.uniforms, U);
-    sh.vertexShader = flag + sh.vertexShader
+    Object.assign(sh.uniforms, U, { uKind });
+    sh.vertexShader = sh.vertexShader
       .replace('#include <common>', `#include <common>
         attribute float _part;
         attribute float _t;
@@ -73,9 +80,9 @@ function tissue(U, kind) {
         vT = _t;
         vAo = _ao;
         if (vVis < 0.5) transformed *= 0.0;`);
-    sh.fragmentShader = (flag + sh.fragmentShader)
+    sh.fragmentShader = sh.fragmentShader
       .replace('#include <common>', `#include <common>
-        uniform float uDim, uClock, uTime, uWave, uXray, uCutOn, uGlow, uPulse;
+        uniform float uDim, uClock, uTime, uWave, uXray, uCutOn, uGlow, uPulse, uKind;
         varying vec3 vCol;
         varying float vInner, vSel, vHov, vT, vVis, vAo;
         float waveFront(float t) {
@@ -90,19 +97,14 @@ function tissue(U, kind) {
           return smoothstep(0.0, 8.0, age) * (1.0 - smoothstep(hold, hold + 90.0, age));
         }`)
       .replace('vec4 diffuseColor = vec4( diffuse, opacity );', `
+        bool isBody = uKind < 0.5;
         vec3 base = vCol;
-        #ifdef KIND_BODY
-          base = mix(base, vec3(0.80, 0.42, 0.38), vInner * 0.35);
-        #endif
+        if (isBody) base = mix(base, vec3(0.80, 0.42, 0.38), vInner * 0.35);
         vec4 diffuseColor = vec4( base, opacity );`)
       .replace('#include <aomap_fragment>', `#include <aomap_fragment>
         // baked occlusion: full strength on bounced light, partial on direct light so the
-        // grooves read as depth without the key light going flat
-        #ifdef KIND_CORONARY
-          float occ = mix(1.0, vAo, 0.45);
-        #else
-          float occ = mix(1.0, vAo, 0.7);
-        #endif
+        // grooves read as depth without the key light going flat (softer on the coronaries)
+        float occ = mix(1.0, vAo, abs(uKind - 1.0) < 0.5 ? 0.45 : 0.7);
         reflectedLight.indirectDiffuse *= occ;
         reflectedLight.indirectSpecular *= occ;
         reflectedLight.directDiffuse *= mix(1.0, occ, 0.45);
@@ -117,35 +119,29 @@ function tissue(U, kind) {
         vec3 nV = normalize(vViewPosition);
         float fr = pow(1.0 - abs(dot(normalize(normal), nV)), 2.2);
         vec3 green = vec3(0.53, 0.95, 0.37);
-        #ifdef KIND_BODY
-          if (!gl_FrontFacing) outgoingLight = mix(outgoingLight, vec3(0.42, 0.13, 0.11) * (0.75 + 0.5 * vCol.r), uCutOn);
-        #endif
-        #ifdef KIND_CONDUCTION
-          outgoingLight = mix(outgoingLight, vCol * 0.9, 0.55 * uGlow);
-        #endif
+        if (isBody && !gl_FrontFacing) outgoingLight = mix(outgoingLight, vec3(0.42, 0.13, 0.11) * (0.75 + 0.5 * vCol.r), uCutOn);
+        if (uKind > 2.5) outgoingLight = mix(outgoingLight, vCol * 0.9, 0.55 * uGlow);
         // depolarisation: a bright front, then a held glow until the tissue repolarises
         float front = waveFront(vT) * uWave;
         float held = wavePlateau(vT) * uWave;
-        // x-ray look for the walls when the inside is the point
-        #ifdef KIND_BODY
+        if (isBody) {
+          // x-ray look for the walls when the inside is the point
           vec3 xr = mix(vec3(0.03, 0.07, 0.04), vec3(0.32, 0.62, 0.28), fr);
           xr += vec3(0.45, 0.85, 0.35) * held * 0.32 + vec3(0.9, 1.0, 0.8) * front * 0.75;
           outgoingLight = mix(outgoingLight, xr, uXray);
-        #else
+        } else {
           outgoingLight += green * front * 1.6 + green * held * 0.35;
-        #endif
+        }
         // a short pulse right after picking, then a steady highlight (no endless redraws)
         float pulse = 0.5 + 0.5 * sin(uClock * 3.6);
         outgoingLight *= mix(1.0, 0.62, uDim * (1.0 - vSel));
         outgoingLight += vSel * green * (0.12 + 0.1 * pulse * uPulse + fr * 0.75);
         outgoingLight += vHov * (1.0 - vSel) * vec3(0.09, 0.11, 0.08);
         #include <opaque_fragment>
-        #ifdef KIND_BODY
-          gl_FragColor.a = mix(gl_FragColor.a, clamp(0.035 + 0.42 * fr + 0.5 * front + 0.12 * held, 0.0, 1.0), uXray);
-        #endif`);
+        if (isBody) gl_FragColor.a = mix(gl_FragColor.a, clamp(0.035 + 0.42 * fr + 0.5 * front + 0.12 * held, 0.0, 1.0), uXray);`);
   };
-  // the patched shader differs per kind, so each kind needs its own program cache key
-  m.customProgramCacheKey = () => 'heart-' + kind;
+  // same source for every kind, so one cache key: the program is built once and shared
+  m.customProgramCacheKey = () => 'heart-tissue';
   return m;
 }
 
@@ -254,13 +250,20 @@ function isSoftwareGL(gl) {
   }
 }
 
-export async function createScene(canvas, { meta, url, onProgress, reducedMotion = false, lowPower = false }) {
+export async function createScene(canvas, { meta, url, onProgress, reducedMotion = false, lowPower = false, touch = false }) {
+  // Full resolution for still frames. While the heart moves, frames render at motionDpr, which
+  // the frame timer below lowers on a slow GPU and raises again when there is headroom; the
+  // first quiet frame after a movement is redrawn at full resolution.
   let dpr = Math.min(window.devicePixelRatio || 1, lowPower ? 1.5 : 2);
   const renderer = new THREE.WebGLRenderer({ canvas, antialias: dpr < 2, alpha: true, powerPreference: 'high-performance' });
   // Without a usable GPU the browser falls back to drawing WebGL on the CPU. The model still
   // works there, but only at a lower resolution and without the idle spin.
   const software = isSoftwareGL(renderer.getContext());
   if (software) { dpr = Math.min(dpr, 0.75); reducedMotion = true; }
+  const lite = touch || lowPower || software;
+  const minDpr = Math.min(dpr, software ? 0.5 : 0.75);
+  let motionDpr = Math.min(dpr, touch ? 1.25 : lowPower ? 1 : 1.5);
+  let curDpr = dpr;
   renderer.setPixelRatio(dpr);
   renderer.outputColorSpace = THREE.SRGBColorSpace;
   renderer.toneMapping = THREE.NeutralToneMapping;
@@ -294,6 +297,13 @@ export async function createScene(canvas, { meta, url, onProgress, reducedMotion
   controls.minDistance = 6;
   controls.maxDistance = radius * 6;
   controls.autoRotateSpeed = 0.55;
+  // On a touch screen the stage must not trap the page: one finger sideways turns the heart,
+  // one finger up or down scrolls the page as usual, two fingers zoom and tilt. Fullscreen
+  // hands every gesture to the heart (setTouchScroll(false)).
+  if (touch) {
+    controls.touches = { ONE: THREE.TOUCH.ROTATE, TWO: THREE.TOUCH.DOLLY_ROTATE };
+    canvas.style.touchAction = 'pan-y';
+  }
 
   const U = shared(meta);
   const loader = new GLTFLoader();
@@ -302,7 +312,7 @@ export async function createScene(canvas, { meta, url, onProgress, reducedMotion
   const meshes = {};
   gltf.scene.traverse((o) => {
     if (o.isMesh) {
-      o.material = tissue(U, o.name);
+      o.material = tissue(U, o.name, lite);
       o.frustumCulled = false;
       meshes[o.name] = o;
     }
@@ -326,13 +336,19 @@ export async function createScene(canvas, { meta, url, onProgress, reducedMotion
     four: { normal: fourN, base: -fourN.dot(apex), range: [-2.2, 2.2], view: fourN.clone().negate().add(new THREE.Vector3(0, 0.15, 0)) },
     base: { normal: new THREE.Vector3(0, -1, 0), base: 1.45, range: [-1.2, 3.4], view: new THREE.Vector3(0.05, 1, 0.32) },
   };
+  // Every material keeps this one clipping plane for its whole life. Outside the cut view it is
+  // parked far away, so it clips nothing, and switching views never changes a shader program
+  // (adding or removing a plane would recompile all of them, a visible stall on some GPUs).
   const plane = new THREE.Plane(new THREE.Vector3(0, 0, -1), 0.6);
+  const PARKED = 1e5;
   let cutKey = 'front', cutOffset = 0;
   function applyCut() {
     const c = CUTS[cutKey];
     plane.normal.copy(c.normal);
-    plane.constant = c.base + cutOffset;
+    plane.constant = state.mode === 'cut' ? c.base + cutOffset : PARKED;
   }
+
+  Object.values(meshes).forEach((m) => { m.material.clippingPlanes = [plane]; });
 
   // ---- state
   const state = { mode: 'whole', sel: -1, selAt: 0, hov: -1, playing: !reducedMotion, speed: 1, time: 0, active: true, coronary: true };
@@ -342,14 +358,12 @@ export async function createScene(canvas, { meta, url, onProgress, reducedMotion
 
   function setMaterialsForMode() {
     const cut = state.mode === 'cut';
-    Object.values(meshes).forEach((m) => {
-      m.material.clippingPlanes = cut ? [plane] : null;
-      m.material.needsUpdate = true;
-    });
+    applyCut();
     const body = meshes.body?.material;
     if (body) {
       const ghost = state.mode === 'ecg' || state.mode === 'flow';
-      body.transparent = ghost;
+      // both programs were compiled while loading, so this only picks the other one
+      if (body.transparent !== ghost) { body.transparent = ghost; body.needsUpdate = true; }
       body.depthWrite = !ghost;
     }
     if (meshes.coronary) meshes.coronary.visible = state.coronary && (state.mode === 'whole' || state.mode === 'cut');
@@ -419,16 +433,18 @@ export async function createScene(canvas, { meta, url, onProgress, reducedMotion
     return { target, pos: target.clone().addScaledVector(dir.clone().normalize(), dist) };
   }
 
-  // ---- picking: draw part ids into a tiny target around the pointer and read them back
+  // ---- picking: draw part ids into a tiny target around the pointer and read them back.
+  // The read is asynchronous (a fence, not glReadPixels on the spot), so hovering never makes the
+  // CPU wait for the GPU to finish the frame. One pick runs at a time; a hover that arrives while
+  // one is in flight replaces the queued position instead of piling up.
   const pickMat = pickMaterial(U);
+  pickMat.clippingPlanes = [plane];
   const pickRT = new THREE.WebGLRenderTarget(11, 11);
   const pickBuf = new Uint8Array(11 * 11 * 4);
-  function pickPass(x, y, only) {
+  function pickRender(x, y, only) {
     const hidden = [];
     Object.entries(meshes).forEach(([name, m]) => { if (m.visible && only && !only.includes(name)) { m.visible = false; hidden.push(m); } });
     const pv = flow.points.visible; flow.points.visible = false;
-    pickMat.clippingPlanes = state.mode === 'cut' ? [plane] : null;
-    pickMat.needsUpdate = true;
     scene.overrideMaterial = pickMat;
     camera.setViewOffset(W, H, x - 5, y - 5 + (inset.bottom - inset.top) / 2, 11, 11);
     renderer.setRenderTarget(pickRT);
@@ -440,7 +456,8 @@ export async function createScene(canvas, { meta, url, onProgress, reducedMotion
     scene.overrideMaterial = null;
     flow.points.visible = pv;
     hidden.forEach((m) => { m.visible = true; });
-    renderer.readRenderTargetPixels(pickRT, 0, 0, 11, 11, pickBuf);
+  }
+  function nearest() {
     let best = -1, bestD = Infinity;
     for (let j = 0; j < 11; j++) {
       for (let i = 0; i < 11; i++) {
@@ -450,23 +467,36 @@ export async function createScene(canvas, { meta, url, onProgress, reducedMotion
         if (d < bestD) { bestD = d; best = v - 1; }
       }
     }
-    needs = true;
     return best;
   }
-  function pick(clientX, clientY) {
+  async function pickPass(x, y, only) {
+    pickRender(x, y, only);
+    if (renderer.readRenderTargetPixelsAsync) await renderer.readRenderTargetPixelsAsync(pickRT, 0, 0, 11, 11, pickBuf);
+    else renderer.readRenderTargetPixels(pickRT, 0, 0, 11, 11, pickBuf);
+    return nearest();
+  }
+  let picking = null;
+  async function pickNow(clientX, clientY) {
     if (contextLost) return -1;
     const r = canvas.getBoundingClientRect();
     const x = clientX - r.left, y = clientY - r.top;
     // in the glowing modes the thin inner structures win over the see-through walls
     if (state.mode === 'ecg') {
-      const p = pickPass(x, y, ['conduction']);
+      const p = await pickPass(x, y, ['conduction']);
       if (p >= 0) return p;
     }
     if (state.mode === 'flow') {
-      const p = pickPass(x, y, ['valves']);
+      const p = await pickPass(x, y, ['valves']);
       if (p >= 0) return p;
     }
     return pickPass(x, y, null);
+  }
+  // resolves with the part index under the point, or -1
+  function pick(clientX, clientY) {
+    const run = (picking || Promise.resolve()).then(() => pickNow(clientX, clientY)).catch(() => -1);
+    picking = run.finally(() => { if (picking === tail) picking = null; });
+    const tail = picking;
+    return run;
   }
 
   // ---- loop
@@ -507,11 +537,40 @@ export async function createScene(canvas, { meta, url, onProgress, reducedMotion
     if (pulsing) U.uClock.value += dt;
     const busy = moving || animating || pulsing || controls.autoRotate;
     if (needs || busy) {
+      setDpr(busy ? motionDpr : dpr);
       renderer.render(scene, camera);
       needs = false;
+      if (busy) timeFrame(dt);
     }
     if (busy) raf = requestAnimationFrame(frame);
-    else armIdle();
+    else {
+      // the movement ended: one sharp frame at full resolution
+      if (curDpr !== dpr) { setDpr(dpr); renderer.render(scene, camera); }
+      samples.length = 0;
+      armIdle();
+    }
+  }
+  function setDpr(v) {
+    if (v === curDpr) return;
+    curDpr = v;
+    renderer.setPixelRatio(v);
+    renderer.setSize(W, H, false);
+  }
+  // Median frame interval over the last 30 moving frames picks the resolution for the next ones.
+  const samples = [];
+  let backoffs = 0;
+  function timeFrame(dt) {
+    if (software) return;
+    samples.push(dt);
+    if (samples.length < 30) return;
+    const med = samples.sort((a, b) => a - b)[15];
+    samples.length = 0;
+    if (med > 0.021 && motionDpr > minDpr) {
+      motionDpr = Math.max(minDpr, Math.round(motionDpr * 0.8 * 100) / 100);
+      backoffs++;
+    } else if (med < 0.0155 && motionDpr < dpr && backoffs < 4) {
+      motionDpr = Math.min(dpr, Math.round(motionDpr * 1.12 * 100) / 100);
+    }
   }
   // after a few quiet seconds the whole heart turns slowly by itself
   let idleTimer = 0;
@@ -532,10 +591,22 @@ export async function createScene(canvas, { meta, url, onProgress, reducedMotion
   canvas.addEventListener('webglcontextlost', (e) => { e.preventDefault(); contextLost = true; api.onContextChange?.(false); });
   canvas.addEventListener('webglcontextrestored', () => { contextLost = false; resize(); kick(); api.onContextChange?.(true); });
 
+  // Compile every program the views will need while the loading bar is still up: the solid and
+  // the see-through body, and the picking shader. compileAsync lets the driver build them in
+  // parallel off the main thread where it can (KHR_parallel_shader_compile).
+  async function warm() {
+    const body = meshes.body?.material;
+    const parallel = renderer.compileAsync && renderer.extensions.has('KHR_parallel_shader_compile');
+    const compile = (fn) => (parallel ? renderer.compileAsync(scene, camera) : Promise.resolve(renderer.compile(scene, camera))).then(fn, fn);
+    flow.points.visible = true;
+    if (body) { body.transparent = true; body.needsUpdate = true; }
+    await compile(() => {});
+    if (body) { body.transparent = false; body.needsUpdate = true; }
+    await compile(() => {});
+    pickRender(W / 2, H / 2, null);
+  }
+  try { await warm(); } catch { /* only a warm-up */ }
   setMaterialsForMode();
-  applyCut();
-  // compile every program now, so the first mode switch does not stall
-  try { renderer.compile(scene, camera); } catch { /* compile is only a warm-up */ }
   kick();
 
   const api = {
@@ -544,6 +615,7 @@ export async function createScene(canvas, { meta, url, onProgress, reducedMotion
     pick,
     onTick(cb) { tickCb = cb; },
     setActive(on) { state.active = on; if (on) kick(); else if (raf) { cancelAnimationFrame(raf); raf = 0; } },
+    setTouchScroll(on) { if (touch) canvas.style.touchAction = on ? 'pan-y' : 'none'; },
     setMode(mode) { state.mode = mode; setMaterialsForMode(); kick(); },
     setCut(k, offset = cutOffset) {
       if (k && CUTS[k] && k !== cutKey) { cutKey = k; cutOffset = 0; } else cutOffset = offset;
