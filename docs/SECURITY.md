@@ -11,10 +11,10 @@ Report a problem privately to the repository owner on GitHub rather than in a pu
 
 ## The portal page
 
-- **One outside host.** Fonts, scripts, the 3D model and media are all served from the site. The only other host contacted is `firestore.googleapis.com`, for public reads of the five content documents, with `credentials: 'omit'` (and none at all while `firebaseConfig` is `null`). The portal end-to-end suite fails if any other host is requested.
+- **One outside host for visitors.** Fonts, scripts, the 3D model, photos and media are all served from the site. The only other host a visitor's page contacts is `firestore.googleapis.com`, for public reads of the five content documents, with `credentials: 'omit'` (and none at all while `firebaseConfig` is `null`). The portal end-to-end suite fails if any other host is requested, and the editor suite checks that no editor or Firebase SDK code is downloaded for a visitor.
 - **Content Security Policy** (from `netlify.toml`):
-  `default-src 'self'; script-src 'self' 'wasm-unsafe-eval'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; font-src 'self' data:; media-src 'self'; connect-src 'self' https://firestore.googleapis.com; worker-src 'self'; manifest-src 'self'; frame-src 'none'; object-src 'none'; base-uri 'none'; form-action 'none'; frame-ancestors 'none'; upgrade-insecure-requests`.
-  No inline scripts (the one bootstrap line lives in `public/boot.js`). `wasm-unsafe-eval` is needed only for the meshoptimizer decoder that unpacks the heart model. Inline styles are allowed because the page sets CSS custom properties from script; inline CSS cannot run code. The portal suite runs the built site under these exact headers and fails on any violation.
+  `default-src 'self'; script-src 'self' 'wasm-unsafe-eval' https://apis.google.com; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; font-src 'self' data:; media-src 'self'; connect-src 'self' https://firestore.googleapis.com https://identitytoolkit.googleapis.com https://securetoken.googleapis.com; worker-src 'self'; manifest-src 'self'; frame-src https://alphangers-1ba79.firebaseapp.com; object-src 'none'; base-uri 'none'; form-action 'none'; frame-ancestors 'none'; upgrade-insecure-requests`.
+  No inline scripts (the one bootstrap line lives in `public/boot.js`). `wasm-unsafe-eval` is needed only for the meshoptimizer decoder that unpacks the heart model. The Google sign-in hosts (`apis.google.com`, the project's auth domain as a frame, and the two Firebase Auth endpoints) are exactly the set `/admin/` already allows; they are used only after the admin opens the live editor. Inline styles are allowed because the page sets CSS custom properties from script and paints blurred photo previews (`data:` images, validated) as backgrounds; inline CSS cannot run code. The portal suite runs the built site under these exact headers and fails on any violation.
 - **Other headers.** HSTS (two years, subdomains), `X-Content-Type-Options: nosniff`, `Referrer-Policy: strict-origin-when-cross-origin`, a Permissions-Policy that turns off camera, microphone, geolocation, payment and similar (motion sensors stay on for the hero's tilt effect), `X-Frame-Options: DENY` and `frame-ancestors 'none'` against clickjacking.
 - **Rendering.** Content from Firestore or the cache is validated (next section) and then written with `textContent` and attributes. Where a module builds HTML strings for speed (the schedule and lecturer rows), every value passes through an escaping helper. Links are `https:` only and open with `rel="noopener noreferrer"`.
 - **Storage.** The portal stores only conveniences on the visitor's device: the content cache, try out progress and scores, the last date picked in the schedule, and whether the intro has been seen. All of it is wrapped so a browser that blocks storage still gets a working page (covered by tests).
@@ -71,7 +71,33 @@ Both pages send `frame-ancestors 'none'` and `X-Frame-Options: DENY`. `Cross-Ori
 
 ### Finding the admin page
 
-`/admin/` is not linked from the portal and sends `noindex` (meta tag and `X-Robots-Tag`). That keeps it out of search results and nothing more. Access control comes from the rules.
+`/admin/` sends `noindex` (meta tag and `X-Robots-Tag`), which keeps it out of search results and nothing more. The portal's footer has an Admin button that opens the live editor's sign-in. Neither is a secret and neither grants anything: access control comes from the rules and, for photos, from the upload function.
+
+## The live editor on the portal
+
+`src/edit/` is a separate chunk that only loads after the Admin button, `/?admin`, Ctrl+Shift+E, or on a device where an admin signed in before (a `localStorage` flag, cleared on sign-out or when the account turns out not to be an admin). It signs in and checks `admins/{uid}` exactly like `/admin/`, and it writes through the same `saveContent` transaction, so every rule above applies unchanged: a non-admin who opens the editor gets a message and nothing else.
+
+- Every edit is applied to a copy of the document and run through `validate()` before it is kept; an edit that does not validate is refused with the validator's message. The page then shows the validated copy, so a draft can never put markup on the page.
+- Texts are typed into elements with `contenteditable="plaintext-only"` (where the browser lacks it, pasting inserts plain text only) and read back with `textContent`.
+- Photo records are rendered from validated fields only: paths must match `/img/...` or `/media/...` on this site (no `..`, no other host, no `javascript:`), srcset entries are checked the same way, the inline preview must be a small `data:image/webp|jpeg|png` URL, and every attribute is escaped.
+
+## Photo uploads
+
+Photos uploaded from the live editor go to two Netlify Functions backed by Netlify Blobs.
+
+`POST /api/media` (`netlify/functions/media-upload.mjs`):
+
+1. **Who is calling.** The request must carry the admin's Firebase ID token. The function verifies its RS256 signature with WebCrypto against Google's published Firebase keys (cached for as long as Google says), and checks the audience and issuer are this project, that it is not expired or issued in the future, that the email is verified and that the provider is `google.com`. It then asks Firestore, with the caller's own token, for `admins/{uid}`: the rules let a user read only their own entry, so a 200 means admin. No service account or secret is involved. Unsigned, forged, tampered, expired and foreign tokens are covered by `tests/v5.test.mjs`.
+2. **Where from.** A request whose `Origin` is not the site itself is refused.
+3. **What.** The body is at most 5.8 MB, and its type is read from the file's own first bytes: JPEG, PNG, WebP or AVIF. SVG, HTML and anything else is refused whatever the client calls it.
+4. **Stored where.** Under `<first 24 hex of its SHA-256>-<width>.<ext>`. Content addressed: the same bytes always get the same key, a key never changes meaning, and nothing a client sends becomes part of a path.
+5. **How often.** A platform rate limit of 90 requests a minute per IP (function config), and a second limit inside the function of 240 uploads per admin per 10 minutes.
+
+`GET /media/<key>` (`netlify/functions/media.mjs`) accepts only keys of that exact shape and answers with the stored bytes, the content type for the extension, `X-Content-Type-Options: nosniff`, `Content-Security-Policy: default-src 'none'; ... sandbox`, `Cross-Origin-Resource-Policy: same-site`, and a year of immutable caching at the CDN and in the browser, so the function runs only on a cache miss.
+
+Before anything is uploaded, the editor strips metadata in the browser: EXIF, XMP, IPTC and comment segments are removed from JPEGs byte for byte (the colour profile stays), text and EXIF chunks from PNGs, EXIF and XMP chunks from WebP. Pixels are untouched. A phone photo whose orientation lives in an EXIF tag is re-encoded upright instead, because removing the tag would show it sideways. No GPS position or camera serial number is published.
+
+Removing a photo from a division does not delete the file, so undo and history can bring it back. Files are public to anyone who knows their hash, which only appears in published content.
 
 ### Secrets
 
@@ -79,13 +105,15 @@ There are none in the repository. The web config is public by design, there are 
 
 ### Tests
 
-`tests/firestore.rules.test.mjs` runs against the Firestore emulator and covers public reads, denied listing, non-admin and unverified writes, wrong providers, stale `rev`, missing or forged history snapshots, extra fields, spoofed authors and timestamps, oversized documents, resets, history immutability, the `admins` collection, and default deny. `tests/content.test.mjs` covers the portal's fallbacks (remote newer, invalid, network down, storage blocked, no config), and `tests/validate.test.mjs` covers the validator.
+`tests/v5.test.mjs` covers the upload function's token check and file sniffing, the photo path rules, page texts, and the editor's metadata stripping; `tests/editor.e2e.mjs` covers the live editor end to end against the mock backend, including that visitors never download it and that announcement text with markup stays text. `tests/firestore.rules.test.mjs` runs against the Firestore emulator and covers public reads, denied listing, non-admin and unverified writes, wrong providers, stale `rev`, missing or forged history snapshots, extra fields, spoofed authors and timestamps, oversized documents, resets, history immutability, the `admins` collection, and default deny. `tests/content.test.mjs` covers the portal's fallbacks (remote newer, invalid, network down, storage blocked, no config), and `tests/validate.test.mjs` covers the validator.
 
 ### Accepted risks
 
 - A compromised admin account can rewrite content and delete history. Git and JSON exports are the backup.
 - App Check is not enforced on Firestore, so read quota and outbound transfer can be burned by anyone. The portal degrades to cached or bundled content.
 - The portal allows inline styles.
+- Uploaded photos are never deleted automatically, so storage grows with every replaced photo. At class scale this is a few hundred megabytes at most.
+- The upload rate limit inside the function is per function instance; the platform limit is the one that holds across instances.
 - If popups are blocked, sign-in falls back to a redirect, which can fail in browsers that block third-party storage unless the optional same-domain auth proxy in `netlify.toml` is set up. A redirect that comes back empty, and a browser that refuses storage to the auth domain outright (some private windows), each get their own message asking for popups or a normal window. This affects only the admin, and fails closed.
 
 ## Checklist when changing things

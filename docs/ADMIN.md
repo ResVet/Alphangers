@@ -1,16 +1,73 @@
 # Memakai editor admin
 
-Editor ada di `/admin/` (misalnya `https://alphangers.netlify.app/admin/`). Halaman ini sengaja tidak ditautkan dari portal dan tidak muncul di mesin pencari, jadi simpan sebagai bookmark.
+Ada dua cara mengubah isi portal, dan keduanya menyimpan ke tempat yang sama:
 
-Kalau Firebase belum disambungkan, halaman ini menampilkan langkah setup. Ikuti [FIREBASE_SETUP.md](FIREBASE_SETUP.md) dulu.
+- **Langsung di halaman portal.** Paling cepat buat perubahan sehari-hari: batalin sesi, ganti teks, nambah dosen, unggah foto divisi. Caranya di bagian berikut.
+- **Panel admin di `/admin/`** (misalnya `https://alphangers.netlify.app/admin/`). Buat riwayat versi, mode JSON, impor dan ekspor, dan kembali ke versi bawaan. Halaman ini tidak muncul di mesin pencari, jadi simpan sebagai bookmark.
 
-## Masuk
+Kalau Firebase belum disambungkan, panel admin menampilkan langkah setup. Ikuti [FIREBASE_SETUP.md](FIREBASE_SETUP.md) dulu.
+
+## Edit langsung di halaman
+
+### Masuk
+
+Gulir ke paling bawah portal dan ketuk **Admin** di sebelah kanan footer. Bisa juga buka `alphangers.netlify.app/?admin`, atau tekan **Ctrl+Shift+E** (**Cmd+Shift+E** di Mac). Pilih akun Google admin. Setelah sekali masuk di satu perangkat, dock editor muncul sendiri tiap kamu membuka portal di perangkat itu, sampai kamu keluar lewat menu **⋯ > Keluar**.
+
+Pengunjung biasa tidak mengunduh apa pun dari editor. Tombol Admin cuma membuka layar login; tanpa akun yang terdaftar sebagai admin tidak ada yang bisa diubah.
+
+### Dock
+
+Dock ada di bawah tengah layar:
+
+- **Lihat / Edit.** Mode Lihat menampilkan halaman persis seperti yang dilihat pengunjung. Mode Edit menyalakan semua alat edit. Pindah kapan saja; mode terakhir diingat selama tab terbuka.
+- **↶ ↷** urungkan dan ulangi (**Ctrl+Z**, **Ctrl+Shift+Z**). Setiap perubahan bisa diurungkan sampai diterbitkan.
+- **Terbitkan** (**Ctrl+S**). Angka di tombol itu jumlah bagian yang berubah. Semua perubahan tetap draf di perangkatmu sampai diterbitkan; pengunjung baru melihatnya setelah itu.
+- **⋯** berisi: semua teks halaman dalam satu formulir, link ke panel admin (riwayat dan JSON), buang semua draf, kecilkan dock, dan keluar.
+
+Draf disimpan di browser. Kalau tab tertutup sebelum terbit, waktu dibuka lagi muncul **Lanjutkan draf sebelumnya?**. Draf yang sama juga muncul di panel admin.
+
+### Mengubah teks
+
+Di mode Edit, semua teks yang bisa diubah diberi garis putus-putus. Ketuk, ketik, lalu ketuk di luar atau tekan Enter. Esc membatalkan ketikan itu. Kosongkan sebuah teks untuk kembali ke tulisan aslinya. Teks yang tidak bisa diketik langsung (misalnya akhiran kalimat pembuka di atas, satu per baris) ada di **⋯ > Semua teks halaman**.
+
+### Mengubah kartu (sesi, dosen, channel, pengumuman, divisi, foto)
+
+Di mode Edit, ketuk atau klik sebuah kartu. Kartu itu diberi bingkai hijau dan muncul bar aksi: di sebelah kartu kalau di laptop, di atas dock kalau di HP. Di mode Edit, klik pada kartu tidak membuka apa-apa (dosen, channel, foto), jadi tidak ada yang berpindah halaman di tengah-tengah edit. Tombol tanggal di jadwal dan panah di divisi tetap jalan seperti biasa.
+
+Di atas tiap bagian ada baris alat untuk menambah: **+ Sesi**, **+ Dosen**, **+ Channel**, **+ Pengumuman**, **+ Divisi**, dan sebagainya.
+
+### Jadwal dan pembatalan
+
+- **Batalkan** di bar aksi sebuah sesi: isi alasannya (boleh kosong). Sesi tetap tampil, dengan label merah Dibatalkan, alasannya, dan pita merah di kartunya. Sesi yang dibatalkan tidak dihitung di "Lagi jalan", "Berikutnya", dan hitung mundur ujian, dan ikut terekspor ke kalender sebagai dibatalkan. **Aktifkan lagi** mengembalikannya.
+- **Batalkan semua hari ini** di baris alat jadwal membatalkan semua sesi di tanggal yang sedang tampil. **Aktifkan semua** kebalikannya.
+- **+ Sesi** menambah sesi di tanggal yang sedang tampil. Dosen dipilih dengan mengetik namanya; kode dosen dibuat otomatis dan dicatat di jadwal dan di data dosen sekaligus.
+- **Ubah** membuka formulir lengkap sesi itu, termasuk memindahnya ke tanggal lain. **Duplikat** menyalin sesi tepat sesudahnya.
+- **Libur**, **Ubah blok**, dan **+ Blok** ada di baris alat. Ketuk tombol blok (Blok 1, Blok 2, ...) di mode Edit untuk mengubah atau menghapus blok itu.
+
+### Foto divisi dan foto kelas
+
+- Ketuk sebuah foto di tumpukan divisi untuk **Ganti foto**, **Keterangan**, atau **Hapus foto**. Slot yang masih kosong ("Foto menyusul") punya tombol **Unggah foto**.
+- **Kelola foto** di bar aksi divisi membuka semua foto divisi itu: urutan (tiga teratas jadi tumpukan, sisanya masuk galeri di tampilan lengkap), keterangan, teks untuk pembaca layar, hapus, dan **+ Tambah foto** (boleh pilih banyak sekaligus).
+- Nama, kepanjangan, label, dan deskripsi divisi bisa diketik langsung di halaman.
+- Foto kelas di bagian paling bawah: ketuk lalu **Ganti foto**.
+
+Foto langsung disiapkan di perangkatmu sebelum dikirim: file aslinya disimpan apa adanya buat zoom, tapi data tersembunyinya (lokasi GPS, nomor seri kamera, riwayat edit) dibuang tanpa mengubah piksel sedikit pun. Foto HP yang mengandalkan tanda rotasi disimpan ulang dalam posisi tegak. Dibuat juga salinan 640, 1280, dan 2048 px supaya HP tidak mengunduh file besar, plus pratinjau buram yang tampil sambil menunggu. Satu file maksimal sekitar 5,6 MB setelah disiapkan; foto yang lebih besar dikecilkan otomatis ke 4096 px. Format: JPG, PNG, WebP, AVIF. Foto HEIC dari iPhone diubah dulu ke JPG (Pengaturan > Kamera > Format > Paling Kompatibel).
+
+Foto yang dilepas dari divisi tetap tersimpan di server, jadi Undo dan Riwayat bisa mengembalikannya.
+
+### Menerbitkan
+
+Ketuk **Terbitkan**, cek daftar bagian yang berubah, lalu **Terbitkan** lagi. Setiap bagian disimpan dengan cara yang sama seperti panel admin: versi sebelumnya masuk Riwayat. Kalau ada yang mengubah bagian yang sama dari tempat lain sejak kamu mulai, editor bertanya mau memakai versimu atau versi terbaru.
+
+## Panel admin
+
+### Masuk
 
 Klik **Masuk dengan Google** dan pilih akun admin. Login tersimpan di browser itu sampai kamu klik **Keluar** di kanan atas. Di komputer pinjaman atau komputer lab, selalu keluar setelah selesai.
 
 Kalau muncul **Belum bisa masuk**, akun itu belum terdaftar sebagai admin. Halaman itu menampilkan UID akun dan cara mendaftarkannya.
 
-## Tampilan
+### Tampilan
 
 Daftar konten ada di kiri (laptop) atau di baris atas (HP). Titik kuning di sebelah nama berarti konten itu punya perubahan yang belum disimpan.
 
@@ -23,6 +80,8 @@ Tiap konten punya tiga mode: **Form** untuk edit biasa, **JSON** untuk edit teks
 ### Link Drive
 
 Kartu-kartu link di portal. Urutan di editor sama dengan urutan di portal; pakai tombol panah untuk memindah. Link harus `https://`, dan editor memberi peringatan kalau bukan folder `drive.google.com`. Channel Try Out tidak punya link karena membuka CBT di portal.
+
+Dokumen yang sama juga menyimpan teks halaman yang sudah diubah (`site.t`), foto kelas (`site.photo`), dan daftar divisi beserta fotonya (`divisi`). Ketiganya paling enak diubah langsung dari halaman portal; di panel admin kelihatan di mode JSON. Selama `divisi` belum ada di dokumen, portal memakai daftar divisi bawaan dari repo.
 
 ### Pengumuman
 

@@ -58,7 +58,7 @@ const HEX_RE = /^#[0-9a-f]{6}$/;
 // C0 and C1 controls except tab and newline, plus the bidi overrides that can
 // make text read differently from how it is stored.
 // eslint-disable-next-line no-control-regex
-const CONTROL_RE = /[\u0000-\u0008\u000B-\u001F\u007F-\u009F‎‏‪-‮⁦-⁩]/g;
+const CONTROL_RE = /[\u0000-\u0008\u000B-\u001F\u007F-\u009F\u200e\u200f\u202a-\u202e\u2066-\u2069]/g;
 
 /* ---------- issue collection ---------- */
 

@@ -60,7 +60,7 @@ test('page text keys and values', () => {
 });
 
 test('control characters and bidi overrides are removed from page texts', () => {
-  const r = validate('links', { ...links, site: { t: { 'foot.credit': 'Made‮ with\u0007 love' } } });
+  const r = validate('links', { ...links, site: { t: { 'foot.credit': 'Made\u202e with\u0007 love' } } });
   assert.equal(r.data.site.t['foot.credit'], 'Made with love');
 });
 
