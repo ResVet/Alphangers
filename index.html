@@ -42,6 +42,7 @@
     <a href="#menu" data-jump="menu">Drive</a>
     <a href="#dosen" data-jump="dosen">Dosen</a>
     <a href="#anatomi" data-jump="anatomi">Jantung 3D</a>
+    <a href="#divisi" data-jump="divisi">Divisi</a>
   </nav>
   <div class="bar-r">
     <span class="bar-meta">FK Unsri · 2026</span>
@@ -62,10 +63,10 @@
   <section class="hero" id="top">
     <div class="wrap hero-in">
       <div class="hero-copy">
-        <p class="kick rv" style="--d:.05s">Portal kelas · PSPD FK Unsri</p>
-        <p class="lede rv" style="--d:.15s">Semua Drive Class Alpha ada di satu halaman ini. Pilih channel, langsung masuk ke foldernya. <span id="ledeEnd">Semangat belajarnya!</span></p>
+        <p class="kick rv" style="--d:.05s" data-k="hero.kick">Portal kelas · PSPD FK Unsri</p>
+        <p class="lede rv" style="--d:.15s"><span data-k="hero.lede">Jadwal, dosen, semua Drive, dan try out Class Alpha ada di satu halaman ini.</span> <span id="ledeEnd">Semangat belajarnya!</span></p>
         <div class="hero-cta rv" style="--d:.25s">
-          <a class="cta mag" href="#menu" data-jump="menu">Buka channel <span>↓</span></a>
+          <a class="cta mag" href="#menu" data-jump="menu"><span data-k="hero.cta">Buka channel</span> <span>↓</span></a>
           <span class="bpm" aria-label="Detak jantung halaman"><i class="bpm-h" id="bpmH"></i><b id="bpmN">72</b>bpm</span>
         </div>
       </div>
@@ -88,7 +89,7 @@
       <div class="hero-word">
         <h1 class="ttl" id="ttl" aria-label="Alphangers"><span class="ttl-sk" id="ttlSk">ALPHANGERS</span></h1>
         <div class="asm rv" style="--d:.7s">
-          <span class="asm-w">assemble!</span>
+          <span class="asm-w" data-k="hero.asm">assemble!</span>
           <svg class="oval" viewBox="0 0 200 72" aria-hidden="true"><path pathLength="1" d="M12,38 C16,12 118,2 168,14 C198,22 196,50 148,60 C92,70 6,64 10,36 C12,24 44,16 78,14"/></svg>
         </div>
       </div>
@@ -111,7 +112,7 @@
   <section class="channels" id="menu">
     <div class="wrap">
       <div class="ch-head">
-        <h2 class="ch-h rv">ke mana <em>hari ini?</em></h2>
+        <h2 class="ch-h rv"><span data-k="menu.h1">ke mana</span> <em data-k="menu.h2">hari ini?</em></h2>
         <span class="lbl rv" style="--d:.1s" id="chCount">Menu · 10 channel</span>
       </div>
       <ol class="rows" id="rows"></ol>
@@ -132,9 +133,9 @@
       <div class="hud hud-r" aria-hidden="true"><span>HR</span><b id="hr">072</b><span>bpm</span></div>
       <div class="tags" id="tags" aria-hidden="true"></div>
       <div class="p-intro" id="pIntro">
-        <p class="kick">Siklus jantung</p>
-        <h2 class="p-h">Satu detak,<br><em>biar kebayang.</em></h2>
-        <p class="p-s">Scroll pelan-pelan. Jantung dan EKG-nya jalan ikut scroll kamu.</p>
+        <p class="kick" data-k="siklus.kick">Siklus jantung</p>
+        <h2 class="p-h"><span data-k="siklus.h1">Satu detak,</span><br><em data-k="siklus.h2">biar kebayang.</em></h2>
+        <p class="p-s" data-k="siklus.sub">Scroll pelan-pelan. Jantung dan EKG-nya jalan ikut scroll kamu.</p>
       </div>
       <div class="caps" id="caps"></div>
       <ol class="rail" id="rail" aria-hidden="true"><li>P</li><li>PR</li><li>QRS</li><li>ST</li><li>T</li></ol>
@@ -145,20 +146,39 @@
   <section class="sec sec-anatomi" id="anatomi" aria-labelledby="anatomiH">
     <div class="wrap">
       <div class="ch-head">
-        <h2 class="ch-h rv" id="anatomiH">bongkar <em>jantungnya.</em></h2>
-        <span class="lbl rv" style="--d:.1s">Model 3D · 55 bagian</span>
+        <h2 class="ch-h rv" id="anatomiH"><span data-k="anatomi.h1">bongkar</span> <em data-k="anatomi.h2">jantungnya.</em></h2>
+        <span class="lbl rv" style="--d:.1s" data-k="anatomi.meta">Model 3D · 55 bagian</span>
       </div>
     </div>
     <div class="feat-root" id="anatomiRoot"></div>
+  </section>
+
+  <section class="sec-divisi" id="divisi" aria-label="Divisi">
+    <div class="feat-root" id="divisiRoot"><p class="feat-wait lbl wrap">Memuat divisi</p></div>
+  </section>
+
+  <section class="kelas" id="kelas" aria-labelledby="kelasH">
+    <div class="kelas-stage">
+      <figure class="kelas-ph" id="kelasPh">
+        <button type="button" class="kelas-open" id="kelasOpen" aria-label="Buka foto Class Alpha ukuran penuh">
+          <picture><img class="kelas-img" src="/img/kelas/alpha.webp" srcset="/img/kelas/alpha-640.webp 640w, /img/kelas/alpha.webp 1280w" sizes="100vw" width="1280" height="960" alt="Foto bersama Class Alpha di lobi Fakultas Kedokteran Universitas Sriwijaya" loading="lazy" decoding="async" draggable="false"></picture>
+        </button>
+      </figure>
+      <div class="kelas-copy">
+        <p class="kelas-k" data-k="kelas.kick">Angkatan 2026</p>
+        <h2 class="kelas-h" id="kelasH"><span data-k="kelas.h1">Class</span> <em data-k="kelas.h2">Alpha.</em></h2>
+        <p class="kelas-s" data-k="kelas.sub">Pendidikan Dokter, Fakultas Kedokteran Universitas Sriwijaya.</p>
+      </div>
+    </div>
   </section>
 
   <footer class="foot">
     <div class="wrap">
       <div class="big" id="big" aria-hidden="true"><span class="big-o">ALPHANGERS</span><span class="big-f">ALPHANGERS</span><span class="big-g" id="bigG">ALPHANGERS</span></div>
       <div class="ft">
-        <button class="carrd" type="button" id="loveBtn" data-cur="lihat" aria-haspopup="dialog">Made with love by Resvet</button>
+        <span class="credit" data-k="foot.credit">Made with love by Resvet</span>
         <span class="clock" id="clock"><i></i>Palembang · --:-- WIB</span>
-        <span class="lbl">Class Alpha · FK Unsri 2026</span>
+        <span class="ft-r"><span class="lbl" data-k="foot.meta">Class Alpha · FK Unsri 2026</span><button type="button" class="adm" id="adminBtn">Admin</button></span>
       </div>
     </div>
   </footer>

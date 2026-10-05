@@ -12,3 +12,5 @@ Thumbs.db
 *.log
 test-results/
 playwright-report/
+/.netlify
+dist-mock/

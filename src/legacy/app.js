@@ -1,5 +1,5 @@
 // The portal shell from v3: loader, hero, scroll-driven heart and ECG, channel list, channel panel
-// with the curtain transition, try out CBT, footer, class photo window and the Polyester easter egg.
+// with the curtain transition, try out CBT, footer and the Polyester easter egg.
 // New features live in src/features and talk to this file only through the object it returns.
 import { HeartGL } from './heart-gl.js';
 import { RR, ecgV, ecgN, ECG3D } from './ecg.js';
@@ -27,6 +27,8 @@ function hRepl(st, u){ try{ history.replaceState(st, '', u); }catch(e){} }
 function store(k, v){ try{ if(v === undefined) return sessionStorage.getItem(k); sessionStorage.setItem(k, v); }catch(e){} return null; }
 function esc(s){ return String(s).replace(/[&<>"']/g, function(ch){ return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[ch]; }); }
 function dprCap(max){ return Math.min(window.devicePixelRatio || 1, max); }
+// main loop state, declared up front because observers may call wake() before the loop is set up
+var last = 0, sy = 0, sv = 0, T = 0, raf = 0, idleN = 0, loopOn = false;
 
 // data
 var ICON = {
@@ -121,13 +123,17 @@ function beatStep(dt, sv){
   if(r > beat.lastR){ beat.lastR = r; for(var i = 0; i < beat.listeners.length; i++) beat.listeners[i](); }
 }
 
-// hero line: one of four endings, same odds on every load
-var ENDS = ['And yes this website is a bit vibecoded\u00a0:D', 'Semangat belajarnya!', 'Jangan tanya apa kepanjangan Resvet.', ''];
+// hero line: one of the endings, same odds on every load. The empty one is the Polyester button.
+// The live editor can replace the list (text key "hero.ends", one ending per line).
+var ENDS = ['Semangat belajarnya!', 'Jangan tanya apa kepanjangan Resvet.', ''];
 var ledeEnd = $('#ledeEnd'), endK = Math.floor(Math.random() * ENDS.length), polyBtn = null;
-if(ledeEnd){
-  if(ENDS[endK]) ledeEnd.textContent = ENDS[endK];
-  else { ledeEnd.innerHTML = '<span class="nw"><button class="poly" type="button" id="polyBtn">100% Polyester</button>.</span>'; polyBtn = $('#polyBtn'); }
+function setEnding(list){
+  if(!ledeEnd) return;
+  if(list){ ENDS = list; endK = Math.floor(Math.random() * ENDS.length); }
+  if(ENDS[endK]){ ledeEnd.textContent = ENDS[endK]; polyBtn = null; }
+  else { ledeEnd.innerHTML = '<span class="nw"><button class="poly" type="button" id="polyBtn">100% Polyester</button>.</span>'; polyBtn = $('#polyBtn'); if(revealed && poly) poly.warm(); }
 }
+setEnding();
 
 // hero title
 var sk = $('#ttlSk'), ttlEl = $('#ttl'), word = sk.textContent.trim(), chars = [];
@@ -234,14 +240,30 @@ if('IntersectionObserver' in window){
   $$('.rv').forEach(function(el){ if(!el.closest('.hero')) io.observe(el); });
 } else { $$('.rv').forEach(function(el){ el.classList.add('in'); }); }
 
-// visibility of the heavy sections
-var vis = { hero: true, pulse: false, foot: false };
+// visibility of the animated sections; the main loop sleeps while none of them is on screen
+var vis = { hero: true, mq: true, pulse: false, foot: false };
 if('IntersectionObserver' in window){
   var vo = new IntersectionObserver(function(es){
     es.forEach(function(e){ vis[e.target.getAttribute('data-vis')] = e.isIntersecting; });
+    wake();
   }, {rootMargin: '80px 0px 80px 0px'});
-  [['.hero','hero'],['#siklus','pulse'],['.foot','foot']].forEach(function(a){ var el = $(a[0]); el.setAttribute('data-vis', a[1]); vo.observe(el); });
+  [['.hero','hero'],['.mq','mq'],['#siklus','pulse'],['.foot','foot']].forEach(function(a){ var el = $(a[0]); if(!el) return; el.setAttribute('data-vis', a[1]); vo.observe(el); });
 } else { vis.pulse = vis.foot = true; }
+
+// Page positions the loop needs, read once per layout change instead of once per frame.
+// Reading them inside the loop, after it has written styles, forced a full layout every frame.
+var OFF = { docH: 0, vh: 1, pulseTop: 0, pulseRun: 1, footTop: 0, footH: 1 };
+function reflow(){
+  var y = window.scrollY || window.pageYOffset || 0;
+  OFF.vh = window.innerHeight || 1;
+  OFF.docH = document.documentElement.scrollHeight;
+  var ps = $('#siklus'), st = $('#stage');
+  if(ps && st){ OFF.pulseTop = ps.getBoundingClientRect().top + y; OFF.pulseRun = ps.offsetHeight - st.offsetHeight; }
+  var f = $('.foot');
+  if(f){ var fr = f.getBoundingClientRect(); OFF.footTop = fr.top + y; OFF.footH = fr.height; }
+  pgLast = -1;
+  wake();
+}
 
 // scroll progress line (ECG across the top bar)
 var pgSvg = $('#progSvg'), pgB = $('#pgB'), pgF = $('#pgF'), pgLen = 1;
@@ -259,37 +281,52 @@ function progBuild(){
   try{ pgLen = pgF.getTotalLength(); }catch(e){ pgLen = w * 1.4; }
   pgF.style.strokeDasharray = pgLen + ' ' + pgLen;
 }
-var pgLast = -1;
+var pgLast = -1, pgOff = '';
 function progFrame(y, force){
   if(y === pgLast && !force) return; pgLast = y;
-  var max = document.documentElement.scrollHeight - window.innerHeight;
+  var max = OFF.docH - OFF.vh;
   var p = max > 0 ? clamp(y / max, 0, 1) : 0;
-  pgF.style.strokeDashoffset = (pgLen * (1 - p)).toFixed(1);
+  var o = (pgLen * (1 - p)).toFixed(1);
+  if(o !== pgOff){ pgOff = o; pgF.style.strokeDashoffset = o; }
 }
 
 // hero: emblem, halo, tilt
-var totem = $('#totem'), tilt = $('#tilt'), halo = $('#halo'), hctx = halo.getContext('2d'), haloS = 0;
+var totem = $('#totem'), tilt = $('#tilt'), halo = $('#halo'), hctx = halo.getContext('2d'), haloS = 0, haloD = 1, bezel = null;
 var bpmN = $('#bpmN'), bpmH = $('#bpmH');
 function haloSize(){
-  var r = halo.getBoundingClientRect(), d = dprCap(2);
-  haloS = r.width; if(!haloS) return;
+  var r = halo.getBoundingClientRect(), d = dprCap(TOUCH ? 1.5 : 2);
+  if(!r.width) return;
+  if(r.width === haloS && d === haloD && bezel) return;
+  haloS = r.width; haloD = d;
   halo.width = Math.round(haloS * d); halo.height = Math.round(haloS * d); hctx.setTransform(d, 0, 0, d, 0, 0);
+  bezel = bezelLayer(haloS, d);
+}
+// The ticks and the dashed ring never move, so they are drawn once and stamped every frame.
+function bezelLayer(S, d){
+  var c = document.createElement('canvas'); c.width = Math.round(S * d); c.height = Math.round(S * d);
+  var g = c.getContext('2d'); g.setTransform(d, 0, 0, d, 0, 0);
+  var cx = S / 2, cy = S / 2;
+  g.lineCap = 'round'; g.lineWidth = 1;
+  for(var pass = 0; pass < 2; pass++){
+    g.beginPath();
+    for(var k = 0; k < 60; k++){
+      var big = k % 5 === 0; if(big !== !!pass) continue;
+      var an = k / 60 * Math.PI * 2, r1 = S * 0.462, r2 = r1 + (big ? S * 0.018 : S * 0.009);
+      g.moveTo(cx + Math.cos(an) * r1, cy + Math.sin(an) * r1); g.lineTo(cx + Math.cos(an) * r2, cy + Math.sin(an) * r2);
+    }
+    g.strokeStyle = 'rgba(238,242,232,' + (pass ? 0.16 : 0.08) + ')'; g.stroke();
+  }
+  g.setLineDash([2, 5]); g.strokeStyle = 'rgba(126,240,90,.12)';
+  g.beginPath(); g.arc(cx, cy, S * 0.338, 0, Math.PI * 2); g.stroke();
+  return c;
 }
 var haloFlash = 0;
 function haloDraw(){
   var S = haloS; if(!S) return;
   hctx.clearRect(0, 0, S, S);
-  var cx = S / 2, cy = S / 2, R0 = S * 0.338, AMP = S * 0.066, BPR = 4, SPAN = 0.9, N = 240;
+  var cx = S / 2, cy = S / 2, R0 = S * 0.338, AMP = S * 0.066, BPR = 4, SPAN = 0.9, N = TOUCH ? 180 : 240;
   var head = beat.phase, a0 = -Math.PI / 2 + (head / BPR) * Math.PI * 2;
-  // bezel ticks
-  hctx.lineCap = 'round';
-  for(var k = 0; k < 60; k++){
-    var an = k / 60 * Math.PI * 2, big = k % 5 === 0, r1 = S * 0.462, r2 = r1 + (big ? S * 0.018 : S * 0.009);
-    hctx.strokeStyle = 'rgba(238,242,232,' + (big ? 0.16 : 0.08) + ')'; hctx.lineWidth = 1;
-    hctx.beginPath(); hctx.moveTo(cx + Math.cos(an) * r1, cy + Math.sin(an) * r1); hctx.lineTo(cx + Math.cos(an) * r2, cy + Math.sin(an) * r2); hctx.stroke();
-  }
-  hctx.setLineDash([2, 5]); hctx.strokeStyle = 'rgba(126,240,90,.12)'; hctx.lineWidth = 1;
-  hctx.beginPath(); hctx.arc(cx, cy, R0, 0, Math.PI * 2); hctx.stroke(); hctx.setLineDash([]);
+  if(bezel) hctx.drawImage(bezel, 0, 0, S, S);
   var pts = [];
   for(var i = 0; i <= N; i++){
     var f = i / N, bt = head - (1 - f) * SPAN * BPR, t = (bt - Math.floor(bt)) * RR;
@@ -346,10 +383,15 @@ function assemble(){
 }
 totem.addEventListener('click', assemble);
 totem.addEventListener('keydown', function(e){ if(e.key === 'Enter' || e.key === ' '){ e.preventDefault(); assemble(); } });
-var ttlSkew = 0;
+var ttlSkew = 0, heroW = {};
+// writes a style only when its value changed, so a still hero costs no style work
+function put(el, key, prop, val){
+  if(heroW[key] === val) return; heroW[key] = val;
+  if(prop.charAt(0) === '-') el.style.setProperty(prop, val); else el.style[prop] = val;
+}
 function heroFrame(dt, T, y, sv){
   ttlSkew = damp(ttlSkew, clamp(-(sv || 0) * 0.0032, -7, 7), 7, dt);
-  sk.style.transform = 'skewX(' + ttlSkew.toFixed(2) + 'deg)';
+  put(sk, 'sk', 'transform', 'skewX(' + ttlSkew.toFixed(2) + 'deg)');
   var tx = tl.trx, ty = tl.try_;
   if(TOUCH){
     tx = Math.cos(T * 0.45) * 5; ty = Math.sin(T * 0.6) * 9 + y * 0.02;
@@ -358,12 +400,12 @@ function heroFrame(dt, T, y, sv){
   tl.rx = damp(tl.rx, tx, 5, dt); tl.ry = damp(tl.ry, ty, 5, dt);
   var sp = 0;
   if(tl.spinT){ var k = (performance.now() - tl.spinT) / 1100; if(k >= 1){ tl.spinT = 0; } else { var e = 1 - Math.pow(1 - k, 3); sp = e * 360; } }
-  tilt.style.transform = 'rotateX(' + tl.rx.toFixed(2) + 'deg) rotateY(' + (tl.ry + sp).toFixed(2) + 'deg)';
-  totem.style.setProperty('--sx', (50 + tl.ry * 2.6).toFixed(1) + '%');
-  totem.style.setProperty('--sy', (36 - tl.rx * 2.6).toFixed(1) + '%');
+  put(tilt, 'tl', 'transform', 'rotateX(' + tl.rx.toFixed(2) + 'deg) rotateY(' + (tl.ry + sp).toFixed(2) + 'deg)');
+  put(totem, 'sx', '--sx', (50 + tl.ry * 2.6).toFixed(1) + '%');
+  put(totem, 'sy', '--sy', (36 - tl.rx * 2.6).toFixed(1) + '%');
   haloFlash = damp(haloFlash, 0, 6, dt);
   tl.glow = damp(tl.glow, haloFlash, 12, dt);
-  totem.style.setProperty('--gl', (0.8 + tl.glow * 0.35).toFixed(3));
+  put(totem, 'gl', '--gl', (0.8 + tl.glow * 0.35).toFixed(2));
   haloDraw();
 }
 
@@ -377,7 +419,7 @@ function mqFrame(dt, sv){
   mqX -= speed * dt * mqDir;
   if(mqX <= -mqW) mqX += mqW; if(mqX > 0) mqX -= mqW;
   mqSk = damp(mqSk, clamp(-sv * 0.0035, -9, 9), 6, dt);
-  mq.style.transform = 'translate3d(' + mqX.toFixed(1) + 'px,0,0) skewX(' + mqSk.toFixed(2) + 'deg)';
+  put(mq, 'mq', 'transform', 'translate3d(' + mqX.toFixed(1) + 'px,0,0) skewX(' + mqSk.toFixed(2) + 'deg)');
 }
 
 // the scroll-driven heart + ECG
@@ -385,21 +427,27 @@ var pulseActive = false;
 var pulse = (function(){
   var sec = $('#siklus'), stage = $('#stage'), ecgC = $('#ecgc'), heartC = $('#heartc');
   var ecg = ECG3D(ecgC), heart = null;
-  try{ heart = HeartGL(heartC, { steps: (LOW || TOUCH) ? 64 : 80 }); }catch(e){ heart = null; }
+  try{ heart = HeartGL(heartC, { steps: (LOW || TOUCH) ? 60 : 72 }); }catch(e){ heart = null; }
   if(!heart){ heartC.style.display = 'none'; $('#dragHint').style.display = 'none'; }
   var capsEl = $('#caps'), tagsEl = $('#tags'), railEl = $('#rail'), rail = $$('#rail li'), intro = $('#pIntro'), hrEl = $('#hr');
+  // plain text; each piece carries a data-k key so the live editor can change it
   var CAPS = [
-    {k:'Gelombang P', d:'80 ms', t:'Merepresentasikan depolarisasi atrium (kontraksi atrium kiri dan kanan). Durasi normal &lt;0,12 detik.'},
+    {k:'Gelombang P', d:'80 ms', t:'Merepresentasikan depolarisasi atrium (kontraksi atrium kiri dan kanan). Durasi normal <0,12 detik.'},
     {k:'Interval PR', d:'160 ms', t:'Waktu dari awal depolarisasi atrium hingga awal depolarisasi ventrikel, mencerminkan konduksi impuls melalui nodus AV. Normal 0,12–0,20 detik.'},
-    {k:'Kompleks QRS', d:'80 ms', t:'Merepresentasikan depolarisasi ventrikel. Durasi normal &lt;0,12 detik; pemanjangan mengindikasikan gangguan konduksi intraventrikular.'},
+    {k:'Kompleks QRS', d:'80 ms', t:'Merepresentasikan depolarisasi ventrikel. Durasi normal <0,12 detik; pemanjangan mengindikasikan gangguan konduksi intraventrikular.'},
     {k:'Segmen ST', d:'100 ms', t:'Periode antara depolarisasi dan repolarisasi ventrikel. Elevasi atau depresi segmen ini merupakan indikator penting iskemia atau infark miokard.'},
     {k:'Gelombang T', d:'160 ms', t:'Merepresentasikan repolarisasi ventrikel.'},
-    {k:'Irama sinus <em>normal</em>', d:'72 bpm', t:'Irama jantung dari nodus SA dengan laju 60–100x/menit, gelombang P selalu diikuti QRS, dan interval R-R teratur.', out:true}
+    {k:'Irama sinus', em:'normal', d:'72 bpm', t:'Irama jantung dari nodus SA dengan laju 60–100x/menit, gelombang P selalu diikuti QRS, dan interval R-R teratur.', out:true}
   ];
+  function capHTML(c, i){
+    var key = 'siklus.cap' + i + '.';
+    return '<span class="cap-k"><span><span data-k="' + key + 'k">' + esc(c.k) + '</span>' + (c.em ? ' <em data-k="' + key + 'em">' + esc(c.em) + '</em>' : '') + '</span>' +
+      '<i data-k="' + key + 'd">' + esc(c.d) + '</i></span><p data-k="' + key + 't">' + esc(c.t) + '</p>';
+  }
   var MARKS = [ {t:.08,y:1.8,h:9,l:'P'}, {t:.165,y:.3,h:3.2,l:'PR'}, {t:.235,y:11.3,h:4,l:'QRS'}, {t:.33,y:.3,h:3.2,l:'ST'}, {t:.46,y:3.2,h:7,l:'T'} ];
-  var capEls = CAPS.map(function(c){
+  var capEls = CAPS.map(function(c, i){
     var d = document.createElement('div'); d.className = 'cap' + (c.out ? ' out' : '');
-    d.innerHTML = '<span class="cap-k"><span>' + c.k + '</span><i>' + c.d + '</i></span><p>' + c.t + '</p>';
+    d.innerHTML = capHTML(c, i);
     capsEl.appendChild(d); return d;
   });
   MARKS.forEach(function(m){ m.h0 = m.h; m.bump = 0; m.bt = 0; });
@@ -438,25 +486,35 @@ var pulse = (function(){
     for(var i = 0; i < KEYS.length; i++){ var k = KEYS[i]; if(u <= k[0]) return lerp(k[1], k[2], u / k[0]); u -= k[0]; }
     return 0.62;
   }
-  var st = { ps: 0, W: 0, H: 0, dpr: 1, q: 1, frames: [], downs: 0, drag: 0, dragV: 0, down: false, lx: 0, mx: 0, my: 0, tmx: 0, tmy: 0, head: 0, cap: -2, capOn: -1 };
+  var st = { ps: 0, W: 0, H: 0, dpr: 1, q: 1, frames: [], downs: 0, drag: 0, dragV: 0, down: false, lx: 0, mx: 0, my: 0, tmx: 0, tmy: 0, head: 0, cap: -2, capOn: -1, tuned: 0 };
+  // from the cached section offsets: no layout read inside the frame
   function progress(){
-    var r = sec.getBoundingClientRect(), total = sec.offsetHeight - stage.offsetHeight;
-    return total > 0 ? clamp(-r.top / total, 0, 1) : 1;
+    var y = window.scrollY || window.pageYOffset || 0;
+    return OFF.pulseRun > 0 ? clamp((y - OFF.pulseTop) / OFF.pulseRun, 0, 1) : 1;
   }
   function band(){
     var sr = stage.getBoundingClientRect(), L = Math.max(16, st.W * 0.05), R = st.W - L;
     if(st.W / st.H > 1.1 && heart){ var hr = heartC.getBoundingClientRect(); if(hr.width) R = Math.max(L + 200, hr.left - sr.left - 24); }
     st.bL = L; st.bR = R;
   }
+  // The hologram is raymarched per pixel, so its cost is its pixel count. It starts inside a
+  // pixel budget, then the frame timer below moves the scale up while frames come in fast and
+  // down when they do not. The soft glow hides the difference between scales.
+  var BUDGET = TOUCH ? 150000 : (LOW ? 220000 : 340000);
   function heartSize(){
     if(!heart) return;
-    if(!st.q0){ st.q0 = (TOUCH ? Math.max(0.75, dprCap(2) * 0.5) : dprCap(1.5) * 0.85) * (LOW ? 0.8 : 1); st.q = st.q0; }
-    var hr = heartC.getBoundingClientRect(); if(hr.width) heart.resize(hr.width, hr.height, st.q);
+    var hr = heartC.getBoundingClientRect(); if(!hr.width) return;
+    st.hw = hr.width; st.hh = hr.height;
+    st.qMax = (TOUCH ? Math.min(1.5, dprCap(2) * 0.75) : dprCap(2) * 0.9);
+    var fit = Math.sqrt(BUDGET / (hr.width * hr.height));
+    if(!st.q0){ st.q0 = clamp(Math.min(st.qMax, fit), 0.42, st.qMax); st.q = st.q0; }
+    st.q = clamp(st.q, 0.35, st.qMax);
+    heart.resize(hr.width, hr.height, st.q);
   }
   function measure(){
     var r = stage.getBoundingClientRect(); if(!r.width) return;
     st.W = r.width; st.H = r.height;
-    st.dpr = dprCap(TOUCH ? 1.75 : 2) * (st.downs > 2 ? 0.75 : 1);
+    st.dpr = dprCap(TOUCH ? 1.5 : 1.75) * (st.downs > 2 ? 0.8 : 1);
     ecg.resize(st.W, st.H, st.dpr);
     tagEls.forEach(function(el){ el.__w = 0; });
     heartSize(); band();
@@ -478,7 +536,7 @@ var pulse = (function(){
     if(head < 0.12) return 0; if(head < 0.2) return 1; if(head < 0.28) return 2; if(head < 0.38) return 3; return 4;
   }
   function frame(dt, T, force){
-    if(st.resizeHeart){ st.resizeHeart = false; heartSize(); }
+    if(st.resizeHeart){ st.resizeHeart = false; if(heart && st.hw) heart.resize(st.hw, st.hh, st.q); }
     var p = RM ? P1 + 0.12 : progress();
     st.ps = (force || RM) ? p : damp(st.ps, p, 9, dt);
     var ps = st.ps, head = headAt(ps), prevHead = st.head; st.head = head;
@@ -516,21 +574,29 @@ var pulse = (function(){
     for(var i = 0; i < tagEls.length; i++){
       var a = anchors[i], el = tagEls[i];
       if(a && a.on && a.b && ps > P0){
-        el.style.transform = 'translate(' + a.b[0].toFixed(1) + 'px,' + a.b[1].toFixed(1) + 'px) translate(-50%,-115%)';
-        el.classList.add('on');
-      } else el.classList.remove('on');
+        var tf = 'translate(' + a.b[0].toFixed(1) + 'px,' + a.b[1].toFixed(1) + 'px) translate(-50%,-115%)';
+        if(el.__tf !== tf){ el.__tf = tf; el.style.transform = tf; }
+        if(!el.__on){ el.__on = true; el.classList.add('on'); }
+      } else if(el.__on){ el.__on = false; el.classList.remove('on'); }
     }
     if(heart){
       var as = bump(cyc, .09, .14, .16, .24), vs = bump(cyc, .24, .32, .42, .56);
       if(!st.down){ st.drag += st.dragV * dt; st.dragV = damp(st.dragV, 0, 2.6, dt); }
       var yaw = st.drag + (Math.sin(T * 0.32) * 0.3 + (ps - 0.45) * 0.9) * (1 - kOut) + st.mx * 0.25;
       heart.draw({ time: T, cyc: head < 0.001 ? 0.6 : cyc, as: as, vs: vs, fade: 1, yaw: yaw, pitch: 0.06 + st.my * 0.06, zoom: 1, lift: 0, glow: 1 });
-      if(!force && !RM){
+      if(!force && !RM && !st.down){
         st.frames.push(dt);
-        if(st.frames.length >= 30){
-          var avg = 0; for(var f = 0; f < st.frames.length; f++) avg += st.frames[f]; avg /= st.frames.length; st.frames.length = 0;
-          st.slow = avg > 0.024 ? (st.slow || 0) + 1 : 0;
-          if((st.slow >= 2 || avg > 0.04) && st.downs < 5){ st.slow = 0; st.downs++; st.q = Math.max(0.3, st.q * (avg > 0.04 ? 0.7 : 0.8)); st.resizeHeart = true; }
+        if(st.frames.length >= 40){
+          // median, so one hitch from a lazy-loaded section does not count as a slow GPU
+          var fr = st.frames.slice().sort(function(a, b){ return a - b; }), med = fr[fr.length >> 1]; st.frames.length = 0;
+          if(med > 0.0205 && st.q > 0.36){
+            st.downs++; st.fast = 0;
+            st.q = Math.max(0.35, st.q * (med > 0.034 ? 0.72 : 0.85)); st.resizeHeart = true;
+          } else if(med < 0.0175 && st.q < st.qMax && st.downs < 6){
+            // headroom: sharpen again, but give up after it has had to back off a few times
+            st.fast = (st.fast || 0) + 1;
+            if(st.fast >= 2){ st.fast = 0; st.q = Math.min(st.qMax, st.q * 1.12); st.resizeHeart = true; }
+          }
         }
       }
     }
@@ -542,15 +608,15 @@ var pulse = (function(){
       railEl.classList.toggle('fin', ci === 5);
     }
     var io2 = 1 - sstep(P0 - 0.07, P0 + 0.005, ps);
-    intro.style.opacity = io2.toFixed(3);
-    intro.style.transform = 'translateY(' + ((1 - io2) * -30).toFixed(1) + 'px)';
+    var ioS = io2.toFixed(3);
+    if(ioS !== st.ioS){ st.ioS = ioS; intro.style.opacity = ioS; intro.style.transform = 'translateY(' + ((1 - io2) * -30).toFixed(1) + 'px)'; }
     var hrS = ('00' + Math.round(beat.bpm)).slice(-3); if(hrS !== st.hrS){ st.hrS = hrS; hrEl.textContent = hrS; }
   }
   // reduced motion: one annotated frame plus the captions as a list
   function still(){
     B.classList.add('pulse-static');
     var list = document.createElement('div'); list.className = 'wrap caps-static';
-    CAPS.forEach(function(c){ var d = document.createElement('div'); d.className = 'cap-s'; d.innerHTML = '<span class="cap-k"><span>' + c.k + '</span><i>' + c.d + '</i></span><p>' + c.t + '</p>'; list.appendChild(d); });
+    CAPS.forEach(function(c, i){ var d = document.createElement('div'); d.className = 'cap-s'; d.innerHTML = capHTML(c, i); list.appendChild(d); });
     sec.appendChild(list);
     capsEl.style.display = 'none'; $('#rail').style.display = 'none'; intro.style.display = 'none';
   }
@@ -1338,17 +1404,20 @@ if(FINE && !RM){
     var b = e.target.closest('.row-b'); if(!b) return;
     var i = +b.getAttribute('data-i');
     if(i !== peekI){ peekI = i; peekIn.style.transform = 'translateY(' + (-i * 270) + 'px)'; }
-    if(!peekOn){ peekOn = true; peek.classList.add('on'); }
+    if(!peekOn){ peekOn = true; peek.classList.add('on'); wake(); }
   });
   rowsEl.addEventListener('pointerleave', function(){ peekOn = false; peek.classList.remove('on'); });
   window.addEventListener('pointermove', function(e){ pk.tx = e.clientX; pk.ty = e.clientY; }, {passive: true});
 }
+// true while the preview card is shown or still settling
 function peekFrame(dt){
-  if(!FINE || RM) return;
+  if(!FINE || RM) return false;
+  if(!peekOn && pk.s < 0.602) return false;
   var ox = pk.x; pk.x = damp(pk.x, pk.tx + 150, 9, dt); pk.y = damp(pk.y, pk.ty, 9, dt);
   pk.r = damp(pk.r, clamp((pk.x - ox) * 0.6, -12, 12), 8, dt);
   pk.s = damp(pk.s, peekOn ? 1 : 0.6, 10, dt); var sc = pk.s.toFixed(3);
   peek.style.transform = 'translate(' + pk.x.toFixed(1) + 'px,' + pk.y.toFixed(1) + 'px) translate(-50%,-50%) rotate(' + pk.r.toFixed(2) + 'deg) scale(' + sc + ')';
+  return true;
 }
 rowsEl.addEventListener('click', function(e){
   var b = e.target.closest('.row-b'); if(!b) return;
@@ -1462,12 +1531,10 @@ function sync(){
 }
 window.addEventListener('popstate', function(){
   if(internal){ internal = false; return; }
-  if(lbx.isOpen() && !(history.state && history.state.lbx)){ lbx.close(true); return; }
   if(!busy) sync();
 });
 window.addEventListener('keydown', function(e){
   if(e.key !== 'Escape') return;
-  if(lbx.isOpen()){ lbx.close(); return; }
   if(!openId) return;
   if(openId === 'tryout' && TRY.esc()) return;
   closeViaHistory();
@@ -1475,7 +1542,7 @@ window.addEventListener('keydown', function(e){
 // a channel hash typed or pasted into an already open tab
 window.addEventListener('hashchange', function(){
   var h = location.hash.replace('#', '');
-  if(!BY[h] || openId || busy || lbx.isOpen()) return;
+  if(!BY[h] || openId || busy) return;
   hRepl({ch: h}, '#' + h);
   goChannel(h, false);
 });
@@ -1510,11 +1577,13 @@ function bigFit(){
   var w = bigO.scrollWidth, cw = big.clientWidth;
   if(w > 0 && cw > 0) big.style.fontSize = Math.floor(100 * cw / w * 0.995 * 100) / 100 + 'px';
 }
+var fillS = '';
 function footFrame(){
-  var r = foot.getBoundingClientRect(), vh = window.innerHeight;
-  var p = clamp((vh - r.top) / Math.max(1, Math.min(r.height, vh) * 0.95), 0, 1);
+  var top = OFF.footTop - (window.scrollY || window.pageYOffset || 0), vh = OFF.vh;
+  var p = clamp((vh - top) / Math.max(1, Math.min(OFF.footH, vh) * 0.95), 0, 1);
   footP = p;
-  big.style.setProperty('--fill', ((1 - p) * 100).toFixed(1) + '%');
+  var f = ((1 - p) * 100).toFixed(1) + '%';
+  if(f !== fillS){ fillS = f; big.style.setProperty('--fill', f); }
 }
 function tick(){
   var s = '';
@@ -1523,113 +1592,6 @@ function tick(){
   clock.innerHTML = '<i></i>Palembang · ' + s + ' WIB';
 }
 tick(); setInterval(tick, 15000);
-
-// class photo window, opened from "Made with love by Resvet"
-function photoSrc(){ return '/img/classphoto.webp'; }
-var lbx = (function(){
-  var el = null, vw = null, img = null, on = false, ret = null;
-  var s = 1, tx = 0, ty = 0, P = {}, n = 0, st = null, pin = null, moved = false, drop = 0, tapT = 0, tapX = 0, tapY = 0;
-  function build(){
-    el = document.createElement('div'); el.className = 'lbx';
-    el.innerHTML = '<div class="lbx-s" data-x="1"></div>' +
-      '<div class="lbx-w" role="dialog" aria-modal="true" aria-labelledby="lbxT">' +
-        '<div class="lbx-bar"><span class="lbx-dot" aria-hidden="true"></span><p class="lbx-t" id="lbxT">Class Alpha · FK Unsri 2026</p>' +
-          '<span class="lbx-h" aria-hidden="true">' + (TOUCH ? 'ketuk 2x buat zoom' : 'klik 2x buat zoom') + '</span>' +
-          '<button class="lbx-x" type="button" data-x="1" aria-label="Tutup foto"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18"/></svg></button></div>' +
-        '<div class="lbx-v" data-cur="zoom"><img alt="Foto bersama Class Alpha di lobi Fakultas Kedokteran Universitas Sriwijaya" draggable="false" decoding="async"></div>' +
-      '</div>';
-    document.body.appendChild(el);
-    vw = el.querySelector('.lbx-v'); img = vw.querySelector('img');
-    img.onload = function(){ vw.classList.add('ld'); };
-    if(photoSrc()) img.src = PHOTO;
-    else document.addEventListener('DOMContentLoaded', function(){ img.src = photoSrc(); });
-    el.addEventListener('click', function(e){ if(e.target.closest('[data-x]')) close(); });
-    el.addEventListener('keydown', function(e){
-      if(e.key === 'Tab'){ e.preventDefault(); el.querySelector('.lbx-x').focus(); }
-      else if(e.key === '+' || e.key === '='){ var b = box(); zoomAt(s * 1.5, b.l + b.w / 2, b.t + b.h / 2, true); }
-      else if(e.key === '-'){ var b2 = box(); zoomAt(s / 1.5, b2.l + b2.w / 2, b2.t + b2.h / 2, true); }
-      else if(e.key === '0'){ reset(true); }
-    });
-    vw.addEventListener('pointerdown', down);
-    vw.addEventListener('pointermove', move);
-    ['pointerup', 'pointercancel', 'lostpointercapture'].forEach(function(t){ vw.addEventListener(t, up); });
-    vw.addEventListener('wheel', function(e){ e.preventDefault(); zoomAt(s * Math.exp(-e.deltaY * (e.deltaMode === 1 ? 0.05 : 0.0022)), e.clientX, e.clientY, false); }, { passive: false });
-    window.addEventListener('resize', function(){ if(on) reset(false); });
-    bindCursor(el);
-  }
-  function box(){ var r = vw.getBoundingClientRect(); return { l: r.left, t: r.top, w: r.width, h: r.height }; }
-  function apply(anim){
-    img.style.transition = (anim && !RM) ? 'transform .4s cubic-bezier(.16,1,.3,1)' : 'none';
-    img.style.transform = 'translate(' + tx.toFixed(1) + 'px,' + ty.toFixed(1) + 'px) scale(' + s.toFixed(3) + ')';
-    vw.classList.toggle('z', s > 1.01);
-  }
-  function bound(){ var b = box(), mx = Math.max(0, (s - 1) * b.w / 2), my = Math.max(0, (s - 1) * b.h / 2); tx = clamp(tx, -mx, mx); ty = clamp(ty, -my, my); }
-  function zoomAt(ns, px, py, anim){
-    var b = box(), cx = b.l + b.w / 2, cy = b.t + b.h / 2, lx = (px - cx - tx) / s, ly = (py - cy - ty) / s;
-    s = clamp(ns, 1, 4); tx = px - cx - s * lx; ty = py - cy - s * ly;
-    if(s < 1.01){ s = 1; tx = ty = 0; }
-    bound(); apply(anim);
-  }
-  function reset(anim){ s = 1; tx = ty = 0; if(img) apply(anim); }
-  function pts(){ return Object.keys(P).map(function(k){ return P[k]; }); }
-  function down(e){
-    if(e.pointerType === 'mouse' && e.button !== 0) return;
-    try{ vw.setPointerCapture(e.pointerId); }catch(er){}
-    P[e.pointerId] = { x: e.clientX, y: e.clientY }; n = Object.keys(P).length;
-    if(n === 1){ st = { x: e.clientX, y: e.clientY, tx: tx, ty: ty }; moved = false; }
-    else if(n === 2){ var p = pts(); pin = { d: Math.hypot(p[0].x - p[1].x, p[0].y - p[1].y) || 1, s: s, mx: (p[0].x + p[1].x) / 2, my: (p[0].y + p[1].y) / 2, tx: tx, ty: ty }; moved = true; drop = 0; }
-  }
-  function move(e){
-    if(!P[e.pointerId]) return;
-    P[e.pointerId] = { x: e.clientX, y: e.clientY };
-    if(n >= 2 && pin){
-      var p = pts(), d = Math.hypot(p[0].x - p[1].x, p[0].y - p[1].y), mx = (p[0].x + p[1].x) / 2, my = (p[0].y + p[1].y) / 2;
-      var b = box(), cx = b.l + b.w / 2, cy = b.t + b.h / 2, lx = (pin.mx - cx - pin.tx) / pin.s, ly = (pin.my - cy - pin.ty) / pin.s;
-      s = clamp(pin.s * d / pin.d, 1, 4); tx = mx - cx - s * lx; ty = my - cy - s * ly; bound(); apply(false);
-      return;
-    }
-    if(n !== 1 || !st) return;
-    var dx = e.clientX - st.x, dy = e.clientY - st.y;
-    if(Math.abs(dx) + Math.abs(dy) > 6) moved = true;
-    if(s > 1.01){ tx = st.tx + dx; ty = st.ty + dy; bound(); apply(false); }
-    else if(e.pointerType !== 'mouse' && moved){
-      drop = dy; img.style.transition = 'none'; img.style.transform = 'translate(0,' + dy.toFixed(1) + 'px) scale(' + (1 - Math.min(Math.abs(dy), 300) / 3000).toFixed(3) + ')';
-      el.style.setProperty('--fade', (1 - Math.min(Math.abs(dy), 320) / 480).toFixed(3));
-    }
-  }
-  function up(e){
-    if(!P[e.pointerId]) return;
-    delete P[e.pointerId]; n = Object.keys(P).length;
-    if(n < 2) pin = null;
-    if(n === 1){ var q = pts()[0]; st = { x: q.x, y: q.y, tx: tx, ty: ty }; return; }
-    if(n) return;
-    st = null;
-    if(drop){ var d = drop; drop = 0; el.style.removeProperty('--fade'); if(Math.abs(d) > 110){ close(); } else apply(true); return; }
-    if(moved || e.type !== 'pointerup') return;
-    var now = performance.now();
-    if(now - tapT < 320 && Math.abs(e.clientX - tapX) < 28 && Math.abs(e.clientY - tapY) < 28){ tapT = 0; if(s > 1.01) zoomAt(1, e.clientX, e.clientY, true); else zoomAt(2.5, e.clientX, e.clientY, true); }
-    else { tapT = now; tapX = e.clientX; tapY = e.clientY; }
-  }
-  function open(){
-    if(on || openId || busy) return;
-    if(!el) build();
-    ret = document.activeElement; on = true; reset(false);
-    el.classList.add('show'); H.classList.add('lbx-lock');
-    hPush({ lbx: 1 }, location.href);
-    requestAnimationFrame(function(){ requestAnimationFrame(function(){ el.classList.add('on'); }); });
-    setTimeout(function(){ try{ el.querySelector('.lbx-x').focus({ preventScroll: true }); }catch(e){} }, 40);
-  }
-  function close(fromPop){
-    if(!on) return;
-    on = false; P = {}; n = 0; pin = null; st = null; drop = 0;
-    el.classList.remove('on'); el.style.removeProperty('--fade'); H.classList.remove('lbx-lock');
-    setTimeout(function(){ if(!on){ el.classList.remove('show'); reset(false); } }, RM ? 0 : 420);
-    if(!fromPop && history.state && history.state.lbx){ internal = true; clearTimeout(internalT); internalT = setTimeout(function(){ internal = false; }, 1200); history.back(); }
-    if(ret && ret.focus){ try{ ret.focus({ preventScroll: true }); }catch(e){} }
-  }
-  return { open: open, close: close, isOpen: function(){ return on; } };
-})();
-$('#loveBtn').addEventListener('click', function(){ lbx.open(); });
 
 // "100% Polyester": each click drops the clip somewhere random for exactly 3.5 s, sound included.
 // The windows are muted videos that ignore the pointer, so whatever sits under them stays clickable.
@@ -1885,12 +1847,14 @@ var poly = (function(){
   function stopAll(){ live.slice().forEach(function(I){ end(I, true); }); }
   document.addEventListener('visibilitychange', function(){ if(document.hidden) stopAll(); });
   window.addEventListener('pagehide', stopAll);
-  if(polyBtn){
-    polyBtn.addEventListener('click', play);
-    polyBtn.addEventListener('mousedown', function(e){ if(e.detail > 1) e.preventDefault(); });
-    polyBtn.addEventListener('pointerenter', warm);
-    polyBtn.addEventListener('focus', warm);
-    polyBtn.addEventListener('touchstart', warm, { passive: true });
+  // delegated from the lede, because the ending (and with it the button) can change after load
+  if(ledeEnd){
+    var onBtn = function(fn){ return function(e){ if(e.target.closest && e.target.closest('#polyBtn')) fn(e); }; };
+    ledeEnd.addEventListener('click', onBtn(play));
+    ledeEnd.addEventListener('mousedown', onBtn(function(e){ if(e.detail > 1) e.preventDefault(); }));
+    ledeEnd.addEventListener('pointerover', onBtn(warm));
+    ledeEnd.addEventListener('focusin', onBtn(warm));
+    ledeEnd.addEventListener('touchstart', onBtn(warm), { passive: true });
   }
   return { warm: warm };
 })();
@@ -1921,15 +1885,19 @@ if(FINE && !RM){
     cur.x = e.clientX; cur.y = e.clientY;
     if(!cur.seen){ cur.seen = true; cur.rx = cur.x; cur.ry = cur.y; }
     cd.style.transform = 'translate(' + cur.x + 'px,' + cur.y + 'px)';
+    wake();
   }, {passive: true});
   document.addEventListener('pointerleave', function(){ cd.style.opacity = cr.style.opacity = '0'; });
   document.addEventListener('pointerenter', function(){ cd.style.opacity = cr.style.opacity = '1'; });
 }
 bindCursor(document);
+// true while the ring is still catching up with the pointer
 function cursorFrame(dt){
-  if(!FINE || RM) return;
+  if(!FINE || RM) return false;
   cur.rx = damp(cur.rx, cur.x, 14, dt); cur.ry = damp(cur.ry, cur.y, 14, dt);
-  cr.style.transform = 'translate(' + cur.rx.toFixed(1) + 'px,' + cur.ry.toFixed(1) + 'px)';
+  var tf = 'translate(' + cur.rx.toFixed(1) + 'px,' + cur.ry.toFixed(1) + 'px)';
+  if(tf !== cur.tf){ cur.tf = tf; cr.style.transform = tf; }
+  return Math.abs(cur.rx - cur.x) + Math.abs(cur.ry - cur.y) > 0.3;
 }
 
 // sizing
@@ -1939,14 +1907,17 @@ function fitTitle(){
   var shortLand = window.innerWidth > window.innerHeight && window.innerHeight < 540;
   if(w > 0 && cw > 0) ttlEl.style.fontSize = (100 * cw * (shortLand ? 0.68 : 1) / w * 0.994).toFixed(2) + 'px';
 }
+// Everything that depends on the viewport size. Runs on resize and once fonts land, never per frame.
 function measureAll(){
   try{ fitTitle(); }catch(e){}
   try{ haloSize(); }catch(e){}
   try{ mqSize(); }catch(e){}
-  try{ progBuild(); progFrame(window.scrollY || 0, true); }catch(e){}
-  try{ pulse.measure(); }catch(e){}
+  try{ progBuild(); }catch(e){}
   try{ bigFit(); }catch(e){}
-  try{ ldSize(); }catch(e){}
+  try{ if(!ldDone) ldSize(); }catch(e){}
+  reflow();
+  try{ pulse.measure(); }catch(e){}
+  progFrame(window.scrollY || 0, true);
 }
 var rsT = 0, lastW = window.innerWidth, lastH = window.innerHeight;
 window.addEventListener('resize', function(){
@@ -1959,25 +1930,38 @@ window.addEventListener('resize', function(){
     measureAll(); if(RM) staticDraw();
   }, 140);
 });
-if(document.fonts && document.fonts.ready) document.fonts.ready.then(function(){ try{ fitTitle(); bigFit(); mqSize(); haloSize(); pulse.measure(); }catch(e){} });
+if(document.fonts && document.fonts.ready) document.fonts.ready.then(function(){ try{ fitTitle(); bigFit(); mqSize(); haloSize(); reflow(); pulse.measure(); }catch(e){} });
 measureAll();
 
-// main loop
-var last = performance.now(), sy = window.scrollY || 0, sv = 0, T = 0, raf = 0;
+// main loop. It runs only while something on screen moves: the hero, the marquee, the scroll
+// heart, the footer, the cursor ring or the channel preview. Between those (the schedule, the
+// lecturer list, the 3D explorer) it stops, and a scroll or pointer move starts it again.
+last = performance.now(); sy = window.scrollY || 0; loopOn = true;
 function frame(now){
+  raf = 0;
   var dt = Math.min(0.05, Math.max(0.001, (now - last) / 1000)); last = now; T += dt;
   var y = window.scrollY || window.pageYOffset || 0;
   var v = (y - sy) / dt; sy = y; sv = damp(sv, openId ? 0 : v, 8, dt);
-  beatStep(dt, sv);
+  var busy = false;
   if(!openId){
+    beatStep(dt, sv);
     progFrame(y);
-    if(vis.hero) heroFrame(dt, T, y, sv);
-    mqFrame(dt, sv);
-    if(vis.pulse) pulse.frame(dt, T); else pulseActive = false;
-    if(vis.foot) footFrame();
-    peekFrame(dt);
+    if(vis.hero){ heroFrame(dt, T, y, sv); busy = true; }
+    if(vis.mq){ mqFrame(dt, sv); busy = true; }
+    if(vis.pulse){ pulse.frame(dt, T); busy = true; } else pulseActive = false;
+    if(vis.foot){ footFrame(); busy = true; }
+    if(peekFrame(dt)) busy = true;
   }
-  cursorFrame(dt);
+  if(cursorFrame(dt)) busy = true;
+  if(Math.abs(sv) > 4) busy = true;
+  // a few spare frames after the last movement so damped values settle
+  idleN = busy ? 0 : idleN + 1;
+  if(idleN < 12 && !document.hidden) raf = requestAnimationFrame(frame);
+}
+function wake(){
+  if(!loopOn || raf || RM || document.hidden) return;
+  idleN = 0;
+  if(performance.now() - last > 100) last = performance.now() - 16;
   raf = requestAnimationFrame(frame);
 }
 function staticDraw(){
@@ -1991,10 +1975,11 @@ if(RM){
   staticDraw();
   window.addEventListener('scroll', function(){ progFrame(window.scrollY || 0); footFrame(); }, {passive: true});
 } else {
-  raf = requestAnimationFrame(frame);
+  window.addEventListener('scroll', wake, {passive: true});
+  wake();
   document.addEventListener('visibilitychange', function(){
-    if(document.hidden){ cancelAnimationFrame(raf); raf = 0; }
-    else if(!raf){ last = performance.now(); raf = requestAnimationFrame(frame); }
+    if(document.hidden){ if(raf) cancelAnimationFrame(raf); raf = 0; }
+    else { last = performance.now(); wake(); }
   });
 }
 
@@ -2007,7 +1992,15 @@ return {
   setChannels: setChannels,
   beat: beat,
   panelOpen: function(){ return !!openId; },
-  relayout: measureAll,
+  // texts from the live editor that the shell builds itself
+  setTexts: function(t){
+    var ends = t && typeof t['hero.ends'] === 'string' ? t['hero.ends'].split('\n').map(function(x){ return x.trim(); }) : null;
+    if(ends && ends.join('|') !== ENDS.join('|')) setEnding(ends.filter(function(x, i, a){ return x || a.indexOf('') === i; }));
+  },
+  // page content moved (a section mounted or grew): refresh the cached offsets only
+  relayout: reflow,
+  measure: measureAll,
+  wake: wake,
   observeReveal: function(root){ $$('.rv', root).forEach(function(el){ if(io) io.observe(el); else el.classList.add('in'); }); },
   lubdub: lubdub
 };

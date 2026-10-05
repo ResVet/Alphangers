@@ -1,9 +1,10 @@
 // Service worker for the portal. It keeps the last good copy of the page and everything it
 // loaded, so the schedule, lecturer list and heart still open in a lecture hall with no
 // signal. The admin page and other sites are never touched.
-const VERSION = 'v4-1';
+const VERSION = 'v5-1';
 const SHELL = 'alpha-shell-' + VERSION;
 const FILES = 'alpha-files-' + VERSION;
+const MEDIA = 'alpha-media-v1';
 
 self.addEventListener('install', (event) => {
   event.waitUntil(caches.open(SHELL).then((c) => c.add('/')).catch(() => {}));
@@ -12,7 +13,7 @@ self.addEventListener('install', (event) => {
 
 self.addEventListener('activate', (event) => {
   event.waitUntil((async () => {
-    const keep = new Set([SHELL, FILES]);
+    const keep = new Set([SHELL, FILES, MEDIA]);
     for (const key of await caches.keys()) if (key.startsWith('alpha-') && !keep.has(key)) await caches.delete(key);
     await self.clients.claim();
   })());
@@ -54,6 +55,25 @@ self.addEventListener('fetch', (event) => {
     })());
     return;
   }
+
+  // uploaded photos never change (the name is their hash): cache first, and keep the newest
+  // 80 so a long browse through the galleries does not fill the phone
+  if (url.pathname.startsWith('/media/')) {
+    event.respondWith((async () => {
+      const cache = await caches.open(MEDIA);
+      const hit = await cache.match(req);
+      if (hit) return hit;
+      const res = await fetch(req);
+      if (cacheable(res)) {
+        await cache.put(req, res.clone());
+        const keys = await cache.keys();
+        for (const k of keys.slice(0, Math.max(0, keys.length - 80))) await cache.delete(k);
+      }
+      return res;
+    })());
+    return;
+  }
+  if (url.pathname.startsWith('/api/')) return;
 
   // everything else of ours (model, images, icons, sound): serve the copy, refresh it behind
   event.respondWith((async () => {

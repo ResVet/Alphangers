@@ -1,0 +1,108 @@
+{
+ "v": 1,
+ "items": [
+  {
+   "id": "bph",
+   "name": "BPH",
+   "full": "Badan Pengurus Harian",
+   "tag": "Pengurus inti",
+   "desc": "Pengurus inti Class Alpha. Koordinasi kelas, keputusan bersama, dan urusan sama fakultas lewat sini dulu.",
+   "photos": [
+    {
+     "src": "/img/divisi/bph-1-2000.webp",
+     "w": 2000,
+     "h": 1333,
+     "alt": "Lima pengurus BPH Class Alpha berdiri di lobi Fakultas Kedokteran Universitas Sriwijaya, semua memakai batik",
+     "cap": "",
+     "set": [
+      [
+       "/img/divisi/bph-1-640.webp",
+       640
+      ],
+      [
+       "/img/divisi/bph-1-1280.webp",
+       1280
+      ],
+      [
+       "/img/divisi/bph-1-2000.webp",
+       2000
+      ]
+     ],
+     "avif": [
+      [
+       "/img/divisi/bph-1-640.avif",
+       640
+      ],
+      [
+       "/img/divisi/bph-1-1280.avif",
+       1280
+      ],
+      [
+       "/img/divisi/bph-1-2000.avif",
+       2000
+      ]
+     ],
+     "full": "/img/divisi/bph-1.jpg",
+     "lq": "data:image/webp;base64,UklGRsIAAABXRUJQVlA4ILYAAACwBACdASoYABAAPtFUo0uoJKMhsAgBABoJZgCdMoCGAe4LgiUfCKtU1tl08dOAAP7J8zDp5Ya7EbCh9q6UdXtitRQ5pTwJ0DPGJLYxDMlAaJSTRjltQ0oVOWGQuIs4NJ9Sg0nrPTjmm7gbSUXo8BOIfRHyKrOUZDdBhAHPVwHoQOzvam3vLzR4t7MSZLwhLMy9m8TC9PyHwqyYYJvAgrSJ3aj6znZkVkeq+Idv04rFkmZDGEAAAA==",
+     "bg": "#f8f8f8"
+    }
+   ]
+  },
+  {
+   "id": "batu",
+   "name": "Batu",
+   "full": "",
+   "tag": "Arsip soal",
+   "desc": "Ngumpulin soal tahun-tahun sebelumnya, dirapikan per blok, biar belajarnya lebih terarah.",
+   "photos": []
+  },
+  {
+   "id": "didis",
+   "name": "Didis",
+   "full": "",
+   "tag": "",
+   "desc": "",
+   "photos": []
+  },
+  {
+   "id": "jarkom",
+   "name": "Jarkom",
+   "full": "Jaringan Komunikasi",
+   "tag": "Info kelas",
+   "desc": "Nyebarin info ke semua anggota kelas: jadwal, pengumuman, dan perubahan mendadak.",
+   "photos": []
+  },
+  {
+   "id": "medinfo",
+   "name": "Medinfo",
+   "full": "Media dan Informasi",
+   "tag": "Dokumentasi",
+   "desc": "Dokumentasi kegiatan, desain, dan media kelas.",
+   "photos": []
+  },
+  {
+   "id": "pleno",
+   "name": "Pleno",
+   "full": "",
+   "tag": "",
+   "desc": "Koordinasi pleno tiap skenario.",
+   "photos": []
+  },
+  {
+   "id": "praktikum",
+   "name": "Praktikum",
+   "full": "",
+   "tag": "",
+   "desc": "Koordinasi praktikum: kelompok, jadwal, dan perlengkapan yang perlu dibawa.",
+   "photos": []
+  },
+  {
+   "id": "solid",
+   "name": "Solid",
+   "full": "",
+   "tag": "Kebersamaan",
+   "desc": "Ngejaga kebersamaan kelas lewat acara dan kegiatan bareng.",
+   "photos": []
+  }
+ ]
+}

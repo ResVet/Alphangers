@@ -69,6 +69,7 @@ export function mountInfo(root, { announcements, now } = {}) {
 
   function card(a, t) {
     const li = el('li', 'ib-card ib-' + (TAGS[a.tag] ? a.tag : 'info'));
+    li.dataset.id = a.id;
     const top = el('p', 'ib-top');
     top.append(el('span', 'ib-tag', TAGS[a.tag] || 'Info'));
     if (a.pinned) top.append(el('span', 'ib-pin', 'Disematkan'));

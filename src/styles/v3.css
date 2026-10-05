@@ -4,7 +4,7 @@
 
 *{box-sizing:border-box;margin:0;padding:0}
 html{background:var(--bg);-webkit-text-size-adjust:100%;text-size-adjust:100%}
-html.lock,html.lock body,html.pre,html.pre body,html.lbx-lock,html.lbx-lock body{overflow:hidden}
+html.lock,html.lock body,html.pre,html.pre body{overflow:hidden}
 body{
   background:var(--bg);color:var(--ink);
   font-family:var(--body);font-size:16px;line-height:1.6;
@@ -37,9 +37,10 @@ html{scrollbar-color:rgba(134,242,94,.32) var(--bg)}
 .b2{width:56vmax;height:56vmax;bottom:-28vmax;right:-22vmax;background:radial-gradient(circle,rgba(200,225,205,.045),transparent 60%);animation:drift2 38s ease-in-out infinite alternate}
 @keyframes drift1{to{transform:translate(9vmax,8vmax) scale(1.1)}}
 @keyframes drift2{to{transform:translate(-8vmax,-6vmax) scale(1.08)}}
-.grain{position:fixed;inset:-50%;z-index:120;pointer-events:none;opacity:.055;
+.grain{position:fixed;inset:-10%;z-index:120;pointer-events:none;opacity:.055;contain:strict;
   background-image:url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='160' height='160'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='.85' numOctaves='3' stitchTiles='stitch'/></filter><rect width='160' height='160' filter='url(%23n)'/></svg>");
   animation:gr 7s steps(7) infinite}
+html.touch .grain{animation:none}
 @keyframes gr{0%{transform:translate(0,0)}14%{transform:translate(-3%,-4%)}28%{transform:translate(4%,-2%)}42%{transform:translate(-4%,3%)}57%{transform:translate(3%,4%)}71%{transform:translate(-2%,-3%)}85%{transform:translate(4%,2%)}100%{transform:translate(0,0)}}
 
 /* reveal */
@@ -308,10 +309,7 @@ html.fine .peek{display:block}
 .big-f{position:absolute;inset:0;background:linear-gradient(180deg,var(--grx),#2d8f1c 70%);-webkit-background-clip:text;background-clip:text;color:transparent;
   clip-path:inset(var(--fill,100%) 0 0 0);-webkit-clip-path:inset(var(--fill,100%) 0 0 0)}
 .ft{display:flex;flex-wrap:wrap;justify-content:space-between;align-items:center;gap:14px 24px}
-.carrd{position:relative;font-family:var(--disp);font-weight:500;font-size:14px;letter-spacing:.02em;color:var(--mut);border-bottom:1px solid var(--line2);padding-bottom:2px;transition:color .3s,border-color .3s}
-.carrd::after{content:"";position:absolute;inset:-12px -8px}
-@media (hover:hover){.carrd:hover{color:var(--grx);border-color:var(--grx)}}
-.carrd:active{color:var(--grx);border-color:var(--grx)}
+.credit{font-family:var(--disp);font-weight:500;font-size:14px;letter-spacing:.02em;color:var(--mut)}
 /* the filled wordmark catches each heartbeat */
 .big-g{position:absolute;inset:0;color:transparent;pointer-events:none;opacity:0;will-change:opacity;
   text-shadow:0 0 .18em rgba(134,242,94,.42)}
@@ -469,28 +467,6 @@ html.static .stage{position:relative}
 
 /* channel list: "baru" badge */
 .row-nb{display:inline-block;vertical-align:middle;margin:0 0 .28em .5em;padding:4px 8px 3px;border-radius:999px;background:var(--grx);color:#07100a;font-family:var(--mono);font-style:normal;font-weight:600;font-size:9px;line-height:1;letter-spacing:.2em;text-transform:uppercase}
-
-/* photo window */
-.lbx{position:fixed;inset:0;z-index:170;display:none;align-items:center;justify-content:center;padding:calc(env(safe-area-inset-top) + 16px) 16px calc(env(safe-area-inset-bottom) + 16px)}
-.lbx.show{display:flex}
-.lbx-s{position:absolute;inset:0;background:rgba(3,7,4,.84);-webkit-backdrop-filter:blur(10px);backdrop-filter:blur(10px);opacity:0;transition:opacity .4s var(--eo)}
-.lbx.on .lbx-s{opacity:var(--fade,1)}
-.lbx-w{position:relative;display:flex;flex-direction:column;width:min(1180px,100%,calc((100vh - 96px - env(safe-area-inset-top) - env(safe-area-inset-bottom)) * 4 / 3));border-radius:18px;overflow:hidden;background:#0b140c;
-  border:1px solid rgba(134,242,94,.24);box-shadow:0 40px 90px -30px rgba(0,0,0,.9);opacity:0;transform:translateY(18px) scale(.97);transition:opacity .4s var(--eo),transform .55s var(--eo)}
-@supports (height:100svh){.lbx-w{width:min(1180px,100%,calc((100svh - 96px - env(safe-area-inset-top) - env(safe-area-inset-bottom)) * 4 / 3))}}
-.lbx.on .lbx-w{opacity:1;transform:none}
-.lbx-bar{display:flex;align-items:center;gap:12px;height:48px;padding:0 4px 0 16px;border-bottom:1px solid var(--line);background:rgba(12,24,13,.96)}
-.lbx-dot{flex:none;width:8px;height:8px;border-radius:50%;background:var(--grx);box-shadow:0 0 10px rgba(134,242,94,.7)}
-.lbx-t{flex:1;min-width:0;font-family:var(--mono);font-size:10.5px;letter-spacing:.22em;text-transform:uppercase;color:var(--ink);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-.lbx-h{font-family:var(--mono);font-size:10px;letter-spacing:.12em;color:var(--dim);white-space:nowrap}
-.lbx-x{flex:none;width:44px;height:44px;display:grid;place-items:center;border-radius:12px;color:var(--ink);transition:background .25s,color .25s}
-.lbx-x:hover{background:rgba(238,242,232,.08);color:var(--grx)}
-.lbx-x svg{width:20px;height:20px;fill:none;stroke:currentColor;stroke-width:1.8;stroke-linecap:round}
-.lbx-v{position:relative;aspect-ratio:4/3;overflow:hidden;touch-action:none;background:#050a06 linear-gradient(110deg,transparent 30%,rgba(238,242,232,.05) 50%,transparent 70%) 0 0/200% 100%;animation:lbxLd 1.2s linear infinite}
-.lbx-v.ld{animation:none;background:#050a06}
-@keyframes lbxLd{to{background-position:-200% 0}}
-.lbx-v img{width:100%;height:100%;object-fit:cover;transform-origin:50% 50%;will-change:transform;user-select:none;-webkit-user-select:none;-webkit-user-drag:none}
-@media (max-width:520px){.lbx-h{display:none}.lbx{padding-left:10px;padding-right:10px}}
 
 /* 100% Polyester clip windows sit on top of everything, and clicks pass straight through them */
 .poly-l{position:fixed;inset:0;z-index:185;pointer-events:none;overflow:hidden;contain:strict;
@@ -752,7 +728,7 @@ html.fine .to-gi:hover{border-color:rgba(134,242,94,.55);color:var(--ink)}
   .to-foot [data-act="prev"]{width:42px;padding:0}
 }
 @media (prefers-reduced-motion:reduce){
-  .to-view.enter>*,.to-mon-ecg path,.to-tp-b i,.to-tm.crit,.lbx-v{animation:none!important}
+  .to-view.enter>*,.to-mon-ecg path,.to-tp-b i,.to-tm.crit{animation:none!important}
   .to-mon-ecg path{stroke-dashoffset:0}
-  .to-nav,.to-scrim,.to-dlg-s,.to-dlg-b,.lbx-s,.lbx-w,.to-prog .pg-f{transition:none!important}
+  .to-nav,.to-scrim,.to-dlg-s,.to-dlg-b,.to-prog .pg-f{transition:none!important}
 }

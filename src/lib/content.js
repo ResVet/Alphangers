@@ -102,7 +102,7 @@ export function createContentStore({
   function state(key) {
     if (!KEYS.includes(key)) throw new Error(`Unknown content key: ${key}`);
     if (!states.has(key)) {
-      states.set(key, { fresh: null, fetching: false, served: null, bundledJson: null, subs: new Set() });
+      states.set(key, { fresh: null, draft: null, fetching: false, served: null, bundledJson: null, subs: new Set() });
     }
     return states.get(key);
   }
@@ -210,7 +210,8 @@ export function createContentStore({
           storage.set(CACHE_PREFIX + key, JSON.stringify({ rev: got.rev, json: got.json, updateTime: got.updateTime }));
           st.fresh = { data: got.data, json: got.json };
         }
-        deliver(st, st.fresh);
+        // while the live editor previews a draft, the draft stays on screen
+        if (!st.draft) deliver(st, st.fresh);
       })
       .catch((e) => {
         // Offline or timed out: stay quiet, the page already has data.
@@ -227,6 +228,7 @@ export function createContentStore({
 
   async function load(key) {
     const st = state(key);
+    if (st.draft) return serve(st, st.draft);
     if (st.fresh) return serve(st, st.fresh);
     const cached = readCache(key);
     startFetch(key, cached);
@@ -246,9 +248,24 @@ export function createContentStore({
     return () => st.subs.delete(sub);
   }
 
-  return { load, subscribe };
+  // The live editor shows a draft to every section by handing it out as the current copy.
+  // inject(key, null) goes back to whatever this page had before.
+  async function inject(key, data) {
+    const st = state(key);
+    if (data != null) {
+      st.draft = { data, json: JSON.stringify(data) };
+      deliver(st, st.draft);
+      return;
+    }
+    st.draft = null;
+    const copy = st.fresh || readCache(key) || (await bundledCopy(key));
+    deliver(st, copy);
+  }
+
+  return { load, subscribe, inject };
 }
 
 const store = createContentStore();
 export const load = store.load;
 export const subscribe = store.subscribe;
+export const inject = store.inject;

@@ -95,6 +95,10 @@ export async function createMockBackend(params) {
       user = null;
       emit();
     },
+    async token() {
+      need();
+      return 'mock-id-token';
+    },
     async isAdmin(uid) {
       await wait();
       return uid.startsWith('admin');

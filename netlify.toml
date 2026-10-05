@@ -16,6 +16,11 @@
 [build.environment]
   NODE_VERSION = "22"
 
+# Photo upload and serving (Netlify Functions + Blobs). See docs/ADMIN.md.
+[functions]
+  directory = "netlify/functions"
+  node_bundler = "esbuild"
+
 # Every response.
 [[headers]]
   for = "/*"
@@ -41,19 +46,23 @@
 #   textures three.js builds in memory.
 # font-src: data: because Vite inlines font files under 2 KB (assetsInlineLimit in
 #   vite.config.js) as data: URLs. A font cannot run script.
-# connect-src: the 3D model and JSON come from 'self'; Firestore is where
-#   src/lib/content.js reads the edited content over REST.
+# connect-src: the 3D model, JSON and photo uploads (/api/media) are 'self';
+#   Firestore is where src/lib/content.js reads the edited content over REST.
+# Live editor (src/edit, loaded only for the admin): Google sign-in needs
+#   apis.google.com (script), the project's auth domain (frame) and the two
+#   Firebase Auth endpoints (connect), the same set the /admin/ page allows.
+#   A visitor's page never requests any of them.
 [[headers]]
   for = "/"
   [headers.values]
-    Content-Security-Policy = "default-src 'self'; script-src 'self' 'wasm-unsafe-eval'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; font-src 'self' data:; media-src 'self'; connect-src 'self' https://firestore.googleapis.com; worker-src 'self'; manifest-src 'self'; frame-src 'none'; object-src 'none'; base-uri 'none'; form-action 'none'; frame-ancestors 'none'; upgrade-insecure-requests"
+    Content-Security-Policy = "default-src 'self'; script-src 'self' 'wasm-unsafe-eval' https://apis.google.com; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; font-src 'self' data:; media-src 'self'; connect-src 'self' https://firestore.googleapis.com https://identitytoolkit.googleapis.com https://securetoken.googleapis.com; worker-src 'self'; manifest-src 'self'; frame-src https://alphangers-1ba79.firebaseapp.com; object-src 'none'; base-uri 'none'; form-action 'none'; frame-ancestors 'none'; upgrade-insecure-requests"
     X-Frame-Options = "DENY"
     Cache-Control = "public, max-age=0, must-revalidate"
 
 [[headers]]
   for = "/index.html"
   [headers.values]
-    Content-Security-Policy = "default-src 'self'; script-src 'self' 'wasm-unsafe-eval'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; font-src 'self' data:; media-src 'self'; connect-src 'self' https://firestore.googleapis.com; worker-src 'self'; manifest-src 'self'; frame-src 'none'; object-src 'none'; base-uri 'none'; form-action 'none'; frame-ancestors 'none'; upgrade-insecure-requests"
+    Content-Security-Policy = "default-src 'self'; script-src 'self' 'wasm-unsafe-eval' https://apis.google.com; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; font-src 'self' data:; media-src 'self'; connect-src 'self' https://firestore.googleapis.com https://identitytoolkit.googleapis.com https://securetoken.googleapis.com; worker-src 'self'; manifest-src 'self'; frame-src https://alphangers-1ba79.firebaseapp.com; object-src 'none'; base-uri 'none'; form-action 'none'; frame-ancestors 'none'; upgrade-insecure-requests"
     X-Frame-Options = "DENY"
     Cache-Control = "public, max-age=0, must-revalidate"
 
@@ -81,6 +90,9 @@
     X-Frame-Options = "DENY"
     X-Robots-Tag = "noindex, nofollow, noarchive"
     Cache-Control = "no-store"
+
+# Photos uploaded from the live editor are served by netlify/functions/media.mjs,
+# which sets its own immutable caching and a sandboxing CSP on every file.
 
 # Hashed by Vite, so a changed file always gets a new name.
 # The service worker must always be fetched fresh, or a fix to it could take a day to arrive.

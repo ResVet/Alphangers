@@ -1,0 +1,20 @@
+{
+ "src": "/img/kelas/alpha.webp",
+ "w": 1280,
+ "h": 960,
+ "alt": "Foto bersama Class Alpha di lobi Fakultas Kedokteran Universitas Sriwijaya",
+ "cap": "",
+ "set": [
+  [
+   "/img/kelas/alpha-640.webp",
+   640
+  ],
+  [
+   "/img/kelas/alpha.webp",
+   1280
+  ]
+ ],
+ "full": "/img/kelas/alpha.webp",
+ "lq": "data:image/webp;base64,UklGRtYAAABXRUJQVlA4IMoAAADwBQCdASoYABIAPtFepE6oJSMiKAqpABoJZwDDZukGeZ5Ed4ZUJXuxANPgERpR4aZD0w+cI6UBgADWY09ZpqjkS+T87xssoFjEmfpZ06rK7bUf6Qj2QjqEPEErh8iJ0g0s2ajKmTI+uA4o3TifaYmSRnidvOqh36xQ3R0rIAo20xvZ4PXRmpLiA7DEHxnj7cJsV7ioLcZuAN+elGar1HPKxWOA7z14GtQxoTrIp//AG9KBqGEPRbqbxq63LH3sXBr8vVGwArL5yAAA",
+ "bg": "#888878"
+}

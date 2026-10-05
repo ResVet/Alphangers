@@ -1,7 +1,7 @@
 {
   "name": "alphangers",
   "private": true,
-  "version": "4.0.0",
+  "version": "5.0.0",
   "description": "Class portal for Class Alpha, PSPD FK Universitas Sriwijaya 2026.",
   "type": "module",
   "license": "SEE LICENSE IN LICENSE",
@@ -13,9 +13,10 @@
     "data": "python3 scripts/build_data.py",
     "heart": "cd scripts/heart && python3 build_heart.py && python3 label_heart.py && python3 vessels.py && python3 internals.py && python3 export_glb.py && cd ../.. && node scripts/heart/pack.mjs",
     "test": "node tests/run.mjs",
-    "test:e2e": "vite build && node --test --test-concurrency=1 tests/portal.e2e.mjs tests/jadwal-dosen.e2e.mjs tests/admin.e2e.mjs",
+    "test:e2e": "vite build && vite build --mode mock --outDir dist-mock && node --test --test-concurrency=1 tests/portal.e2e.mjs tests/jadwal-dosen.e2e.mjs tests/admin.e2e.mjs tests/editor.e2e.mjs",
     "test:rules": "firebase emulators:exec --only firestore --project demo-alphangers \"node --test tests/firestore.rules.test.mjs\"",
-    "heart:content": "python3 scripts/heart/content.py"
+    "heart:content": "python3 scripts/heart/content.py",
+    "media": "node scripts/media.mjs"
   },
   "engines": {
     "node": ">=20"
@@ -34,6 +35,7 @@
     "@fontsource-variable/bricolage-grotesque": "^5.3.0",
     "@fontsource-variable/jetbrains-mono": "^5.3.0",
     "@fontsource/instrument-serif": "^5.3.0",
+    "@netlify/blobs": "^11.1.3",
     "firebase": "^12.19.0",
     "three": "^0.186.1"
   }

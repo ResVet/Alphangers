@@ -38,6 +38,7 @@ export const HEART_IDS = [
 export const LIMITS = {
   channels: 40, announcements: 100, bloks: 20, days: 120, sessions: 30, codes: 80,
   dosen: 1500, phones: 4, dosenBloks: 20, heartList: 16, heartRelated: 10,
+  siteTexts: 600, divisi: 16, photos: 40, srcset: 6,
 };
 
 const ID_RE = /^[a-z0-9]+(?:[-_][a-z0-9]+)*$/;
@@ -45,6 +46,14 @@ const CODE_RE = /^[A-Z0-9]{1,8}$/;
 const DATE_RE = /^(\d{4})-(\d{2})-(\d{2})$/;
 const TIME_RE = /^([01]\d|2[0-3]):([0-5]\d)$/;
 const DATETIME_RE = /^(\d{4}-\d{2}-\d{2})T(\d{2}:\d{2})$/;
+// Page text keys, e.g. "hero.lede" or "foot.credit".
+const TEXT_KEY_RE = /^[a-z0-9]+(?:[._-][a-z0-9]+){0,7}$/;
+// Photos are served by this site only: bundled ones under /img/, uploaded ones under /media/.
+// Every path segment starts with a letter or digit, so ".." can never appear.
+export const MEDIA_RE = /^\/(?:img|media)(?:\/[A-Za-z0-9][A-Za-z0-9._-]{0,120}){1,4}$/;
+// A tiny blurred preview kept inline; a few hundred bytes in practice.
+const LQIP_RE = /^data:image\/(?:webp|jpeg|png);base64,[A-Za-z0-9+/]{8,4000}={0,2}$/;
+const HEX_RE = /^#[0-9a-f]{6}$/;
 
 // C0 and C1 controls except tab and newline, plus the bidi overrides that can
 // make text read differently from how it is stored.
@@ -279,8 +288,128 @@ export function normalizePhone(input) {
 
 /* ---------- links ---------- */
 
+/* ---------- photos ---------- */
+
+function mediaPath(ctx, path, v, { required = false } = {}) {
+  if (v === undefined || v === null || v === '') {
+    if (required) err(ctx, path, 'Foto wajib ada.');
+    return '';
+  }
+  if (typeof v !== 'string' || !MEDIA_RE.test(v)) {
+    err(ctx, path, 'Alamat foto harus dari situs ini (/img/... atau /media/...).');
+    return '';
+  }
+  return v;
+}
+
+function int(ctx, path, v, lo, hi) {
+  if (!Number.isInteger(v) || v < lo || v > hi) {
+    err(ctx, path, `Harus bilangan bulat ${lo} sampai ${hi}.`);
+    return 0;
+  }
+  return v;
+}
+
+// One photo: the main file, its pixel size (so the page reserves the space before it loads),
+// smaller copies for srcset, an optional AVIF set, the untouched original for zooming, and a
+// blurred preview. Text fields are plain text, never HTML.
+function photo(ctx, p, x) {
+  if (!isObj(x)) {
+    err(ctx, p, 'Foto harus berupa objek.');
+    return null;
+  }
+  noteUnknown(ctx, p, x, ['src', 'w', 'h', 'alt', 'cap', 'set', 'avif', 'full', 'lq', 'bg']);
+  const out = {
+    src: mediaPath(ctx, p.concat('src'), x.src, { required: true }),
+    w: int(ctx, p.concat('w'), x.w, 1, 20000),
+    h: int(ctx, p.concat('h'), x.h, 1, 20000),
+    alt: text(ctx, p.concat('alt'), x.alt, { max: 300 }),
+    cap: text(ctx, p.concat('cap'), x.cap, { max: 600, multiline: true }),
+  };
+  for (const k of ['set', 'avif']) {
+    if (x[k] === undefined || x[k] === null) continue;
+    const items = list(ctx, p.concat(k), x[k], LIMITS.srcset, { required: false });
+    const set = [];
+    items.forEach((it, j) => {
+      const ip = p.concat(k, j);
+      if (!Array.isArray(it) || it.length !== 2) return err(ctx, ip, 'Harus [alamat, lebar].');
+      const src = mediaPath(ctx, ip.concat(0), it[0], { required: true });
+      const w = int(ctx, ip.concat(1), it[1], 1, 20000);
+      if (src && w) set.push([src, w]);
+    });
+    if (set.length) out[k] = set;
+  }
+  const full = mediaPath(ctx, p.concat('full'), x.full);
+  if (full) out.full = full;
+  if (x.lq !== undefined && x.lq !== null && x.lq !== '') {
+    if (typeof x.lq === 'string' && LQIP_RE.test(x.lq)) out.lq = x.lq;
+    else warn(ctx, p.concat('lq'), 'Pratinjau buram tidak valid, dibuang.');
+  }
+  if (x.bg !== undefined && x.bg !== null && x.bg !== '') {
+    if (typeof x.bg === 'string' && HEX_RE.test(x.bg)) out.bg = x.bg;
+    else warn(ctx, p.concat('bg'), 'Warna latar tidak valid, dibuang.');
+  }
+  return out;
+}
+
+/* ---------- page texts and divisi (both live in the links document) ---------- */
+
+function validateSite(ctx, p, v) {
+  if (!isObj(v)) {
+    err(ctx, p, 'Harus berupa objek.');
+    return null;
+  }
+  noteUnknown(ctx, p, v, ['t', 'photo']);
+  const out = { t: {} };
+  if (v.t !== undefined && v.t !== null) {
+    if (!isObj(v.t)) err(ctx, p.concat('t'), 'Harus berupa objek.');
+    else {
+      const entries = Object.entries(v.t);
+      if (entries.length > LIMITS.siteTexts) err(ctx, p.concat('t'), `Maksimal ${LIMITS.siteTexts} teks.`);
+      else {
+        for (const [k, val] of entries) {
+          const kp = p.concat('t', k);
+          if (!TEXT_KEY_RE.test(k) || k.length > 64) err(ctx, kp, 'Kunci teks tidak valid.');
+          else out.t[k] = text(ctx, kp, val, { max: 4000, multiline: true });
+        }
+      }
+    }
+  }
+  if (v.photo !== undefined && v.photo !== null) {
+    const ph = photo(ctx, p.concat('photo'), v.photo);
+    if (ph) out.photo = ph;
+  }
+  return out;
+}
+
+function validateDivisi(ctx, p, v) {
+  const items = list(ctx, p, v, LIMITS.divisi);
+  uniqueIds(ctx, p, items);
+  return items.map((d, i) => {
+    const dp = p.concat(i);
+    if (!isObj(d)) {
+      err(ctx, dp, 'Divisi harus berupa objek.');
+      return null;
+    }
+    noteUnknown(ctx, dp, d, ['id', 'name', 'full', 'tag', 'desc', 'photos']);
+    const out = {
+      id: id(ctx, dp.concat('id'), d.id),
+      name: text(ctx, dp.concat('name'), d.name, { max: 40, required: true }),
+      full: text(ctx, dp.concat('full'), d.full, { max: 100 }),
+      tag: text(ctx, dp.concat('tag'), d.tag, { max: 80 }),
+      desc: text(ctx, dp.concat('desc'), d.desc, { max: 3000, multiline: true }),
+      photos: [],
+    };
+    for (const [j, ph] of list(ctx, dp.concat('photos'), d.photos, LIMITS.photos, { required: false }).entries()) {
+      const x = photo(ctx, dp.concat('photos', j), ph);
+      if (x) out.photos.push(x);
+    }
+    return out;
+  });
+}
+
 function validateLinks(ctx, value) {
-  const doc = root(ctx, value, 'channels', ['v', 'channels']);
+  const doc = root(ctx, value, 'channels', ['v', 'channels', 'site', 'divisi']);
   if (!doc) return null;
   const items = list(ctx, ['channels'], doc.channels, LIMITS.channels);
   uniqueIds(ctx, ['channels'], items);
@@ -307,7 +436,14 @@ function validateLinks(ctx, value) {
     }
     return out;
   });
-  return { v: FORMAT_VERSION, channels };
+  const result = { v: FORMAT_VERSION, channels };
+  // Both optional: a document without them keeps the page's own texts and the bundled divisi.
+  if (doc.site !== undefined && doc.site !== null) {
+    const site = validateSite(ctx, ['site'], doc.site);
+    if (site) result.site = site;
+  }
+  if (doc.divisi !== undefined && doc.divisi !== null) result.divisi = validateDivisi(ctx, ['divisi'], doc.divisi);
+  return result;
 }
 
 /* ---------- announcements ---------- */
@@ -356,7 +492,7 @@ function validateSession(ctx, p, x, codes) {
     err(ctx, p, 'Sesi harus berupa objek.');
     return null;
   }
-  noteUnknown(ctx, p, x, ['s', 'e', 't', 'k', 'dz', 'pj', 'tim', 'n']);
+  noteUnknown(ctx, p, x, ['s', 'e', 't', 'k', 'dz', 'pj', 'tim', 'n', 'batal', 'alasan']);
   const s = time(ctx, p.concat('s'), x.s, { required: true });
   let e = null;
   if (x.e !== null && x.e !== undefined && x.e !== '') {
@@ -376,6 +512,12 @@ function validateSession(ctx, p, x, codes) {
   if (flag(ctx, p.concat('tim'), x.tim)) out.tim = true;
   const n = text(ctx, p.concat('n'), x.n, { max: 300 });
   if (n) out.n = n;
+  // Cancelled sessions stay in the schedule, marked, so people can see what was dropped.
+  if (flag(ctx, p.concat('batal'), x.batal)) {
+    out.batal = true;
+    const why = text(ctx, p.concat('alasan'), x.alasan, { max: 200 });
+    if (why) out.alasan = why;
+  }
   return out;
 }
 

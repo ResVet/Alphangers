@@ -127,6 +127,8 @@ export async function createFirebaseBackend(config, appCheckSiteKey) {
       }
     },
     signOut: () => signOut(auth),
+    // ID token for the media upload function; refreshed by the SDK when it is close to expiring
+    token: () => (auth.currentUser ? auth.currentUser.getIdToken() : Promise.reject(new Error('Belum login.'))),
     isAdmin: (id) => ops.isAdmin(db, id),
     read: (key) => ops.readContent(db, key),
     save: (key, { json, baseRev, note }) => ops.saveContent(db, { key, json, baseRev, note, uid: uid() }),

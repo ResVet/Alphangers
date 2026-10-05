@@ -36,3 +36,42 @@
 
 .nojs{position:relative;z-index:2;padding:40px 24px;text-align:center;color:var(--mut)}
 .to-load{padding:32px 0}
+
+/* class photo, the last thing before the footer. Where scroll-linked animation exists the photo
+   starts as a framed print in the middle of the screen and grows to fill it as you scroll,
+   while the picture inside settles from a slight zoom. Transforms only. */
+.sec-divisi{position:relative;z-index:1}
+.kelas{position:relative;z-index:1;view-timeline-name:--kelas}
+.kelas-stage{position:relative;overflow:hidden;display:grid;padding:0 var(--gut) clamp(40px,8vh,90px)}
+.kelas-ph{position:relative;margin:0;border-radius:var(--r3);overflow:hidden;aspect-ratio:4/3;max-height:88vh;max-height:88svh;background:#0b140c;
+  box-shadow:0 60px 120px -40px rgba(0,0,0,.9)}
+.kelas-open{display:block;width:100%;height:100%;padding:0;border:0;cursor:zoom-in}
+.kelas-open picture{display:block;width:100%;height:100%}
+.kelas-img{display:block;width:100%;height:100%;object-fit:cover;object-position:50% 46%;background-size:cover}
+.kelas-img.is-ld{background-image:none!important}
+.kelas-ph::after{content:"";position:absolute;inset:0;pointer-events:none;background:linear-gradient(180deg,rgba(7,13,8,0) 46%,rgba(7,13,8,.55) 74%,rgba(7,13,8,.92))}
+.kelas-copy{position:absolute;left:calc(var(--gut) + clamp(18px,3vw,44px));right:calc(var(--gut) + 18px);bottom:calc(clamp(40px,8vh,90px) + clamp(18px,4vh,40px));z-index:2;pointer-events:none}
+.kelas-k{font-family:var(--mono);font-size:11px;letter-spacing:.3em;text-transform:uppercase;color:var(--grx)}
+.kelas-h{margin-top:6px;font-family:var(--disp);font-weight:800;font-size:clamp(60px,12.5vw,210px);line-height:.86;letter-spacing:-.05em;color:var(--ink);text-shadow:0 10px 60px rgba(0,0,0,.45)}
+.kelas-h em{font-family:var(--ser);font-style:italic;font-weight:400;letter-spacing:-.02em;color:var(--grx)}
+.kelas-s{margin-top:clamp(8px,1.4vh,16px);max-width:46ch;font-size:clamp(15px,1.3vw,18px);color:#d3dbcf}
+@media (max-width:640px){.kelas-ph{aspect-ratio:3/4}.kelas-img{object-position:50% 40%}}
+@supports (animation-timeline: view()){
+  @media (prefers-reduced-motion:no-preference){
+    .kelas{height:190vh;height:190svh}
+    .kelas-stage{position:sticky;top:0;height:100vh;height:100svh;padding:12px;place-items:stretch}
+    .kelas-ph{aspect-ratio:auto;max-height:none;height:100%;border-radius:26px;
+      animation:kelas-grow linear both;animation-timeline:--kelas;animation-range:contain 0% contain 58%}
+    .kelas-img{animation:kelas-settle linear both;animation-timeline:--kelas;animation-range:contain 0% contain 100%}
+    .kelas-copy{left:clamp(30px,5vw,80px);bottom:clamp(30px,7vh,80px);animation:kelas-copy linear both;animation-timeline:--kelas;animation-range:contain 32% contain 62%}
+  }
+}
+@keyframes kelas-grow{from{transform:scale(.56)}to{transform:none}}
+@keyframes kelas-settle{from{transform:scale(1.22)}to{transform:none}}
+@keyframes kelas-copy{from{opacity:0;transform:translate3d(0,50px,0)}to{opacity:1;transform:none}}
+
+/* the admin's way in: quiet, at the very end of the page */
+.ft-r{display:inline-flex;align-items:center;gap:16px}
+.adm{height:28px;padding:0 10px;border-radius:999px;border:1px solid var(--line);font-family:var(--mono);font-size:9.5px;letter-spacing:.2em;text-transform:uppercase;
+  color:var(--dim);transition:color .2s,border-color .2s}
+@media (hover:hover) and (pointer:fine){.adm:hover{color:var(--grx);border-color:rgba(134,242,94,.4)}}

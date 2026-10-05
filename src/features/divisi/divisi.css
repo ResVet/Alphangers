@@ -1,0 +1,137 @@
+/* Divisi. Each chapter is a spread: the division on the left in big type, its photos on the right
+   as real prints stacked on a light table, lit by a glow taken from the front photo itself. */
+.dv{
+  --dv-s0:translate3d(0,0,0) rotate(-1.2deg);
+  --dv-s1:translate3d(7%,-5%,-110px) rotate(3.2deg) rotateY(-9deg);
+  --dv-s2:translate3d(13%,-10%,-220px) rotate(6.5deg) rotateY(-16deg);
+  --paper:#f2efe6;
+  --ease-deck:cubic-bezier(.32,.72,0,1);
+  position:relative;padding-bottom:clamp(40px,8vh,96px);
+}
+.dv-head{padding-top:clamp(64px,11vh,130px)}
+.dv-h{font-family:var(--disp);font-weight:800;font-size:clamp(38px,7.4vw,104px);line-height:.98;letter-spacing:-.035em;text-wrap:balance;max-width:14ch}
+.dv-h em{font-family:var(--ser);font-style:italic;font-weight:400;color:var(--grx);letter-spacing:-.01em}
+.dv-lede{margin-top:clamp(14px,2vh,22px);max-width:52ch;font-size:clamp(16px,1.4vw,19px);line-height:1.6;color:var(--mut);text-wrap:pretty}
+
+/* index of the eight, follows the reader while they are in the section */
+.dv-index{position:sticky;top:calc(var(--barh) + env(safe-area-inset-top) + 10px);z-index:6;display:flex;justify-content:center;margin:clamp(26px,4vh,42px) var(--gut) 0;pointer-events:none}
+.dv-index-in{display:flex;gap:2px;max-width:100%;overflow-x:auto;scrollbar-width:none;padding:4px;border-radius:999px;border:1px solid var(--line);
+  background:rgba(7,13,8,.88);pointer-events:auto;scroll-behavior:smooth}
+.dv-index-in::-webkit-scrollbar{display:none}
+.dv-ix{flex:none;display:inline-flex;align-items:baseline;gap:7px;height:34px;padding:0 14px;border-radius:999px;font-family:var(--disp);font-weight:600;font-size:14px;
+  line-height:34px;color:var(--mut);white-space:nowrap;transition:color .25s,background-color .25s}
+.dv-ix span{font-family:var(--mono);font-size:9.5px;letter-spacing:.08em;color:var(--dim);transition:color .25s}
+.dv-ix.on{background:var(--ink);color:#07100a}
+.dv-ix.on span{color:rgba(7,16,10,.6)}
+@media (hover:hover) and (pointer:fine){.dv-ix:not(.on):hover{color:var(--ink);background:rgba(238,242,232,.06)}}
+
+/* a chapter */
+.dv-list{position:relative}
+.dv-ch{position:relative;isolation:isolate;display:grid;grid-template-columns:minmax(0,5fr) minmax(0,7fr);align-items:center;gap:clamp(24px,4vw,72px);
+  max-width:1400px;min-height:100vh;min-height:100svh;margin:0 auto;padding:clamp(70px,12vh,140px) var(--gut) clamp(50px,8vh,100px);scroll-margin-top:calc(var(--barh) + 40px)}
+.dv-amb{position:absolute;inset:0;z-index:-1;overflow:hidden;pointer-events:none;
+  -webkit-mask-image:radial-gradient(58% 52% at 66% 52%,#000 18%,transparent 74%);mask-image:radial-gradient(58% 52% at 66% 52%,#000 18%,transparent 74%)}
+/* a 24px preview, blurred at its own size and scaled up by the compositor: a soft light for free */
+.dv-amb i{position:absolute;left:66%;top:52%;width:200px;height:134px;margin:-67px 0 0 -100px;background-size:cover;background-position:center;
+  filter:blur(9px) saturate(1.55);opacity:.5;transform:scale(8.5);will-change:transform}
+.dv-amb .dv-amb-none{background:radial-gradient(closest-side,var(--glow),transparent);opacity:.55;filter:none}
+
+.dv-copy{position:relative;min-width:0}
+.dv-no{display:flex;align-items:baseline;gap:10px;font-family:var(--mono);font-size:11px;letter-spacing:.14em;color:var(--dim)}
+.dv-no b{font-family:var(--disp);font-weight:800;font-size:clamp(46px,5vw,76px);line-height:1;letter-spacing:-.04em;color:transparent;-webkit-text-stroke:1.2px rgba(134,242,94,.55)}
+.dv-name{margin-top:clamp(6px,1vh,12px);font-family:var(--disp);font-weight:800;font-size:clamp(58px,9.2vw,148px);line-height:.88;letter-spacing:-.05em;overflow-wrap:anywhere}
+.dv-full{margin-top:clamp(8px,1.4vh,14px);font-family:var(--ser);font-style:italic;font-size:clamp(22px,2.4vw,34px);line-height:1.15;color:var(--grx)}
+.dv-tag{margin-top:14px;display:inline-flex;align-items:center;gap:9px;font-family:var(--mono);font-size:10.5px;letter-spacing:.2em;text-transform:uppercase;color:var(--mut)}
+.dv-tag::before{content:"";width:7px;height:7px;border-radius:50%;background:var(--glow,var(--grx));box-shadow:0 0 0 3px rgba(238,242,232,.06)}
+.dv-desc{margin-top:clamp(14px,2.2vh,22px);max-width:44ch;font-size:clamp(15.5px,1.25vw,17.5px);line-height:1.65;color:#c3ccbe;text-wrap:pretty;white-space:pre-line;
+  display:-webkit-box;-webkit-line-clamp:6;-webkit-box-orient:vertical;overflow:hidden}
+.dv-ctl{margin-top:clamp(22px,3.4vh,36px);display:flex;flex-wrap:wrap;align-items:center;gap:10px}
+.dv-arrow{width:50px;height:50px;display:grid;place-items:center;border-radius:50%;border:1px solid var(--line2);color:var(--ink);
+  transition:border-color .2s,color .2s,background-color .2s,transform .16s ease-out}
+.dv-arrow svg{width:20px;height:20px;fill:none;stroke:currentColor;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}
+.dv-arrow:active{transform:scale(.94)}
+.dv-pos{min-width:52px;text-align:center;font-family:var(--mono);font-size:12px;color:var(--dim);font-variant-numeric:tabular-nums}
+.dv-pos b{font-weight:500;color:var(--ink)}
+.dv-more{display:inline-flex;align-items:center;gap:10px;height:50px;margin-left:6px;padding:0 22px;border-radius:999px;background:var(--ink);color:#07100a;
+  font-family:var(--disp);font-weight:700;font-size:14px;letter-spacing:.01em;transition:background-color .2s,transform .16s ease-out}
+.dv-more span{font-family:var(--mono);font-size:11px;color:rgba(7,16,10,.6)}
+.dv-more:active{transform:scale(.97)}
+@media (hover:hover) and (pointer:fine){
+  .dv-arrow:hover{border-color:var(--grx);color:var(--grx);background:rgba(134,242,94,.06)}
+  .dv-more:hover{background:var(--grx)}
+}
+
+/* the deck */
+.dv-deck{position:relative;aspect-ratio:7/5.4;perspective:1700px;perspective-origin:40% 40%;touch-action:pan-y;outline:none}
+.dv-tilt{position:absolute;inset:0;transform-style:preserve-3d;transition:transform .7s var(--ease-deck)}
+.dv-print{position:absolute;inset:4% 13% 13% 2%;margin:0;transform:var(--dv-s2);transform-style:preserve-3d;transition:transform .78s var(--ease-deck)}
+.dv-print[data-slot="0"]{transform:var(--dv-s0)}
+.dv-print[data-slot="1"]{transform:var(--dv-s1)}
+.dv-print::after{content:"";position:absolute;inset:0;border-radius:7px;background:#020503;opacity:.62;pointer-events:none;transition:opacity .78s var(--ease-deck)}
+.dv-print[data-slot="0"]::after{opacity:0}
+.dv-print[data-slot="1"]::after{opacity:.4}
+.dv-pic{position:relative;display:block;width:100%;height:100%;padding:clamp(6px,.75vw,11px);border-radius:7px;background:var(--paper);color:inherit;text-align:left;
+  box-shadow:0 1px 0 rgba(255,255,255,.6) inset,0 40px 70px -28px rgba(0,0,0,.85),0 12px 24px -12px rgba(0,0,0,.6)}
+.dv-pic picture{display:block;width:100%;height:100%}
+.dv-pic img{display:block;width:100%;height:100%;object-fit:cover;object-position:50% 42%;border-radius:2px;background-color:#c9c4b6;background-size:cover;background-position:center}
+.dv-pic img.is-ld{background-image:none!important}
+.dv-print[data-slot="0"] .dv-pic{animation:dv-float 7.5s ease-in-out infinite;cursor:zoom-in}
+@keyframes dv-float{0%,100%{translate:0 0}50%{translate:0 -9px}}
+.dv-cap{position:absolute;left:3%;right:3%;top:calc(100% + 14px);font-family:var(--ser);font-style:italic;font-size:clamp(15px,1.3vw,18px);line-height:1.35;color:var(--mut);
+  opacity:0;transition:opacity .5s}
+.dv-print[data-slot="0"] .dv-cap{opacity:1;transition-delay:.3s}
+
+/* a print still waiting for its photo */
+.dv-print.is-empty .dv-pic{background:#0c160d;border:1px solid rgba(238,242,232,.12);box-shadow:0 40px 70px -28px rgba(0,0,0,.85);overflow:hidden;display:grid;place-items:center}
+.dv-print.is-empty .dv-pic::before,.dv-print.is-empty .dv-pic::after{content:"";position:absolute;width:26px;height:26px;border-color:rgba(134,242,94,.6);border-style:solid}
+.dv-print.is-empty .dv-pic::before{left:16px;top:16px;border-width:2px 0 0 2px}
+.dv-print.is-empty .dv-pic::after{right:16px;bottom:16px;border-width:0 2px 2px 0}
+.dv-blank{position:absolute;inset:0;display:grid;place-items:center;overflow:hidden;
+  background:radial-gradient(70% 60% at 50% 40%,color-mix(in srgb,var(--glow) 35%,transparent),transparent 72%),
+    linear-gradient(rgba(238,242,232,.035) 1px,transparent 1px) 0 0/28px 28px,linear-gradient(90deg,rgba(238,242,232,.035) 1px,transparent 1px) 0 0/28px 28px}
+.dv-blank b{font-family:var(--disp);font-weight:800;font-size:clamp(46px,7vw,110px);letter-spacing:-.05em;color:transparent;-webkit-text-stroke:1.2px rgba(238,242,232,.16);white-space:nowrap}
+.dv-soon{position:absolute;left:50%;bottom:16px;transform:translateX(-50%);font-family:var(--mono);font-size:10px;letter-spacing:.24em;text-transform:uppercase;color:var(--mut);white-space:nowrap}
+
+/* arriving on scroll. Where the browser can tie animations to scroll position, the deck rises off
+   the table and the type slides in as the chapter enters, and both settle back as it leaves.
+   Elsewhere the same entrance plays once when the chapter comes into view. */
+@supports (animation-timeline: view()){
+  .dv-deck{animation:dv-deck-in linear both,dv-deck-out linear both;animation-timeline:view(),view();animation-range:entry 0% cover 42%,exit 0% exit 100%}
+  .dv-copy>*{animation:dv-copy-in linear both;animation-timeline:view();animation-range:entry 8% cover 30%}
+  .dv-amb{animation:dv-amb linear both;animation-timeline:view();animation-range:cover 0% cover 100%}
+}
+@keyframes dv-deck-in{from{opacity:0;transform:perspective(1400px) translate3d(0,16vh,0) rotateX(26deg) scale(.86)}}
+@keyframes dv-deck-out{to{opacity:.25;transform:perspective(1400px) translate3d(0,-6vh,0) rotateX(-12deg) scale(.95)}}
+@keyframes dv-copy-in{from{opacity:0;transform:translate3d(0,40px,0)}}
+@keyframes dv-amb{0%,100%{opacity:0}30%,70%{opacity:1}}
+@supports not (animation-timeline: view()){
+  html.js .dv-ch:not(.in) .dv-deck{opacity:0;transform:perspective(1400px) translate3d(0,12vh,0) rotateX(22deg) scale(.9)}
+  html.js .dv-ch:not(.in) .dv-copy>*{opacity:0;transform:translate3d(0,32px,0)}
+  .dv-deck{transition:opacity 1s var(--eo),transform 1.2s var(--eo)}
+  .dv-copy>*{transition:opacity .9s var(--eo),transform .9s var(--eo)}
+  .dv-copy>:nth-child(2){transition-delay:.06s}.dv-copy>:nth-child(3){transition-delay:.12s}.dv-copy>:nth-child(4){transition-delay:.18s}
+  .dv-copy>:nth-child(5){transition-delay:.24s}.dv-copy>:nth-child(6){transition-delay:.3s}
+}
+
+@media (max-width:899px){
+  .dv{--dv-s1:translate3d(5%,-4%,-90px) rotate(2.6deg) rotateY(-7deg);--dv-s2:translate3d(10%,-8%,-180px) rotate(5deg) rotateY(-12deg)}
+  .dv-index{justify-content:flex-start}
+  .dv-ch{grid-template-columns:minmax(0,1fr);min-height:0;gap:0;padding:64px var(--gut) 72px}
+  /* the copy's children join the chapter grid so the arrows can sit under the photos */
+  .dv-copy{display:contents}
+  .dv-copy>*{order:1}
+  .dv-deck{order:2;aspect-ratio:5/4.3;margin:26px -2px 0}
+  .dv-print{inset:6% 9% 12% 1%}
+  .dv-amb{-webkit-mask-image:radial-gradient(70% 45% at 50% 66%,#000 20%,transparent 76%);mask-image:radial-gradient(70% 45% at 50% 66%,#000 20%,transparent 76%)}
+  .dv-amb i{left:50%;top:68%}
+  .dv-name{font-size:clamp(54px,17vw,96px)}
+  .dv-desc{-webkit-line-clamp:5}
+  .dv-ctl{order:3;margin-top:34px}
+  .dv-more{margin-left:auto}
+  .dv-cap{font-size:14.5px;top:calc(100% + 10px)}
+}
+@media (max-width:420px){.dv-arrow{width:46px;height:46px}.dv-more{height:46px;padding:0 18px}}
+@media (prefers-reduced-motion:reduce){
+  .dv-deck,.dv-copy>*,.dv-amb,.dv-print[data-slot="0"] .dv-pic{animation:none!important}
+  .dv-print,.dv-print::after,.dv-tilt{transition:none}
+}
