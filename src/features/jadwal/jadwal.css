@@ -328,5 +328,8 @@
   .jw-x-tilt{transform:none}
 }
 
-/* off screen: no animation keeps running (the observer in jadwal.js sets jw-off) */
-.jw.jw-off *,.jw.jw-off *::before,.jw.jw-off *::after{animation-play-state:paused!important}
+/* off screen: the looping animations stop (the observer in jadwal.js sets jw-off). One-shot
+   entrances keep running, so a day changed while the schedule is scrolled away is never left
+   half faded in. */
+.jw.jw-off .jw-ro-k::before,.jw.jw-off .jw-s.is-now::before,.jw.jw-off .jw-x-bar,
+.jw.jw-off .jw-x-face::after,.jw.jw-off .jw-x-run{animation-play-state:paused}
