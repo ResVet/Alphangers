@@ -145,6 +145,75 @@ function tissue(U, kind, lite) {
   return m;
 }
 
+// The see-through body of the electrical and blood-flow views. The physical material spent most
+// of its time on lighting (environment reflections, clearcoat) that the x-ray look then painted
+// over, once per layer of wall behind every pixel. This draws the same picture directly: a
+// simple lit surface that fades into the x-ray rim, the wave and the selection highlight.
+function ghostMaterial(U) {
+  const m = new THREE.ShaderMaterial({
+    uniforms: { ...U, uLight: { value: new THREE.Vector3(-0.42, 0.55, 0.72).normalize() } },
+    transparent: true,
+    depthWrite: false,
+    side: THREE.DoubleSide,
+    vertexShader: `
+      attribute float _part;
+      attribute float _t;
+      attribute float _ao;
+      uniform vec3 uCol[${N}];
+      uniform float uVis[${N}];
+      uniform float uSel, uHov;
+      varying vec3 vCol, vN, vV;
+      varying float vInner, vSel, vHov, vT, vAo;
+      void main() {
+        float pid = _part;
+        vInner = step(127.5, pid);
+        pid -= 128.0 * vInner;
+        int ip = int(pid + 0.5);
+        vCol = uCol[ip];
+        vSel = 1.0 - step(0.5, abs(pid - uSel));
+        vHov = 1.0 - step(0.5, abs(pid - uHov));
+        vT = _t;
+        vAo = _ao;
+        vec4 mv = modelViewMatrix * vec4(position * step(0.5, uVis[ip]), 1.0);
+        vV = -mv.xyz;
+        vN = normalMatrix * normal;
+        gl_Position = projectionMatrix * mv;
+      }`,
+    fragmentShader: `
+      uniform float uDim, uClock, uTime, uWave, uXray, uPulse;
+      uniform vec3 uLight;
+      varying vec3 vCol, vN, vV;
+      varying float vInner, vSel, vHov, vT, vAo;
+      void main() {
+        vec3 n = normalize(vN);
+        vec3 v = normalize(vV);
+        float fr = pow(1.0 - abs(dot(n, v)), 2.2);
+        vec3 nf = gl_FrontFacing ? n : -n;
+        vec3 base = mix(vCol, vec3(0.80, 0.42, 0.38), vInner * 0.35);
+        float occ = mix(1.0, vAo, 0.6);
+        vec3 lit = base * (0.32 + 0.68 * max(dot(nf, uLight), 0.0)) * occ;
+        float age = uTime - vT;
+        bool timed = vT < 60000.0;
+        float front = timed ? exp(-(age * age) / 300.0) * uWave : 0.0;
+        float hold = vT < 150.0 ? 210.0 : 250.0;
+        float held = timed ? smoothstep(0.0, 8.0, age) * (1.0 - smoothstep(hold, hold + 90.0, age)) * uWave : 0.0;
+        vec3 xr = mix(vec3(0.03, 0.07, 0.04), vec3(0.32, 0.62, 0.28), fr);
+        xr += vec3(0.45, 0.85, 0.35) * held * 0.32 + vec3(0.9, 1.0, 0.8) * front * 0.75;
+        vec3 col = mix(lit, xr, uXray);
+        vec3 green = vec3(0.53, 0.95, 0.37);
+        float pulse = 0.5 + 0.5 * sin(uClock * 3.6);
+        col *= mix(1.0, 0.62, uDim * (1.0 - vSel));
+        col += vSel * green * (0.12 + 0.1 * pulse * uPulse + fr * 0.75);
+        col += vHov * (1.0 - vSel) * vec3(0.09, 0.11, 0.08);
+        float a = mix(1.0, clamp(0.035 + 0.42 * fr + 0.5 * front + 0.12 * held, 0.0, 1.0), uXray);
+        gl_FragColor = vec4(col, a);
+        #include <tonemapping_fragment>
+        #include <colorspace_fragment>
+      }`,
+  });
+  return m;
+}
+
 function pickMaterial(U) {
   return new THREE.ShaderMaterial({
     uniforms: { uVis: U.uVis },
@@ -277,11 +346,34 @@ export async function createScene(canvas, { meta, url, onProgress, reducedMotion
 
   const scene = new THREE.Scene();
   await yieldNow();
-  const pmrem = new THREE.PMREMGenerator(renderer);
-  const envTex = pmrem.fromScene(new RoomEnvironment(), 0.04).texture;
-  scene.environment = envTex;
-  scene.environmentIntensity = 0.55;
-  pmrem.dispose();
+  // Two ways to light the studio. Full: reflections of a soft room, the wet look on the muscle.
+  // Light: the same room boiled down to an ambient probe plus one more highlight light, about
+  // half the cost per pixel. Phones and low-power machines start light; a computer switches once
+  // if even the lowest resolution cannot keep up (see timeFrame).
+  let envTex = null;
+  const ENV_INTENSITY = 0.55;
+  const probe = new THREE.LightProbe();
+  const spec = new THREE.DirectionalLight('#ffffff', 1.6);
+  spec.position.set(4, 10, 26);
+  // The room's light as 9 spherical harmonics, worked out once from the same RoomEnvironment
+  // (LightProbeGenerator on a 128 px cube). It is grey, so one number per band.
+  const ROOM_SH = [1.7114, 0.1481, -0.0014, 0.1213, 0.0796, -0.0437, -0.1706, 0.0246, -0.4931];
+  ROOM_SH.forEach((v, i) => probe.sh.coefficients[i].setScalar(v));
+  probe.intensity = ENV_INTENSITY * 2.5;
+  async function lightRig() {
+    scene.environment = null;
+    scene.add(probe, spec);
+    if (envTex) { envTex.dispose(); envTex = null; }
+  }
+  let lightLook = lite;
+  if (lite) await lightRig();
+  else {
+    const pmrem = new THREE.PMREMGenerator(renderer);
+    envTex = pmrem.fromScene(new RoomEnvironment(), 0.04).texture;
+    scene.environment = envTex;
+    scene.environmentIntensity = ENV_INTENSITY;
+    pmrem.dispose();
+  }
   const key = new THREE.DirectionalLight('#fff1e6', 2.1);
   key.position.set(-14, 18, 22);
   const rim = new THREE.DirectionalLight('#9dff7a', 1.15);
@@ -364,16 +456,17 @@ export async function createScene(canvas, { meta, url, onProgress, reducedMotion
   const mix = { xray: 0, wave: 0, cut: 0, target: { xray: 0, wave: 0, cut: 0 } };
   let needs = true, last = performance.now(), raf = 0, tickCb = null, contextLost = false;
 
+  const ghost = ghostMaterial(U);
+  const solid = meshes.body?.material;
+  const isGhost = () => state.mode === 'ecg' || state.mode === 'flow';
   function setMaterialsForMode() {
     const cut = state.mode === 'cut';
     applyCut();
-    const body = meshes.body?.material;
-    if (body) {
-      const ghost = state.mode === 'ecg' || state.mode === 'flow';
-      // both programs were compiled while loading, so this only picks the other one
-      if (body.transparent !== ghost) { body.transparent = ghost; body.needsUpdate = true; }
-      body.depthWrite = !ghost;
-    }
+    // into the see-through views the light ghost material takes over at once; on the way out it
+    // stays until the x-ray has faded, then the solid material comes back (see frame())
+    if (meshes.body && isGhost()) meshes.body.material = ghost;
+    // the cut needs the solid material's clipping straight away, so that one switch is immediate
+    if (meshes.body && cut && meshes.body.material === ghost) { meshes.body.material = solid; mix.xray = 0; U.uXray.value = 0; }
     if (meshes.coronary) meshes.coronary.visible = state.coronary && (state.mode === 'whole' || state.mode === 'cut');
     if (meshes.conduction) meshes.conduction.visible = state.mode === 'cut' || state.mode === 'ecg';
     if (meshes.valves) meshes.valves.visible = state.mode !== 'whole' || state.sel >= 0 && isValvePart(state.sel);
@@ -527,6 +620,7 @@ export async function createScene(canvas, { meta, url, onProgress, reducedMotion
       if (Math.abs(d) > 0.002) { mix[k] += d * Math.min(1, dt * (reducedMotion ? 60 : 6)); moving = true; } else mix[k] = mix.target[k];
     }
     U.uXray.value = mix.xray;
+    if (meshes.body && meshes.body.material === ghost && !isGhost() && mix.xray < 0.004) { meshes.body.material = solid; moving = true; }
     U.uWave.value = mix.wave;
     U.uCutOn.value = mix.cut;
     if (controls.update(dt)) moving = true;
@@ -571,18 +665,26 @@ export async function createScene(canvas, { meta, url, onProgress, reducedMotion
     renderer.setPixelRatio(v);
     renderer.setSize(W, H, false);
   }
-  // Median frame interval over the last 30 moving frames picks the resolution for the next ones.
+  // Median frame interval over the last 12 moving frames picks the resolution for the next ones.
   const samples = [];
   let backoffs = 0;
   function timeFrame(dt) {
     if (software) return;
     samples.push(dt);
-    if (samples.length < 30) return;
-    const med = samples.sort((a, b) => a - b)[15];
+    if (samples.length < 12) return;
+    const med = samples.sort((a, b) => a - b)[6];
     samples.length = 0;
     if (med > 0.021 && motionDpr > minDpr) {
       motionDpr = Math.max(minDpr, Math.round(motionDpr * 0.8 * 100) / 100);
       backoffs++;
+    } else if (med > 0.028 && !lightLook) {
+      // already at the lowest resolution and still slow: trade the reflections for speed, once
+      lightLook = true;
+      lightRig().then(() => {
+        Object.values(meshes).forEach((m) => { if (m.material !== ghost) m.material.needsUpdate = true; });
+        solid && (solid.needsUpdate = true);
+        kick();
+      });
     } else if (med < 0.0155 && motionDpr < dpr && backoffs < 4) {
       motionDpr = Math.min(dpr, Math.round(motionDpr * 1.12 * 100) / 100);
     }
@@ -608,20 +710,25 @@ export async function createScene(canvas, { meta, url, onProgress, reducedMotion
   canvas.addEventListener('webglcontextlost', (e) => { e.preventDefault(); contextLost = true; api.onContextChange?.(false); });
   canvas.addEventListener('webglcontextrestored', () => { contextLost = false; resize(); kick(); api.onContextChange?.(true); });
 
-  // Compile every program the views will need while the loading bar is still up: the solid and
-  // the see-through body, and the picking shader. compileAsync lets the driver build them in
+  // Compile every program the views will need while the loading bar is still up: the solid
+  // tissue, the see-through body, the blood particles and the picking shader. compileAsync lets the driver build them in
   // parallel off the main thread where it can (KHR_parallel_shader_compile).
   async function warm() {
-    const body = meshes.body?.material;
     const parallel = renderer.compileAsync && renderer.extensions.has('KHR_parallel_shader_compile');
     const compile = (fn) => (parallel ? renderer.compileAsync(scene, camera) : Promise.resolve(renderer.compile(scene, camera))).then(fn, fn);
+    // everything visible at once, so every program is built now rather than on a first switch
     flow.points.visible = true;
-    if (body) { body.transparent = true; body.needsUpdate = true; }
+    const shown = Object.values(meshes).map((m) => [m, m.visible]);
+    shown.forEach(([m]) => { m.visible = true; });
     await compile(() => {});
     await yieldNow();
-    if (body) { body.transparent = false; body.needsUpdate = true; }
-    await compile(() => {});
-    await yieldNow();
+    if (meshes.body) {
+      meshes.body.material = ghost;
+      await compile(() => {});
+      meshes.body.material = solid;
+      await yieldNow();
+    }
+    shown.forEach(([m, v]) => { m.visible = v; });
     pickRender(W / 2, H / 2, null);
   }
   try { await warm(); } catch { /* only a warm-up */ }
@@ -707,8 +814,10 @@ export async function createScene(canvas, { meta, url, onProgress, reducedMotion
       flow.dispose();
       pickRT.dispose();
       pickMat.dispose();
-      envTex.dispose();
+      envTex?.dispose();
       gltf.scene.traverse((o) => { if (o.isMesh) { o.geometry.dispose(); o.material.dispose(); } });
+      ghost.dispose();
+      solid?.dispose();
       renderer.dispose();
     },
   };

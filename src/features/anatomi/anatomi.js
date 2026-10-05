@@ -360,6 +360,14 @@ export function mountAnatomi(root, { heart, portal }) {
   // ---------- ECG strip and phase text
   let playing = !RM, phaseIdx = -1;
   const ectx = ecgC.getContext('2d');
+  let ecgBg = null;
+  const ecgSize = { w: 0, h: 0, W: 0, H: 0, dpr: 1 };
+  function measureEcg() {
+    const r = ecgC.getBoundingClientRect();
+    const dpr = Math.min(window.devicePixelRatio || 1, 2);
+    Object.assign(ecgSize, { W: r.width, H: r.height, dpr, w: Math.round(r.width * dpr), h: Math.round(r.height * dpr) });
+  }
+  if ('ResizeObserver' in window) new ResizeObserver(() => { measureEcg(); ecgBg = null; if (scene) drawEcg(scene.time); }).observe(ecgC);
   function drawEcg(ms) {
     if (ecgBox.hidden && flowKey.hidden) return;
     const ph = PHASES.findIndex(([a, b]) => ms >= a && ms < b);
@@ -372,32 +380,44 @@ export function mountAnatomi(root, { heart, portal }) {
       if (!playing) ecgLive.textContent = `${k}. ${d}`;
     }
     if (ecgBox.hidden) return;
-    const r = ecgC.getBoundingClientRect();
-    const dpr = Math.min(window.devicePixelRatio || 1, 2);
-    const w = Math.round(r.width * dpr), h = Math.round(r.height * dpr);
+    // the grid and the grey trace only change with the strip's size: drawn once into a layer,
+    // copied each frame, and only the green part up to the playhead is traced live
+    if (!ecgSize.w) measureEcg();
+    const { w, h, W, H, dpr } = ecgSize;
     if (!w || !h) return;
-    if (ecgC.width !== w || ecgC.height !== h) { ecgC.width = w; ecgC.height = h; }
-    ectx.setTransform(dpr, 0, 0, dpr, 0, 0);
-    const W = r.width, H = r.height, mid = H * 0.68, amp = H * 0.5;
-    ectx.clearRect(0, 0, W, H);
-    ectx.strokeStyle = 'rgba(238,242,232,.07)';
-    ectx.lineWidth = 1;
-    for (let x = 0; x < W; x += 12) { ectx.beginPath(); ectx.moveTo(x + 0.5, 0); ectx.lineTo(x + 0.5, H); ectx.stroke(); }
-    const span = RR, head = (ms / 1000);
-    const trace = (from, to, style, lw) => {
-      ectx.beginPath();
+    if (ecgC.width !== w || ecgC.height !== h) { ecgC.width = w; ecgC.height = h; ecgBg = null; }
+    const mid = H * 0.68, amp = H * 0.5, span = RR, head = (ms / 1000);
+    const trace = (g, from, to) => {
+      g.beginPath();
       for (let x = Math.floor(from); x <= to; x += 1.5) {
-        const t = (x / W) * span;
-        const y = mid - ecgV(t + ECG_OFFSET) * amp;
-        if (x === Math.floor(from)) ectx.moveTo(x, y); else ectx.lineTo(x, y);
+        const y = mid - ecgV((x / W) * span + ECG_OFFSET) * amp;
+        if (x === Math.floor(from)) g.moveTo(x, y); else g.lineTo(x, y);
       }
-      ectx.strokeStyle = style;
-      ectx.lineWidth = lw;
-      ectx.stroke();
     };
+    if (!ecgBg) {
+      ecgBg = document.createElement('canvas');
+      ecgBg.width = w; ecgBg.height = h;
+      const g = ecgBg.getContext('2d');
+      g.setTransform(dpr, 0, 0, dpr, 0, 0);
+      g.strokeStyle = 'rgba(238,242,232,.07)';
+      g.lineWidth = 1;
+      g.beginPath();
+      for (let x = 0; x < W; x += 12) { g.moveTo(x + 0.5, 0); g.lineTo(x + 0.5, H); }
+      g.stroke();
+      trace(g, 0, W);
+      g.strokeStyle = 'rgba(238,242,232,.18)';
+      g.lineWidth = 1.2;
+      g.stroke();
+    }
+    ectx.setTransform(1, 0, 0, 1, 0, 0);
+    ectx.clearRect(0, 0, w, h);
+    ectx.drawImage(ecgBg, 0, 0);
+    ectx.setTransform(dpr, 0, 0, dpr, 0, 0);
     const hx = (head / span) * W;
-    trace(0, W, 'rgba(238,242,232,.18)', 1.2);
-    trace(0, hx, 'rgba(134,242,94,.95)', 1.8);
+    trace(ectx, 0, hx);
+    ectx.strokeStyle = 'rgba(134,242,94,.95)';
+    ectx.lineWidth = 1.8;
+    ectx.stroke();
     const hy = mid - ecgV(head + ECG_OFFSET) * amp;
     ectx.fillStyle = '#eaffde';
     ectx.beginPath(); ectx.arc(hx, hy, 3, 0, Math.PI * 2); ectx.fill();
