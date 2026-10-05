@@ -245,6 +245,10 @@ var vis = { hero: true, mq: true, pulse: false, foot: false };
 if('IntersectionObserver' in window){
   var vo = new IntersectionObserver(function(es){
     es.forEach(function(e){ vis[e.target.getAttribute('data-vis')] = e.isIntersecting; });
+    // CSS animations in a section that is off screen are paused too (see .hero-off in v3.css):
+    // some of them repaint on the main thread every frame even when nobody can see them
+    H.classList.toggle('hero-off', !vis.hero);
+    H.classList.toggle('foot-off', !vis.foot);
     wake();
   }, {rootMargin: '80px 0px 80px 0px'});
   [['.hero','hero'],['.mq','mq'],['#siklus','pulse'],['.foot','foot']].forEach(function(a){ var el = $(a[0]); if(!el) return; el.setAttribute('data-vis', a[1]); vo.observe(el); });

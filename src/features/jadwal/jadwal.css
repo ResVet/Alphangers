@@ -327,3 +327,6 @@
   .jw *,.jw *::before,.jw *::after{animation:none!important;transition:none!important;scroll-behavior:auto!important}
   .jw-x-tilt{transform:none}
 }
+
+/* off screen: no animation keeps running (the observer in jadwal.js sets jw-off) */
+.jw.jw-off *,.jw.jw-off *::before,.jw.jw-off *::after{animation-play-state:paused!important}

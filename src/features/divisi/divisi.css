@@ -75,7 +75,8 @@
 .dv-pic picture{display:block;width:100%;height:100%}
 .dv-pic img{display:block;width:100%;height:100%;object-fit:cover;object-position:50% 42%;border-radius:2px;background-color:#c9c4b6;background-size:cover;background-position:center}
 .dv-pic img.is-ld{background-image:none!important}
-.dv-print[data-slot="0"] .dv-pic{animation:dv-float 7.5s ease-in-out infinite;cursor:zoom-in}
+.dv-print[data-slot="0"] .dv-pic{cursor:zoom-in}
+.dv-ch.is-near .dv-print[data-slot="0"] .dv-pic{animation:dv-float 7.5s ease-in-out infinite}
 @keyframes dv-float{0%,100%{translate:0 0}50%{translate:0 -9px}}
 .dv-cap{position:absolute;left:3%;right:3%;top:calc(100% + 14px);font-family:var(--ser);font-style:italic;font-size:clamp(15px,1.3vw,18px);line-height:1.35;color:var(--mut);
   opacity:0;transition:opacity .5s}

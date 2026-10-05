@@ -250,6 +250,10 @@ function isSoftwareGL(gl) {
   }
 }
 
+// Hands the main thread back between the heavy setup steps, so taps and scrolling are not
+// blocked for the whole of loading. scheduler.yield where available, a macrotask elsewhere.
+const yieldNow = () => (globalThis.scheduler?.yield ? globalThis.scheduler.yield() : new Promise((r) => setTimeout(r, 0)));
+
 export async function createScene(canvas, { meta, url, onProgress, reducedMotion = false, lowPower = false, touch = false }) {
   // Full resolution for still frames. While the heart moves, frames render at motionDpr, which
   // the frame timer below lowers on a slow GPU and raises again when there is headroom; the
@@ -272,6 +276,7 @@ export async function createScene(canvas, { meta, url, onProgress, reducedMotion
   renderer.setClearColor(0x000000, 0);
 
   const scene = new THREE.Scene();
+  await yieldNow();
   const pmrem = new THREE.PMREMGenerator(renderer);
   const envTex = pmrem.fromScene(new RoomEnvironment(), 0.04).texture;
   scene.environment = envTex;
@@ -308,7 +313,9 @@ export async function createScene(canvas, { meta, url, onProgress, reducedMotion
   const U = shared(meta);
   const loader = new GLTFLoader();
   loader.setMeshoptDecoder(MeshoptDecoder);
+  await yieldNow();
   const gltf = await loader.loadAsync(url, (e) => { if (e.total) onProgress?.(e.loaded / e.total); });
+  await yieldNow();
   const meshes = {};
   gltf.scene.traverse((o) => {
     if (o.isMesh) {
@@ -322,6 +329,7 @@ export async function createScene(canvas, { meta, url, onProgress, reducedMotion
   if (meshes.body) meshes.body.renderOrder = 2;
   scene.add(gltf.scene);
 
+  await yieldNow();
   const flow = bloodFlow(meta);
   flow.points.visible = false;
   scene.add(flow.points);
@@ -536,6 +544,13 @@ export async function createScene(canvas, { meta, url, onProgress, reducedMotion
     U.uPulse.value = pulsing ? 1 - since / PULSE_MS : 0;
     if (pulsing) U.uClock.value += dt;
     const busy = moving || animating || pulsing || controls.autoRotate;
+    // the slow idle spin alone is drawn at half the frame rate: it looks the same and the GPU
+    // (and a phone's battery) does half the work while someone reads the notes beside it
+    const spinOnly = controls.autoRotate && tween.dur === 0 && !animating && !pulsing && !dragging;
+    if (spinOnly && !needs) {
+      spinSkip = !spinSkip;
+      if (spinSkip) { raf = requestAnimationFrame(frame); return; }
+    }
     if (needs || busy) {
       setDpr(busy ? motionDpr : dpr);
       renderer.render(scene, camera);
@@ -585,7 +600,9 @@ export async function createScene(canvas, { meta, url, onProgress, reducedMotion
     needs = true;
     if (!raf && state.active && !contextLost) { last = performance.now(); raf = requestAnimationFrame(frame); }
   }
-  controls.addEventListener('start', () => { clearTimeout(idleTimer); controls.autoRotate = false; tween.dur = 0; kick(); });
+  let dragging = false, spinSkip = false;
+  controls.addEventListener('start', () => { dragging = true; clearTimeout(idleTimer); controls.autoRotate = false; tween.dur = 0; kick(); });
+  controls.addEventListener('end', () => { dragging = false; });
   controls.addEventListener('change', kick);
 
   canvas.addEventListener('webglcontextlost', (e) => { e.preventDefault(); contextLost = true; api.onContextChange?.(false); });
@@ -601,8 +618,10 @@ export async function createScene(canvas, { meta, url, onProgress, reducedMotion
     flow.points.visible = true;
     if (body) { body.transparent = true; body.needsUpdate = true; }
     await compile(() => {});
+    await yieldNow();
     if (body) { body.transparent = false; body.needsUpdate = true; }
     await compile(() => {});
+    await yieldNow();
     pickRender(W / 2, H / 2, null);
   }
   try { await warm(); } catch { /* only a warm-up */ }

@@ -754,6 +754,8 @@ export function mountJadwal(root, { schedule, dosen, now } = {}) {
       const visible = entries[entries.length - 1].isIntersecting;
       if (visible === state.onScreen) return;
       state.onScreen = visible;
+      // the "now" pulse and the cancellation tape stop while the schedule is off screen
+      root.classList.toggle('jw-off', !visible);
       if (visible) tick();
       else scheduleTick();
     }, { rootMargin: '120px 0px' });

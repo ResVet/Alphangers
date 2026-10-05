@@ -227,7 +227,7 @@ export async function mountDivisi(root, { links }) {
   }
 
   // which chapter is under the reading line: lights up its name in the index
-  let spy = null;
+  let spy = null, near = null;
   function observe() {
     spy?.disconnect();
     if (!('IntersectionObserver' in window)) return;
@@ -242,6 +242,10 @@ export async function mountDivisi(root, { links }) {
       }
     }, { rootMargin: '-45% 0px -54% 0px' });
     root.querySelectorAll('.dv-ch').forEach((c) => spy.observe(c));
+    // only chapters near the screen keep their front print floating
+    near?.disconnect();
+    near = new IntersectionObserver((es) => es.forEach((en) => en.target.classList.toggle('is-near', en.isIntersecting)), { rootMargin: '200px 0px' });
+    root.querySelectorAll('.dv-ch').forEach((c) => near.observe(c));
     // without scroll-driven animation support, chapters fade in as they arrive
     if (!CSS.supports?.('animation-timeline: view()')) {
       const io = new IntersectionObserver((es) => es.forEach((en) => { if (en.isIntersecting) { en.target.classList.add('in'); io.unobserve(en.target); } }), { rootMargin: '0px 0px -12% 0px' });
@@ -261,6 +265,7 @@ export async function mountDivisi(root, { links }) {
     step,
     destroy() {
       spy?.disconnect();
+      near?.disconnect();
       root.innerHTML = '';
     },
   };
