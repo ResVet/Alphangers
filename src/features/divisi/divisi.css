@@ -138,3 +138,24 @@
   .dv-deck,.dv-copy>*,.dv-amb,.dv-print[data-slot="0"] .dv-pic{animation:none!important}
   .dv-print,.dv-print::after,.dv-tilt{transition:none}
 }
+
+/* Phones. Mobile Safari redraws fixed and sticky headers badly while 3D layers, big blurred
+   layers and masks scroll underneath them: the top bar and the index flickered in and out.
+   Here the deck arrives with a flat slide instead of a 3D tilt, the glow is a plain gradient
+   in the photo's colour, and the index keeps a layer of its own. */
+@media (max-width:899px){
+  .dv-index{transform:translateZ(0)}
+  .dv-amb{-webkit-mask-image:none;mask-image:none}
+  .dv-amb i{display:none}
+  .dv-amb::before{content:"";position:absolute;inset:0;background:radial-gradient(72% 36% at 50% 66%,var(--glow),transparent 72%);opacity:.42}
+}
+@media (max-width:899px) and (prefers-reduced-motion:no-preference){
+  @supports (animation-timeline: view()){
+    .dv-deck{animation-name:dv-deck-in-flat,dv-deck-out-flat}
+  }
+  @supports not (animation-timeline: view()){
+    html.js .dv-ch:not(.in) .dv-deck{transform:translate3d(0,10vh,0) scale(.92)}
+  }
+}
+@keyframes dv-deck-in-flat{from{opacity:0;transform:translate3d(0,12vh,0) scale(.9)}}
+@keyframes dv-deck-out-flat{to{opacity:.25;transform:translate3d(0,-5vh,0) scale(.96)}}

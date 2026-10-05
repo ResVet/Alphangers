@@ -747,3 +747,9 @@ html.fine .to-gi:hover{border-color:rgba(134,242,94,.55);color:var(--ink)}
   .to-mon-ecg path{stroke-dashoffset:0}
   .to-nav,.to-scrim,.to-dlg-s,.to-dlg-b,.to-prog .pg-f{transition:none!important}
 }
+
+/* Phones: a solid bar instead of a live blur. Mobile Safari let the blurred bar flicker while
+   3D and blurred layers scrolled under it (the Divisi section). Its own layer, too. */
+@media (max-width:899px){
+  .bar{-webkit-backdrop-filter:none;backdrop-filter:none;background:linear-gradient(180deg,rgba(7,13,8,.97),rgba(7,13,8,.9));transform:translateZ(0)}
+}
