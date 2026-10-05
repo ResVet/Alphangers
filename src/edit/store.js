@@ -136,6 +136,24 @@ export async function createStore(backend) {
   function flush() {
     for (const k of CONTENT_KEYS) docs[k].flushDraft();
   }
+
+  /**
+   * Reads every document again and takes over the drafts saved on this device, without asking.
+   * Used after the admin panel had the drafts: it may have changed them, saved, or thrown them away.
+   */
+  async function reload() {
+    const remotes = await Promise.all(CONTENT_KEYS.map((k) => backend.read(k)));
+    CONTENT_KEYS.forEach((k, i) => {
+      const doc = docs[k];
+      doc.pending = undefined;
+      doc.setBase(remotes[i]);
+      if (doc.pending) doc.restorePending();
+      show(k);
+    });
+    undo.length = 0;
+    redo.length = 0;
+    emit();
+  }
   addEventListener('pagehide', flush);
 
   return {
@@ -152,6 +170,8 @@ export async function createStore(backend) {
     pending,
     restorePending,
     dropPending,
+    flush,
+    reload,
     onChange: (fn) => { listeners.add(fn); return () => listeners.delete(fn); },
   };
 }

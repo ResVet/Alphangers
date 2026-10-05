@@ -166,3 +166,35 @@ for (const width of [1440, 390]) {
     await context.close();
   });
 }
+
+test('Panel: the /admin/ editor inside the page, drafts carried both ways', async () => {
+  const { page, context, errors } = await open();
+  await page.waitForSelector('.ed-dock.is-admin');
+  await page.click('.ed-seg:has-text("Edit")');
+  const lede = page.locator('[data-k="hero.cta"]').first();
+  await lede.scrollIntoViewIfNeeded();
+  await lede.click();
+  await page.keyboard.press('Control+a');
+  await page.keyboard.type('Buka jadwal kelas');
+  await page.keyboard.press('Enter');
+  await page.waitForFunction(() => /1/.test(document.querySelector('.ed-n')?.textContent || ''));
+
+  await page.click('.ed-seg:has-text("Panel")');
+  const frame = page.frameLocator('.ed-panel-f');
+  await frame.locator('.key-b').first().waitFor({ timeout: 20000 });
+  // the page's draft is there, marked unsaved, without a restore prompt
+  assert.equal(await frame.locator('.key-b').filter({ hasText: /Link|Drive|Halaman/ }).locator('.dirty-mark').isHidden(), false);
+  assert.equal(await page.locator('.ed-pub').isVisible(), false, 'publishing waits until the panel is closed');
+
+  // throw the draft away in the panel, then go back to the page
+  await frame.locator('.key-b').filter({ hasText: /Link|Drive|Halaman/ }).click();
+  await frame.locator('button:has-text("Batalkan perubahan")').click();
+  const ok = frame.locator('dialog[open] button.primary, dialog[open] button.danger, dialog[open] .btn.primary');
+  if (await ok.count()) await ok.first().click();
+  await page.click('.ed-seg:has-text("Lihat")');
+  await page.waitForSelector('.ed-panel', { state: 'detached' });
+  await page.waitForFunction(() => !/Buka jadwal kelas/.test(document.querySelector('[data-k="hero.cta"]').textContent));
+  assert.equal(await page.locator('.ed-n').textContent(), '');
+  assert.deepEqual(errors, []);
+  await context.close();
+});

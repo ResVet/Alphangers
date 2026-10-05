@@ -1717,3 +1717,8 @@ iframe[src*='/__/auth/iframe'] {
   height: 1px;
   border: 0;
 }
+
+.who a.btn { text-decoration: none; }
+@media (max-width: 560px) {
+  .who:has(.who-live) .who-name { display: none; }
+}

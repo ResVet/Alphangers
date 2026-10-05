@@ -12,6 +12,11 @@ import { h, replace } from './dom.js';
 
 const root = document.getElementById('app');
 const params = new URLSearchParams(location.search);
+// Inside the portal's editor (the dock's "Panel" view). Drafts then belong to both editors:
+// the ones written on the page are taken over without asking, and the portal asks for this
+// side's drafts to be written out before it switches back.
+const EMBED = params.has('embed') && window.parent !== window;
+if (EMBED) document.documentElement.classList.add('embed');
 
 async function createBackend() {
   // The mock exists only in `vite` dev and in builds made with --mode mock.
@@ -105,8 +110,16 @@ async function boot() {
     try {
       const docs = await loadDocs(backend);
       started = true;
+      if (EMBED) {
+        for (const d of Object.values(docs)) if (d.pending) d.restorePending();
+        window.addEventListener('message', (e) => {
+          if (e.origin !== location.origin || e.source !== window.parent || e.data?.type !== 'alpha:flush') return;
+          for (const d of Object.values(docs)) d.flushDraft();
+          e.source.postMessage({ type: 'alpha:flushed', id: e.data.id }, location.origin);
+        });
+      }
       const { startApp } = await import('./app.js');
-      startApp(root, { backend, user, docs });
+      startApp(root, { backend, user, docs, embed: EMBED });
     } catch (e) {
       renderFailure('Konten gagal dimuat', e);
     }

@@ -1,9 +1,12 @@
 # Memakai editor admin
 
-Ada dua cara mengubah isi portal, dan keduanya menyimpan ke tempat yang sama:
+Semua dikerjakan dari `alphangers.netlify.app/?admin`. Di sana ada tiga tampilan yang bisa dipindah kapan saja dari dock di bawah layar:
 
-- **Langsung di halaman portal.** Paling cepat buat perubahan sehari-hari: batalin sesi, ganti teks, nambah dosen, unggah foto divisi. Caranya di bagian berikut.
-- **Panel admin di `/admin/`** (misalnya `https://alphangers.netlify.app/admin/`). Buat riwayat versi, mode JSON, impor dan ekspor, dan kembali ke versi bawaan. Halaman ini tidak muncul di mesin pencari, jadi simpan sebagai bookmark.
+- **Lihat**: halaman persis seperti yang dilihat pengunjung.
+- **Edit**: ubah langsung di halaman. Paling cepat buat perubahan sehari-hari: batalin sesi, ganti teks, nambah dosen, unggah foto divisi.
+- **Panel**: editor formulir yang lengkap (formulir per blok jadwal dan per dosen, mode JSON, riwayat versi, impor dan ekspor, kembali ke versi bawaan), dibuka di atas halaman.
+
+Ketiganya memakai draf yang sama. Teks yang kamu ketik di Edit sudah ada waktu Panel dibuka, dan yang kamu ubah atau simpan di Panel langsung kelihatan di halaman begitu kembali ke Lihat atau Edit. Panel yang sama juga masih bisa dibuka sendiri di `/admin/`; tombol **Ke halaman** di kanan atasnya membawa kembali ke `/?admin`.
 
 Kalau Firebase belum disambungkan, panel admin menampilkan langkah setup. Ikuti [FIREBASE_SETUP.md](FIREBASE_SETUP.md) dulu.
 
@@ -19,12 +22,12 @@ Pengunjung biasa tidak mengunduh apa pun dari editor. Tombol Admin cuma membuka 
 
 Dock ada di bawah tengah layar:
 
-- **Lihat / Edit.** Mode Lihat menampilkan halaman persis seperti yang dilihat pengunjung. Mode Edit menyalakan semua alat edit. Pindah kapan saja; mode terakhir diingat selama tab terbuka.
+- **Lihat / Edit / Panel.** Pindah kapan saja; tampilan terakhir diingat selama tab terbuka. Selama Panel terbuka, menyimpan dilakukan dengan tombol **Simpan** di bawah panel; tombol urungkan dan Terbitkan di dock muncul lagi setelah kembali ke halaman.
 - **↶ ↷** urungkan dan ulangi (**Ctrl+Z**, **Ctrl+Shift+Z**). Setiap perubahan bisa diurungkan sampai diterbitkan.
 - **Terbitkan** (**Ctrl+S**). Angka di tombol itu jumlah bagian yang berubah. Semua perubahan tetap draf di perangkatmu sampai diterbitkan; pengunjung baru melihatnya setelah itu.
-- **⋯** berisi: semua teks halaman dalam satu formulir, link ke panel admin (riwayat dan JSON), buang semua draf, kecilkan dock, dan keluar.
+- **⋯** berisi: semua teks halaman dalam satu formulir, Panel, buang semua draf, kecilkan dock, dan keluar.
 
-Draf disimpan di browser. Kalau tab tertutup sebelum terbit, waktu dibuka lagi muncul **Lanjutkan draf sebelumnya?**. Draf yang sama juga muncul di panel admin.
+Draf disimpan di browser. Kalau tab tertutup sebelum terbit, waktu dibuka lagi muncul **Lanjutkan draf sebelumnya?**.
 
 ### Mengubah teks
 
@@ -59,11 +62,13 @@ Foto yang dilepas dari divisi tetap tersimpan di server, jadi Undo dan Riwayat b
 
 Ketuk **Terbitkan**, cek daftar bagian yang berubah, lalu **Terbitkan** lagi. Setiap bagian disimpan dengan cara yang sama seperti panel admin: versi sebelumnya masuk Riwayat. Kalau ada yang mengubah bagian yang sama dari tempat lain sejak kamu mulai, editor bertanya mau memakai versimu atau versi terbaru.
 
-## Panel admin
+## Panel
+
+Bagian ini berlaku untuk Panel di dock maupun `/admin/` yang dibuka sendiri.
 
 ### Masuk
 
-Klik **Masuk dengan Google** dan pilih akun admin. Login tersimpan di browser itu sampai kamu klik **Keluar** di kanan atas. Di komputer pinjaman atau komputer lab, selalu keluar setelah selesai.
+Di dalam dock kamu sudah masuk. Di `/admin/`, klik **Masuk dengan Google** dan pilih akun admin. Login tersimpan di browser itu sampai kamu klik **Keluar** di kanan atas. Di komputer pinjaman atau komputer lab, selalu keluar setelah selesai.
 
 Kalau muncul **Belum bisa masuk**, akun itu belum terdaftar sebagai admin. Halaman itu menampilkan UID akun dan cara mendaftarkannya.
 

@@ -26,7 +26,7 @@ const MODES = [
   ['history', 'Riwayat'],
 ];
 
-export function startApp(root, { backend, user, docs }) {
+export function startApp(root, { backend, user, docs, embed = false }) {
   const keys = Object.keys(docs);
   const uiState = Object.fromEntries(keys.map((k) => [k, {}]));
   let key = keys[0];
@@ -69,6 +69,7 @@ export function startApp(root, { backend, user, docs }) {
           'div',
           { class: 'who' },
           h('span', { class: 'who-name', title: `UID ${user.uid}` }, user.email || user.name),
+          embed ? null : h('a', { class: 'btn ghost sm who-live', href: '/?admin', title: 'Buka portal dengan Lihat, Edit dan Panel' }, 'Ke halaman'),
           h('button', { type: 'button', class: 'btn ghost sm', onclick: signOut }, 'Keluar'),
         ),
       ),
@@ -279,7 +280,8 @@ export function startApp(root, { backend, user, docs }) {
   // reminder before leaving is cheaper than a restore.
   window.addEventListener('beforeunload', (e) => {
     for (const k of keys) docs[k].flushDraft();
-    if (keys.some((k) => docs[k].dirty)) {
+    // inside the portal the drafts carry over to the page editor, so no reminder there
+    if (!embed && keys.some((k) => docs[k].dirty)) {
       e.preventDefault();
       e.returnValue = '';
     }

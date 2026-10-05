@@ -187,3 +187,13 @@ html.editing .dv-print[data-slot="0"] .dv-pic{animation-play-state:paused}
 /* the page's own toasts sit above the dock while the editor is open */
 html.ed-on .toast{bottom:calc(84px + env(safe-area-inset-bottom));z-index:195}
 html.ed-on .dz-dock{bottom:calc(84px + env(safe-area-inset-bottom))}
+
+/* Panel: the /admin/ editor in a frame over the page, the dock still on top to switch back */
+.ed-panel{position:fixed;inset:0;z-index:188;box-sizing:border-box;padding-bottom:calc(76px + env(safe-area-inset-bottom));background:#070d08}
+.ed-panel-f{border-bottom:1px solid rgba(238,242,232,.1)!important}
+.ed-panel-f{display:block;width:100%;height:100%;border:0;background:transparent}
+html.ed-panel-on,html.ed-panel-on body{overflow:hidden}
+/* the page's cursor cannot follow the pointer into the frame; the frame shows the normal one */
+html.ed-panel-on #cd,html.ed-panel-on #cr{display:none!important}
+/* undo, redo and publishing belong to the page; the panel saves with its own bar */
+.ed-dock.is-panel .ed-ib:not([aria-haspopup]),.ed-dock.is-panel .ed-pub,.ed-dock.is-panel .ed-count,.ed-dock.is-panel .ed-div{display:none}

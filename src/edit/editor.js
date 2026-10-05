@@ -148,10 +148,12 @@ async function run({ portal, texts, views, bundledDivisi, signIn: wantSignIn }) 
     };
 
     const overlay = createOverlay({ adapters: ADAPTERS, ctx });
+    let view = 'view', panel = null, switching = null;
 
     // ---------- dock
-    const modeView = h('button', { type: 'button', class: 'ed-seg', 'aria-pressed': 'true', onclick: () => setMode(false) }, 'Lihat');
-    const modeEdit = h('button', { type: 'button', class: 'ed-seg', 'aria-pressed': 'false', onclick: () => setMode(true) }, 'Edit');
+    const modeView = h('button', { type: 'button', class: 'ed-seg', 'aria-pressed': 'true', title: 'Halaman seperti yang dilihat pengunjung', onclick: () => setView('view') }, 'Lihat');
+    const modeEdit = h('button', { type: 'button', class: 'ed-seg', 'aria-pressed': 'false', title: 'Ketik dan ubah langsung di halaman', onclick: () => setView('edit') }, 'Edit');
+    const modePanel = h('button', { type: 'button', class: 'ed-seg', 'aria-pressed': 'false', title: 'Formulir, JSON dan riwayat', onclick: () => setView('panel') }, 'Panel');
     const undoB = h('button', { type: 'button', class: 'ed-ib', 'aria-label': 'Urungkan (Ctrl+Z)', title: 'Urungkan (Ctrl+Z)', onclick: () => step(-1) }, '↶');
     const redoB = h('button', { type: 'button', class: 'ed-ib', 'aria-label': 'Ulangi (Ctrl+Shift+Z)', title: 'Ulangi (Ctrl+Shift+Z)', onclick: () => step(1) }, '↷');
     const count = h('span', { class: 'ed-count', 'aria-live': 'polite' });
@@ -163,7 +165,7 @@ async function run({ portal, texts, views, bundledDivisi, signIn: wantSignIn }) 
     const menu = h('div', { class: 'ed-menu', role: 'menu', hidden: true },
       h('p', { class: 'ed-menu-k', text: user.email }),
       h('button', { type: 'button', role: 'menuitem', onclick: () => { toggleMenu(false); textsPanel(ctx); } }, 'Semua teks halaman'),
-      h('a', { role: 'menuitem', href: '/admin/', target: '_blank', rel: 'noopener' }, 'Panel admin: riwayat dan JSON'),
+      h('button', { type: 'button', role: 'menuitem', onclick: () => { toggleMenu(false); setView('panel'); } }, 'Panel: formulir, JSON dan riwayat'),
       h('button', { type: 'button', role: 'menuitem', onclick: () => { toggleMenu(false); discardAll(); } }, 'Buang semua draf'),
       h('button', { type: 'button', role: 'menuitem', onclick: () => { toggleMenu(false); dock.classList.toggle('is-min'); } }, 'Kecilkan dock'),
       h('button', { type: 'button', role: 'menuitem', onclick: async () => {
@@ -177,7 +179,7 @@ async function run({ portal, texts, views, bundledDivisi, signIn: wantSignIn }) 
       h('button', { type: 'button', class: 'ed-min', 'aria-label': 'Buka dock editor', onclick: () => dock.classList.remove('is-min') }, 'Admin'),
       h('div', { class: 'ed-dock-in' },
         who,
-        h('div', { class: 'ed-segs', role: 'group', 'aria-label': 'Mode' }, modeView, modeEdit),
+        h('div', { class: 'ed-segs', role: 'group', 'aria-label': 'Tampilan' }, modeView, modeEdit, modePanel),
         h('span', { class: 'ed-div' }),
         undoB, redoB,
         prog, count, pub, menuB, menu));
@@ -199,16 +201,62 @@ async function run({ portal, texts, views, bundledDivisi, signIn: wantSignIn }) 
       pubN.textContent = dirty.length ? String(dirty.length) : '';
       undoB.disabled = !store.canUndo();
       redoB.disabled = !store.canRedo();
+      // the panel has its own save bar; publishing from the dock waits until the panel is closed
+      dock.classList.toggle('is-panel', view === 'panel');
     }
     store.onChange(paint);
     paint();
 
-    function setMode(edit) {
-      modeEdit.setAttribute('aria-pressed', String(edit));
-      modeView.setAttribute('aria-pressed', String(!edit));
-      overlay.setOn(edit);
-      ss(MODE, edit ? 'edit' : 'view');
-      if (edit) toast('Mode edit: ketuk teks buat mengetik, ketuk kartu buat aksinya.');
+    // ---------- views: Lihat (the page as visitors see it), Edit (on the page), Panel (the
+    // /admin/ editor in a frame over the page). Drafts pass between them through this device's
+    // storage: written out before the panel opens, read back after it closes.
+    function setView(next) {
+      if (switching) return switching;
+      switching = (async () => {
+        if (next === view) { if (next === 'edit') overlay.setOn(true); return; }
+        const from = view;
+        if (from === 'panel') await closePanel();
+        view = next;
+        for (const [b, v] of [[modeView, 'view'], [modeEdit, 'edit'], [modePanel, 'panel']]) b.setAttribute('aria-pressed', String(v === next));
+        overlay.setOn(next === 'edit');
+        ss(MODE, next);
+        if (next === 'panel') openPanel();
+        else if (next === 'edit' && from !== 'panel') toast('Mode edit: ketuk teks buat mengetik, ketuk kartu buat aksinya.');
+        paint();
+      })().finally(() => { switching = null; });
+      return switching;
+    }
+
+    function openPanel() {
+      store.flush();
+      const q = new URLSearchParams({ embed: '' });
+      const mock = new URLSearchParams(location.search).get('mock');
+      if ((import.meta.env.DEV || import.meta.env.MODE === 'mock') && mock !== null) q.set('mock', mock);
+      const frame = h('iframe', { class: 'ed-panel-f', title: 'Panel admin', src: '/admin/?' + q });
+      panel = h('div', { class: 'ed-ui ed-panel' }, frame);
+      document.body.append(panel);
+      document.documentElement.classList.add('ed-panel-on');
+      frame.focus();
+    }
+    // asks the panel to write its drafts out, waits a moment at most, then reads them back here
+    async function closePanel() {
+      const frame = panel?.querySelector('iframe');
+      const win = frame?.contentWindow;
+      if (win) {
+        const id = Math.random().toString(36).slice(2);
+        await new Promise((res) => {
+          const done = () => { removeEventListener('message', on); clearTimeout(t); res(); };
+          const on = (e) => { if (e.source === win && e.origin === location.origin && e.data?.type === 'alpha:flushed' && e.data.id === id) done(); };
+          const t = setTimeout(done, 1500);
+          addEventListener('message', on);
+          try { win.postMessage({ type: 'alpha:flush', id }, location.origin); } catch { done(); }
+        });
+      }
+      panel?.remove();
+      panel = null;
+      document.documentElement.classList.remove('ed-panel-on');
+      const note = ctx.progress('Memuat perubahan dari panel…');
+      try { await store.reload(); } catch (e) { toast('Gagal memuat ulang: ' + explain(e)); } finally { note(null); }
     }
 
     function step(d) {
@@ -258,7 +306,7 @@ async function run({ portal, texts, views, bundledDivisi, signIn: wantSignIn }) 
       if (k === 'z' && !typing) { e.preventDefault(); step(e.shiftKey ? 1 : -1); }
       else if (k === 'y' && !typing) { e.preventDefault(); step(1); }
       else if (k === 's') { e.preventDefault(); publish(); }
-      else if (k === 'e' && e.shiftKey) { e.preventDefault(); setMode(!overlay.on); }
+      else if (k === 'e' && e.shiftKey) { e.preventDefault(); setView(view === 'edit' ? 'view' : 'edit'); }
     });
     addEventListener('beforeunload', (e) => { if (store.dirtyKeys().length) e.preventDefault(); });
 
@@ -268,7 +316,8 @@ async function run({ portal, texts, views, bundledDivisi, signIn: wantSignIn }) 
       const yes = await confirmDialog('Lanjutkan draf sebelumnya?', 'Ada perubahan yang belum diterbitkan di: ' + pend.map((k) => KEY_NAMES[k] || k).join(', ') + '.', { ok: 'Pulihkan', cancel: 'Buang' });
       if (yes) store.restorePending(); else store.dropPending();
     }
-    setMode(ss(MODE) === 'edit');
+    const start = ss(MODE);
+    setView(start === 'edit' || start === 'panel' ? start : 'view');
     paint();
   }
 
