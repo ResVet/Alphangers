@@ -19,9 +19,22 @@ async function defaults() {
   return bundled;
 }
 
-/** The divisi list to show: the edited one from the links document, or the bundled one. */
+/**
+ * The divisi list to show: the edited one from the links document, or the bundled one. A text
+ * left empty in the edited list (name, full name, tag, description) shows the bundled one, the
+ * same rule as the page texts: clear it and the original comes back.
+ */
 export async function divisiOf(links) {
-  return Array.isArray(links?.divisi) ? links.divisi : defaults();
+  const base = await defaults();
+  if (!Array.isArray(links?.divisi)) return base;
+  const byId = new Map(base.map((d) => [d.id, d]));
+  return links.divisi.map((d) => {
+    const b = byId.get(d.id);
+    if (!b) return d;
+    const out = { ...d };
+    for (const k of ['name', 'full', 'tag', 'desc']) if (!String(out[k] ?? '').trim() && b[k]) out[k] = b[k];
+    return out;
+  });
 }
 
 export async function mountDivisi(root, { links }) {
@@ -253,17 +266,53 @@ export async function mountDivisi(root, { links }) {
     }
   }
 
+  // The names are set big, sized to the screen. A long one (Praktikum) on a tablet or laptop can
+  // be wider than its column and would break mid-word, so each name is shrunk just enough to fit
+  // its longest word on one line. Measured once per layout, with an off-screen copy of the style.
+  let probe = null;
+  function fitNames() {
+    const names = root.querySelectorAll('.dv-name');
+    if (!names.length) return;
+    if (!probe) {
+      probe = document.createElement('span');
+      probe.className = 'dv-name dv-probe';
+      probe.setAttribute('aria-hidden', 'true');
+    }
+    root.append(probe);
+    for (const n of names) {
+      n.style.fontSize = '';
+      const avail = n.clientWidth;
+      const word = (n.textContent || '').split(/\s+/).reduce((a, w) => (w.length > a.length ? w : a), '');
+      if (!avail || !word) continue;
+      probe.style.fontSize = getComputedStyle(n).fontSize;
+      probe.textContent = word;
+      const wide = probe.getBoundingClientRect().width;
+      if (wide > avail) n.style.fontSize = Math.floor(parseFloat(probe.style.fontSize) * (avail / wide) * 0.97) + 'px';
+    }
+    probe.remove();
+  }
+  let fitW = 0;
+  const fitRo = 'ResizeObserver' in window ? new ResizeObserver((es) => {
+    const w = Math.round(es[0].contentRect.width);
+    if (w !== fitW) { fitW = w; fitNames(); }
+  }) : null;
+  fitRo?.observe(root);
+  document.fonts?.ready.then(fitNames);
+
   render();
+  fitNames();
 
   return {
     async update({ links: fresh }) {
       items = await divisiOf(fresh);
       render();
+      fitNames();
     },
     items: () => items,
     open: openViewer,
     step,
     destroy() {
+      fitRo?.disconnect();
       spy?.disconnect();
       near?.disconnect();
       root.innerHTML = '';

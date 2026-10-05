@@ -56,7 +56,9 @@ export function createOverlay({ adapters, ctx }) {
 
   function tick() {
     frame = 0;
-    if (!on) return;
+    // editing off: nothing stays outlined (the boxes are fixed to the screen, so a leftover one
+    // would hang in place while the page scrolls under it)
+    if (!on) { hl.style.opacity = sel.style.opacity = '0'; bar.hidden = true; return; }
     place(hl, hovered?.el !== selected?.el ? hovered?.el : null);
     place(sel, selected?.el);
     placeBar();
@@ -193,7 +195,7 @@ export function createOverlay({ adapters, ctx }) {
       refreshTexts();
       renderSectionTools();
       if (v) mo.observe(document.getElementById('home'), { childList: true, subtree: true });
-      else { mo.disconnect(); select(null); hovered = null; }
+      else { mo.disconnect(); hovered = null; selected = null; bar.hidden = true; hl.style.opacity = sel.style.opacity = '0'; }
       queue();
     },
     refresh() { refreshTexts(); renderSectionTools(); queue(); },

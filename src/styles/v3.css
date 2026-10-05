@@ -314,7 +314,10 @@ html.fine .peek{display:block}
 .big-f{position:absolute;inset:0;background:linear-gradient(180deg,var(--grx),#2d8f1c 70%);-webkit-background-clip:text;background-clip:text;color:transparent;
   clip-path:inset(var(--fill,100%) 0 0 0);-webkit-clip-path:inset(var(--fill,100%) 0 0 0)}
 .ft{display:flex;flex-wrap:wrap;justify-content:space-between;align-items:center;gap:14px 24px}
-.credit{font-family:var(--disp);font-weight:500;font-size:14px;letter-spacing:.02em;color:var(--mut)}
+.credit{position:relative;font-family:var(--disp);font-weight:500;font-size:14px;letter-spacing:.02em;color:var(--mut);text-decoration:none;border-bottom:1px solid var(--line2);padding-bottom:2px;transition:color .3s,border-color .3s}
+.credit::after{content:"";position:absolute;inset:-12px -8px}
+@media (hover:hover){.credit:hover{color:var(--grx);border-color:var(--grx)}}
+.credit:active,.credit:focus-visible{color:var(--grx);border-color:var(--grx)}
 /* the filled wordmark catches each heartbeat */
 .big-g{position:absolute;inset:0;color:transparent;pointer-events:none;opacity:0;will-change:opacity;
   text-shadow:0 0 .18em rgba(134,242,94,.42)}

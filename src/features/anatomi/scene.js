@@ -32,186 +32,219 @@ function shared(meta) {
     uCutOn: { value: 0 },
     uGlow: { value: 1 },
     uPulse: { value: 0 },
+    uLitW: { value: null },
+    uLitS: { value: null },
   };
 }
 
 const KINDS = { body: 0, coronary: 1, valves: 2, conduction: 3 };
 
-// MeshPhysicalMaterial with per-part colour, highlight, x-ray and the depolarisation wave patched in.
-// The four meshes share one shader program: what differs per mesh (the cut face and x-ray of the
-// body, the softer occlusion on the coronaries, the glow of the conduction system) is chosen by
-// the uKind uniform, not by #defines, so the browser compiles one program instead of four.
-// On phones and low-power machines the sheen lobe is left out: it is the most expensive term in
-// the shader and the least visible at that screen size. Clearcoat stays, it carries the wet look.
-function tissue(U, kind, lite) {
-  const m = new THREE.MeshPhysicalMaterial({
-    roughness: kind === 'valves' ? 0.6 : 0.52,
-    metalness: 0,
-    clearcoat: kind === 'conduction' ? 0.15 : 0.32,
-    clearcoatRoughness: 0.42,
-    sheen: lite ? 0 : 0.32,
-    sheenRoughness: 0.6,
-    sheenColor: new THREE.Color('#ffe2da'),
-    side: THREE.DoubleSide,
+// ---- light
+// The studio (a soft room reflected in the tissue, a warm key light, a green rim and a fill from
+// above) is rendered once, at load, onto a sphere of the tissue's physical material, seen from
+// the default viewing direction. Two renders: a white sphere (diffuse plus gloss) and a black
+// one (gloss alone). Each pixel of the heart then reads its lighting from those two small
+// pictures by the direction its surface faces, and mixes in its own colour:
+//   light = colour * (white - black) + black
+// For a non-metal that is the same sum the physical shader used to work out for every pixel of
+// every frame, room reflections, clearcoat and sheen included, now at the cost of two texture
+// reads. The lights turn with the camera instead of staying put in the room, so the side of the
+// heart you are looking at is always lit.
+const LIT_SIZE = 256;
+function bakeStudio(renderer, viewDir) {
+  // half floats keep the highlights brighter than white; a GPU that cannot draw into them gets
+  // ordinary 8-bit targets, which only clip the very brightest glints
+  const ext = renderer.extensions;
+  const type = ext.has('EXT_color_buffer_half_float') || ext.has('EXT_color_buffer_float') ? THREE.HalfFloatType : THREE.UnsignedByteType;
+  const rt = () => new THREE.WebGLRenderTarget(LIT_SIZE, LIT_SIZE, { type });
+  const white = rt(), black = rt();
+  const room = new THREE.Scene();
+  const pmrem = new THREE.PMREMGenerator(renderer);
+  const env = pmrem.fromScene(new RoomEnvironment(), 0.04);
+  pmrem.dispose();
+  room.environment = env.texture;
+  room.environmentIntensity = 0.55;
+  const key = new THREE.DirectionalLight('#fff1e6', 2.1);
+  key.position.set(-14, 18, 22);
+  const rim = new THREE.DirectionalLight('#9dff7a', 1.15);
+  rim.position.set(16, 6, -22);
+  room.add(key, rim, new THREE.HemisphereLight('#f2fff0', '#1a0d0b', 0.55));
+  const mat = new THREE.MeshPhysicalMaterial({
+    color: 0xffffff, roughness: 0.52, metalness: 0,
+    clearcoat: 0.32, clearcoatRoughness: 0.42,
+    sheen: 0.32, sheenRoughness: 0.6, sheenColor: new THREE.Color('#ffe2da'),
   });
-  m.userData.kind = kind;
-  const uKind = { value: KINDS[kind] ?? 2 };
-  m.onBeforeCompile = (sh) => {
-    Object.assign(sh.uniforms, U, { uKind });
-    sh.vertexShader = sh.vertexShader
-      .replace('#include <common>', `#include <common>
-        attribute float _part;
-        attribute float _t;
-        attribute float _ao;
-        uniform vec3 uCol[${N}];
-        uniform float uVis[${N}];
-        uniform float uSel, uHov;
-        varying vec3 vCol;
-        varying float vInner, vSel, vHov, vT, vVis, vAo;`)
-      .replace('#include <begin_vertex>', `#include <begin_vertex>
-        float pid = _part;
-        vInner = step(127.5, pid);
-        pid -= 128.0 * vInner;
-        int ip = int(pid + 0.5);
-        vCol = uCol[ip];
-        vVis = uVis[ip];
-        vSel = 1.0 - step(0.5, abs(pid - uSel));
-        vHov = 1.0 - step(0.5, abs(pid - uHov));
-        vT = _t;
-        vAo = _ao;
-        if (vVis < 0.5) transformed *= 0.0;`);
-    sh.fragmentShader = sh.fragmentShader
-      .replace('#include <common>', `#include <common>
-        uniform float uDim, uClock, uTime, uWave, uXray, uCutOn, uGlow, uPulse, uKind;
-        varying vec3 vCol;
-        varying float vInner, vSel, vHov, vT, vVis, vAo;
-        float waveFront(float t) {
-          if (t > 60000.0) return 0.0;
-          float age = uTime - t;
-          return exp(-(age * age) / 300.0);
-        }
-        float wavePlateau(float t) {
-          if (t > 60000.0) return 0.0;
-          float age = uTime - t;
-          float hold = t < 150.0 ? 210.0 : 250.0;
-          return smoothstep(0.0, 8.0, age) * (1.0 - smoothstep(hold, hold + 90.0, age));
-        }`)
-      .replace('vec4 diffuseColor = vec4( diffuse, opacity );', `
-        bool isBody = uKind < 0.5;
-        vec3 base = vCol;
-        if (isBody) base = mix(base, vec3(0.80, 0.42, 0.38), vInner * 0.35);
-        vec4 diffuseColor = vec4( base, opacity );`)
-      .replace('#include <aomap_fragment>', `#include <aomap_fragment>
-        // baked occlusion: full strength on bounced light, partial on direct light so the
-        // grooves read as depth without the key light going flat (softer on the coronaries)
-        float occ = mix(1.0, vAo, abs(uKind - 1.0) < 0.5 ? 0.45 : 0.7);
-        reflectedLight.indirectDiffuse *= occ;
-        reflectedLight.indirectSpecular *= occ;
-        reflectedLight.directDiffuse *= mix(1.0, occ, 0.45);
-        reflectedLight.directSpecular *= mix(1.0, occ, 0.6);
-        #ifdef USE_SHEEN
-          sheenSpecularIndirect *= occ;
-        #endif
-        #ifdef USE_CLEARCOAT
-          clearcoatSpecularIndirect *= occ;
-        #endif`)
-      .replace('#include <opaque_fragment>', `
-        vec3 nV = normalize(vViewPosition);
-        float fr = pow(1.0 - abs(dot(normalize(normal), nV)), 2.2);
-        vec3 green = vec3(0.53, 0.95, 0.37);
-        if (isBody && !gl_FrontFacing) outgoingLight = mix(outgoingLight, vec3(0.42, 0.13, 0.11) * (0.75 + 0.5 * vCol.r), uCutOn);
-        if (uKind > 2.5) outgoingLight = mix(outgoingLight, vCol * 0.9, 0.55 * uGlow);
-        // depolarisation: a bright front, then a held glow until the tissue repolarises
-        float front = waveFront(vT) * uWave;
-        float held = wavePlateau(vT) * uWave;
-        if (isBody) {
-          // x-ray look for the walls when the inside is the point
-          vec3 xr = mix(vec3(0.03, 0.07, 0.04), vec3(0.32, 0.62, 0.28), fr);
-          xr += vec3(0.45, 0.85, 0.35) * held * 0.32 + vec3(0.9, 1.0, 0.8) * front * 0.75;
-          outgoingLight = mix(outgoingLight, xr, uXray);
-        } else {
-          outgoingLight += green * front * 1.6 + green * held * 0.35;
-        }
-        // a short pulse right after picking, then a steady highlight (no endless redraws)
-        float pulse = 0.5 + 0.5 * sin(uClock * 3.6);
-        outgoingLight *= mix(1.0, 0.62, uDim * (1.0 - vSel));
-        outgoingLight += vSel * green * (0.12 + 0.1 * pulse * uPulse + fr * 0.75);
-        outgoingLight += vHov * (1.0 - vSel) * vec3(0.09, 0.11, 0.08);
-        #include <opaque_fragment>
-        if (isBody) gl_FragColor.a = mix(gl_FragColor.a, clamp(0.035 + 0.42 * fr + 0.5 * front + 0.12 * held, 0.0, 1.0), uXray);`);
-  };
-  // same source for every kind, so one cache key: the program is built once and shared
-  m.customProgramCacheKey = () => 'heart-tissue';
-  return m;
+  const ball = new THREE.Mesh(new THREE.SphereGeometry(1, 160, 120), mat);
+  room.add(ball);
+  const cam = new THREE.OrthographicCamera(-1, 1, 1, -1, 0.1, 10);
+  cam.position.copy(viewDir).normalize().multiplyScalar(4);
+  cam.lookAt(0, 0, 0);
+  const was = { rt: renderer.getRenderTarget(), color: renderer.getClearColor(new THREE.Color()), alpha: renderer.getClearAlpha() };
+  renderer.setClearColor(0x000000, 0);
+  for (const [target, c] of [[white, 1], [black, 0]]) {
+    mat.color.setScalar(c);
+    renderer.setRenderTarget(target);
+    renderer.clear();
+    renderer.render(room, cam);
+  }
+  renderer.setRenderTarget(was.rt);
+  renderer.setClearColor(was.color, was.alpha);
+  ball.geometry.dispose();
+  mat.dispose();
+  env.dispose();
+  return { white, black, dispose() { white.dispose(); black.dispose(); } };
 }
 
-// The see-through body of the electrical and blood-flow views. The physical material spent most
-// of its time on lighting (environment reflections, clearcoat) that the x-ray look then painted
-// over, once per layer of wall behind every pixel. This draws the same picture directly: a
-// simple lit surface that fades into the x-ray rim, the wave and the selection highlight.
-function ghostMaterial(U) {
+// Shared shader parts. Each vertex carries its part id (+128 on the inner, endocardial surface),
+// its activation time in the beat and its baked ambient occlusion.
+const PART_VERTEX = `
+  attribute float _part;
+  attribute float _t;
+  attribute float _ao;
+  uniform vec3 uCol[${N}];
+  uniform float uVis[${N}];
+  uniform float uSel, uHov;
+  varying vec3 vCol, vN, vV;
+  varying float vInner, vSel, vHov, vT, vAo;`;
+const PART_MAIN = `
+  float pid = _part;
+  vInner = step(127.5, pid);
+  pid -= 128.0 * vInner;
+  int ip = int(pid + 0.5);
+  vCol = uCol[ip];
+  vSel = 1.0 - step(0.5, abs(pid - uSel));
+  vHov = 1.0 - step(0.5, abs(pid - uHov));
+  vT = _t;
+  vAo = _ao;
+  vec4 mvPosition = modelViewMatrix * vec4(position * step(0.5, uVis[ip]), 1.0);
+  vV = -mvPosition.xyz;
+  vN = normalMatrix * normal;
+  gl_Position = projectionMatrix * mvPosition;`;
+const FRAG_COMMON = `
+  uniform sampler2D uLitW, uLitS;
+  uniform float uDim, uClock, uTime, uWave, uXray, uPulse;
+  varying vec3 vCol, vN, vV;
+  varying float vInner, vSel, vHov, vT, vAo;
+  // the baked studio light for a surface facing n, seen along v (view space): d is the diffuse
+  // part, to be tinted by the surface colour, s the gloss that stays white
+  void studio(vec3 n, vec3 v, out vec3 d, out vec3 s) {
+    vec3 x = normalize(vec3(v.z, 0.0, -v.x));
+    vec3 y = cross(v, x);
+    vec2 uv = vec2(dot(x, n), dot(y, n)) * 0.492 + 0.5;
+    vec3 w = texture2D(uLitW, uv).rgb;
+    s = texture2D(uLitS, uv).rgb;
+    d = max(w - s, 0.0);
+  }
+  // depolarisation: a bright front, then a held glow until the tissue repolarises
+  float waveFront(float t) {
+    if (t > 60000.0) return 0.0;
+    float age = uTime - t;
+    return exp(-(age * age) / 300.0);
+  }
+  float wavePlateau(float t) {
+    if (t > 60000.0) return 0.0;
+    float age = uTime - t;
+    float hold = t < 150.0 ? 210.0 : 250.0;
+    return smoothstep(0.0, 8.0, age) * (1.0 - smoothstep(hold, hold + 90.0, age));
+  }
+  // a short pulse right after picking, then a steady highlight; hover is a faint lift
+  vec3 marks(vec3 col, float fr) {
+    vec3 green = vec3(0.53, 0.95, 0.37);
+    float pulse = 0.5 + 0.5 * sin(uClock * 3.6);
+    col *= mix(1.0, 0.62, uDim * (1.0 - vSel));
+    col += vSel * green * (0.12 + 0.1 * pulse * uPulse + fr * 0.75);
+    col += vHov * (1.0 - vSel) * vec3(0.09, 0.11, 0.08);
+    return col;
+  }`;
+
+// The solid tissue of all four meshes, one shader program for all of them: what differs per mesh
+// (the cut face of the body, softer occlusion on the coronaries, the glow of the conduction
+// system) is chosen by the uKind uniform.
+function tissue(U, kind) {
   const m = new THREE.ShaderMaterial({
-    uniforms: { ...U, uLight: { value: new THREE.Vector3(-0.42, 0.55, 0.72).normalize() } },
-    transparent: true,
-    depthWrite: false,
+    uniforms: { ...U, uKind: { value: KINDS[kind] ?? 2 } },
     side: THREE.DoubleSide,
+    clipping: true,
     vertexShader: `
-      attribute float _part;
-      attribute float _t;
-      attribute float _ao;
-      uniform vec3 uCol[${N}];
-      uniform float uVis[${N}];
-      uniform float uSel, uHov;
-      varying vec3 vCol, vN, vV;
-      varying float vInner, vSel, vHov, vT, vAo;
+      ${PART_VERTEX}
+      #include <clipping_planes_pars_vertex>
       void main() {
-        float pid = _part;
-        vInner = step(127.5, pid);
-        pid -= 128.0 * vInner;
-        int ip = int(pid + 0.5);
-        vCol = uCol[ip];
-        vSel = 1.0 - step(0.5, abs(pid - uSel));
-        vHov = 1.0 - step(0.5, abs(pid - uHov));
-        vT = _t;
-        vAo = _ao;
-        vec4 mv = modelViewMatrix * vec4(position * step(0.5, uVis[ip]), 1.0);
-        vV = -mv.xyz;
-        vN = normalMatrix * normal;
-        gl_Position = projectionMatrix * mv;
+        ${PART_MAIN}
+        #include <clipping_planes_vertex>
       }`,
     fragmentShader: `
-      uniform float uDim, uClock, uTime, uWave, uXray, uPulse;
-      uniform vec3 uLight;
-      varying vec3 vCol, vN, vV;
-      varying float vInner, vSel, vHov, vT, vAo;
+      uniform float uCutOn, uGlow, uKind;
+      ${FRAG_COMMON}
+      #include <clipping_planes_pars_fragment>
       void main() {
+        #include <clipping_planes_fragment>
+        bool isBody = uKind < 0.5;
         vec3 n = normalize(vN);
         vec3 v = normalize(vV);
+        vec3 base = vCol;
+        if (isBody) base = mix(base, vec3(0.80, 0.42, 0.38), vInner * 0.35);
+        vec3 d, s;
+        studio(gl_FrontFacing ? n : -n, v, d, s);
+        // baked occlusion: deeper on the light that bounces, lighter on the gloss
+        float occ = mix(1.0, vAo, abs(uKind - 1.0) < 0.5 ? 0.45 : 0.7);
+        vec3 col = base * d * mix(1.0, occ, 0.8) + s * mix(1.0, occ, 0.7);
         float fr = pow(1.0 - abs(dot(n, v)), 2.2);
-        vec3 nf = gl_FrontFacing ? n : -n;
-        vec3 base = mix(vCol, vec3(0.80, 0.42, 0.38), vInner * 0.35);
-        float occ = mix(1.0, vAo, 0.6);
-        vec3 lit = base * (0.32 + 0.68 * max(dot(nf, uLight), 0.0)) * occ;
-        float age = uTime - vT;
-        bool timed = vT < 60000.0;
-        float front = timed ? exp(-(age * age) / 300.0) * uWave : 0.0;
-        float hold = vT < 150.0 ? 210.0 : 250.0;
-        float held = timed ? smoothstep(0.0, 8.0, age) * (1.0 - smoothstep(hold, hold + 90.0, age)) * uWave : 0.0;
-        vec3 xr = mix(vec3(0.03, 0.07, 0.04), vec3(0.32, 0.62, 0.28), fr);
-        xr += vec3(0.45, 0.85, 0.35) * held * 0.32 + vec3(0.9, 1.0, 0.8) * front * 0.75;
-        vec3 col = mix(lit, xr, uXray);
+        // inside walls seen through the cut are shaded as cut muscle
+        if (isBody && !gl_FrontFacing) col = mix(col, vec3(0.42, 0.13, 0.11) * (0.75 + 0.5 * vCol.r), uCutOn);
+        if (uKind > 2.5) col = mix(col, vCol * 0.9, 0.55 * uGlow);
+        float front = waveFront(vT) * uWave;
+        float held = wavePlateau(vT) * uWave;
         vec3 green = vec3(0.53, 0.95, 0.37);
-        float pulse = 0.5 + 0.5 * sin(uClock * 3.6);
-        col *= mix(1.0, 0.62, uDim * (1.0 - vSel));
-        col += vSel * green * (0.12 + 0.1 * pulse * uPulse + fr * 0.75);
-        col += vHov * (1.0 - vSel) * vec3(0.09, 0.11, 0.08);
-        float a = mix(1.0, clamp(0.035 + 0.42 * fr + 0.5 * front + 0.12 * held, 0.0, 1.0), uXray);
-        gl_FragColor = vec4(col, a);
+        if (isBody) {
+          vec3 xr = mix(vec3(0.03, 0.07, 0.04), vec3(0.32, 0.62, 0.28), fr);
+          xr += vec3(0.45, 0.85, 0.35) * held * 0.32 + vec3(0.9, 1.0, 0.8) * front * 0.75;
+          col = mix(col, xr, uXray);
+        } else {
+          col += green * front * 1.6 + green * held * 0.35;
+        }
+        gl_FragColor = vec4(marks(col, fr), 1.0);
         #include <tonemapping_fragment>
         #include <colorspace_fragment>
       }`,
   });
+  m.userData.kind = kind;
   return m;
+}
+
+// The see-through body of the electrical and blood-flow views: the same surface, fading into an
+// x-ray rim. Its own program because it blends, with no depth writes, over everything inside.
+function ghostMaterial(U) {
+  return new THREE.ShaderMaterial({
+    uniforms: { ...U },
+    transparent: true,
+    depthWrite: false,
+    side: THREE.DoubleSide,
+    vertexShader: `
+      ${PART_VERTEX}
+      void main() {
+        ${PART_MAIN}
+      }`,
+    fragmentShader: `
+      ${FRAG_COMMON}
+      void main() {
+        vec3 n = normalize(vN);
+        vec3 v = normalize(vV);
+        float fr = pow(1.0 - abs(dot(n, v)), 2.2);
+        vec3 base = mix(vCol, vec3(0.80, 0.42, 0.38), vInner * 0.35);
+        vec3 d, s;
+        studio(gl_FrontFacing ? n : -n, v, d, s);
+        float occ = mix(1.0, vAo, 0.7);
+        vec3 lit = base * d * mix(1.0, occ, 0.8) + s * mix(1.0, occ, 0.7);
+        float front = waveFront(vT) * uWave;
+        float held = wavePlateau(vT) * uWave;
+        vec3 xr = mix(vec3(0.03, 0.07, 0.04), vec3(0.32, 0.62, 0.28), fr);
+        xr += vec3(0.45, 0.85, 0.35) * held * 0.32 + vec3(0.9, 1.0, 0.8) * front * 0.75;
+        float a = mix(1.0, clamp(0.035 + 0.42 * fr + 0.5 * front + 0.12 * held, 0.0, 1.0), uXray);
+        gl_FragColor = vec4(marks(mix(lit, xr, uXray), fr), a);
+        #include <tonemapping_fragment>
+        #include <colorspace_fragment>
+      }`,
+  });
 }
 
 function pickMaterial(U) {
@@ -324,18 +357,18 @@ function isSoftwareGL(gl) {
 const yieldNow = () => (globalThis.scheduler?.yield ? globalThis.scheduler.yield() : new Promise((r) => setTimeout(r, 0)));
 
 export async function createScene(canvas, { meta, url, onProgress, reducedMotion = false, lowPower = false, touch = false }) {
-  // Full resolution for still frames. While the heart moves, frames render at motionDpr, which
-  // the frame timer below lowers on a slow GPU and raises again when there is headroom; the
-  // first quiet frame after a movement is redrawn at full resolution.
-  let dpr = Math.min(window.devicePixelRatio || 1, lowPower ? 1.5 : 2);
-  const renderer = new THREE.WebGLRenderer({ canvas, antialias: dpr < 2, alpha: true, powerPreference: 'high-performance' });
+  // Frames render at up to 1.5 device pixels per CSS pixel with antialiasing, which looks as
+  // smooth as 2x without it for about half the pixels. The resolution stays put while the heart
+  // moves (changing it reallocates the canvas, a hitch every time a drag starts or stops); the
+  // frame timer below steps it down only if a device keeps missing frames.
+  let dpr = Math.min(window.devicePixelRatio || 1, 1.5);
+  const renderer = new THREE.WebGLRenderer({ canvas, antialias: true, alpha: true, powerPreference: 'high-performance' });
   // Without a usable GPU the browser falls back to drawing WebGL on the CPU. The model still
   // works there, but only at a lower resolution and without the idle spin.
   const software = isSoftwareGL(renderer.getContext());
   if (software) { dpr = Math.min(dpr, 0.75); reducedMotion = true; }
-  const lite = touch || lowPower || software;
   const minDpr = Math.min(dpr, software ? 0.5 : 0.75);
-  let motionDpr = Math.min(dpr, touch ? 1.25 : lowPower ? 1 : 1.5);
+  if (lowPower && !software) dpr = Math.min(dpr, 1.25);
   let curDpr = dpr;
   renderer.setPixelRatio(dpr);
   renderer.outputColorSpace = THREE.SRGBColorSpace;
@@ -343,43 +376,12 @@ export async function createScene(canvas, { meta, url, onProgress, reducedMotion
   renderer.toneMappingExposure = 1.0;
   renderer.localClippingEnabled = true;
   renderer.setClearColor(0x000000, 0);
+  // Reading every shader's compile log makes the browser wait for the GPU driver; only worth it
+  // while developing.
+  renderer.debug.checkShaderErrors = !!import.meta.env.DEV;
 
   const scene = new THREE.Scene();
   await yieldNow();
-  // Two ways to light the studio. Full: reflections of a soft room, the wet look on the muscle.
-  // Light: the same room boiled down to an ambient probe plus one more highlight light, about
-  // half the cost per pixel. Phones and low-power machines start light; a computer switches once
-  // if even the lowest resolution cannot keep up (see timeFrame).
-  let envTex = null;
-  const ENV_INTENSITY = 0.55;
-  const probe = new THREE.LightProbe();
-  const spec = new THREE.DirectionalLight('#ffffff', 1.6);
-  spec.position.set(4, 10, 26);
-  // The room's light as 9 spherical harmonics, worked out once from the same RoomEnvironment
-  // (LightProbeGenerator on a 128 px cube). It is grey, so one number per band.
-  const ROOM_SH = [1.7114, 0.1481, -0.0014, 0.1213, 0.0796, -0.0437, -0.1706, 0.0246, -0.4931];
-  ROOM_SH.forEach((v, i) => probe.sh.coefficients[i].setScalar(v));
-  probe.intensity = ENV_INTENSITY * 2.5;
-  async function lightRig() {
-    scene.environment = null;
-    scene.add(probe, spec);
-    if (envTex) { envTex.dispose(); envTex = null; }
-  }
-  let lightLook = lite;
-  if (lite) await lightRig();
-  else {
-    const pmrem = new THREE.PMREMGenerator(renderer);
-    envTex = pmrem.fromScene(new RoomEnvironment(), 0.04).texture;
-    scene.environment = envTex;
-    scene.environmentIntensity = ENV_INTENSITY;
-    pmrem.dispose();
-  }
-  const key = new THREE.DirectionalLight('#fff1e6', 2.1);
-  key.position.set(-14, 18, 22);
-  const rim = new THREE.DirectionalLight('#9dff7a', 1.15);
-  rim.position.set(16, 6, -22);
-  const fill = new THREE.HemisphereLight('#f2fff0', '#1a0d0b', 0.55);
-  scene.add(key, rim, fill);
 
   const [lo, hi] = meta.bounds.map(v3);
   const centre = lo.clone().add(hi).multiplyScalar(0.5);
@@ -403,6 +405,17 @@ export async function createScene(canvas, { meta, url, onProgress, reducedMotion
   }
 
   const U = shared(meta);
+  // the studio light, baked from the direction the heart is first seen from (see bakeStudio)
+  const STUDIO_VIEW = new THREE.Vector3(-0.22, 0.18, 1);
+  let lit = null;
+  function bake() {
+    lit?.dispose();
+    lit = bakeStudio(renderer, STUDIO_VIEW);
+    U.uLitW.value = lit.white.texture;
+    U.uLitS.value = lit.black.texture;
+  }
+  bake();
+  await yieldNow();
   const loader = new GLTFLoader();
   loader.setMeshoptDecoder(MeshoptDecoder);
   await yieldNow();
@@ -411,7 +424,7 @@ export async function createScene(canvas, { meta, url, onProgress, reducedMotion
   const meshes = {};
   gltf.scene.traverse((o) => {
     if (o.isMesh) {
-      o.material = tissue(U, o.name, lite);
+      o.material = tissue(U, o.name);
       o.frustumCulled = false;
       meshes[o.name] = o;
     }
@@ -507,7 +520,7 @@ export async function createScene(canvas, { meta, url, onProgress, reducedMotion
     camera.updateProjectionMatrix();
     kick();
   }
-  const homeDir = new THREE.Vector3(-0.22, 0.18, 1).normalize();
+  const homeDir = STUDIO_VIEW.clone().normalize();
   function homePose() {
     const d = fitDistance();
     return { target: centre.clone(), pos: centre.clone().addScaledVector(homeDir, d) };
@@ -604,6 +617,8 @@ export async function createScene(canvas, { meta, url, onProgress, reducedMotion
   function frame(now) {
     raf = 0;
     if (!state.active || contextLost) return;
+    // 60 frames a second at most: a 120 Hz screen would otherwise draw everything twice as often
+    if (now - last < 14) { raf = requestAnimationFrame(frame); return; }
     const dt = Math.min(0.05, (now - last) / 1000);
     last = now;
     let moving = false;
@@ -624,6 +639,7 @@ export async function createScene(canvas, { meta, url, onProgress, reducedMotion
     U.uWave.value = mix.wave;
     U.uCutOn.value = mix.cut;
     if (controls.update(dt)) moving = true;
+    camMoving = moving;
     const timed = state.mode === 'ecg' || state.mode === 'flow';
     // a paused beat needs no redraws until the scrubber or a mode change asks for one
     const animating = timed && state.playing;
@@ -646,15 +662,12 @@ export async function createScene(canvas, { meta, url, onProgress, reducedMotion
       if (spinSkip) { raf = requestAnimationFrame(frame); return; }
     }
     if (needs || busy) {
-      setDpr(busy ? motionDpr : dpr);
       renderer.render(scene, camera);
       needs = false;
       if (busy) timeFrame(dt);
     }
     if (busy) raf = requestAnimationFrame(frame);
     else {
-      // the movement ended: one sharp frame at full resolution
-      if (curDpr !== dpr) { setDpr(dpr); renderer.render(scene, camera); }
       samples.length = 0;
       armIdle();
     }
@@ -665,50 +678,54 @@ export async function createScene(canvas, { meta, url, onProgress, reducedMotion
     renderer.setPixelRatio(v);
     renderer.setSize(W, H, false);
   }
-  // Median frame interval over the last 12 moving frames picks the resolution for the next ones.
+  // Median frame interval over 12 moving frames. Persistently slow: one step down in resolution
+  // (a single canvas reallocation). Fast again for a while: one step back up, at most twice, so a
+  // device on the edge does not keep flipping between the two.
   const samples = [];
-  let backoffs = 0;
+  let ups = 0;
   function timeFrame(dt) {
     if (software) return;
     samples.push(dt);
     if (samples.length < 12) return;
     const med = samples.sort((a, b) => a - b)[6];
     samples.length = 0;
-    if (med > 0.021 && motionDpr > minDpr) {
-      motionDpr = Math.max(minDpr, Math.round(motionDpr * 0.8 * 100) / 100);
-      backoffs++;
-    } else if (med > 0.028 && !lightLook) {
-      // already at the lowest resolution and still slow: trade the reflections for speed, once
-      lightLook = true;
-      lightRig().then(() => {
-        Object.values(meshes).forEach((m) => { if (m.material !== ghost) m.material.needsUpdate = true; });
-        solid && (solid.needsUpdate = true);
-        kick();
-      });
-    } else if (med < 0.0155 && motionDpr < dpr && backoffs < 4) {
-      motionDpr = Math.min(dpr, Math.round(motionDpr * 1.12 * 100) / 100);
-    }
+    if (med > 0.024 && curDpr > minDpr) setDpr(Math.max(minDpr, Math.round(curDpr * 0.82 * 100) / 100));
+    else if (med < 0.0175 && curDpr < dpr && ups < 2) { ups++; setDpr(Math.min(dpr, Math.round(curDpr * 1.15 * 100) / 100)); }
   }
   // after a few quiet seconds the whole heart turns slowly by itself
   let idleTimer = 0;
+  // Not on phones and tablets (their GPU and battery are better spent on the page being read),
+  // and never while the page scrolls or the pointer is on the heart.
+  const spinAllowed = !reducedMotion && !touch && !lowPower;
+  function stopSpin() {
+    if (controls.autoRotate) { controls.autoRotate = false; kick(); }
+    armIdle();
+  }
+  const onScroll = () => { if (controls.autoRotate || idleTimer) stopSpin(); };
+  addEventListener('scroll', onScroll, { passive: true });
   function armIdle() {
     clearTimeout(idleTimer);
-    if (reducedMotion) return;
+    idleTimer = 0;
+    if (!spinAllowed) return;
     idleTimer = setTimeout(() => {
+      idleTimer = 0;
+      if (hovering) return;
       if (state.active && state.mode === 'whole' && state.sel < 0 && tween.dur === 0) { controls.autoRotate = true; kick(); }
     }, 5000);
   }
   function kick() {
     needs = true;
-    if (!raf && state.active && !contextLost) { last = performance.now(); raf = requestAnimationFrame(frame); }
+    // last is set one frame back, so the first frame after a pause is never held back by the cap
+    if (!raf && state.active && !contextLost) { last = performance.now() - 17; raf = requestAnimationFrame(frame); }
   }
-  let dragging = false, spinSkip = false;
+  let dragging = false, spinSkip = false, hovering = false, camMoving = false;
   controls.addEventListener('start', () => { dragging = true; clearTimeout(idleTimer); controls.autoRotate = false; tween.dur = 0; kick(); });
   controls.addEventListener('end', () => { dragging = false; });
   controls.addEventListener('change', kick);
 
   canvas.addEventListener('webglcontextlost', (e) => { e.preventDefault(); contextLost = true; api.onContextChange?.(false); });
-  canvas.addEventListener('webglcontextrestored', () => { contextLost = false; resize(); kick(); api.onContextChange?.(true); });
+  // a restored context comes back with empty render targets: the studio light is baked again
+  canvas.addEventListener('webglcontextrestored', () => { contextLost = false; bake(); resize(); kick(); api.onContextChange?.(true); });
 
   // Compile every program the views will need while the loading bar is still up: the solid
   // tissue, the see-through body, the blood particles and the picking shader. compileAsync lets the driver build them in
@@ -720,11 +737,16 @@ export async function createScene(canvas, { meta, url, onProgress, reducedMotion
     flow.points.visible = true;
     const shown = Object.values(meshes).map((m) => [m, m.visible]);
     shown.forEach(([m]) => { m.visible = true; });
+    // Compiling is not enough: drivers often finish the job, and three.js reads the result,
+    // only when a program first draws. So each one draws once here, to the real canvas (a render
+    // target would build a different variant), still hidden under the loading bar.
     await compile(() => {});
+    renderer.render(scene, camera);
     await yieldNow();
     if (meshes.body) {
       meshes.body.material = ghost;
       await compile(() => {});
+      renderer.render(scene, camera);
       meshes.body.material = solid;
       await yieldNow();
     }
@@ -741,6 +763,10 @@ export async function createScene(canvas, { meta, url, onProgress, reducedMotion
     pick,
     onTick(cb) { tickCb = cb; },
     setActive(on) { state.active = on; if (on) kick(); else if (raf) { cancelAnimationFrame(raf); raf = 0; } },
+    stopSpin,
+    // true while the camera is still travelling (drag, its glide, a fly-to): hover picks wait
+    moving: () => dragging || camMoving || controls.autoRotate,
+    setPointerInside(on) { hovering = on; if (on) stopSpin(); },
     setTouchScroll(on) { if (touch) canvas.style.touchAction = on ? 'pan-y' : 'none'; },
     setMode(mode) { state.mode = mode; setMaterialsForMode(); kick(); },
     setCut(k, offset = cutOffset) {
@@ -809,12 +835,13 @@ export async function createScene(canvas, { meta, url, onProgress, reducedMotion
     dispose() {
       state.active = false;
       clearTimeout(idleTimer);
+      removeEventListener('scroll', onScroll);
       if (raf) cancelAnimationFrame(raf);
       controls.dispose();
       flow.dispose();
       pickRT.dispose();
       pickMat.dispose();
-      envTex?.dispose();
+      lit?.dispose();
       gltf.scene.traverse((o) => { if (o.isMesh) { o.geometry.dispose(); o.material.dispose(); } });
       ghost.dispose();
       solid?.dispose();

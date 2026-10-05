@@ -51,7 +51,7 @@ Di atas tiap bagian ada baris alat untuk menambah: **+ Sesi**, **+ Dosen**, **+ 
 
 - Ketuk sebuah foto di tumpukan divisi untuk **Ganti foto**, **Keterangan**, atau **Hapus foto**. Slot yang masih kosong ("Foto menyusul") punya tombol **Unggah foto**.
 - **Kelola foto** di bar aksi divisi membuka semua foto divisi itu: urutan (tiga teratas jadi tumpukan, sisanya masuk galeri di tampilan lengkap), keterangan, teks untuk pembaca layar, hapus, dan **+ Tambah foto** (boleh pilih banyak sekaligus).
-- Nama, kepanjangan, label, dan deskripsi divisi bisa diketik langsung di halaman.
+- Nama, kepanjangan, label, dan deskripsi divisi bisa diketik langsung di halaman. Kosongkan salah satunya untuk kembali ke teks bawaan, sama seperti teks halaman lainnya.
 - Foto kelas di bagian paling bawah: ketuk lalu **Ganti foto**.
 
 Foto langsung disiapkan di perangkatmu sebelum dikirim: file aslinya disimpan apa adanya buat zoom, tapi data tersembunyinya (lokasi GPS, nomor seri kamera, riwayat edit) dibuang tanpa mengubah piksel sedikit pun. Foto HP yang mengandalkan tanda rotasi disimpan ulang dalam posisi tegak. Dibuat juga salinan 640, 1280, dan 2048 px supaya HP tidak mengunduh file besar, plus pratinjau buram yang tampil sambil menunggu. Satu file maksimal sekitar 5,6 MB setelah disiapkan; foto yang lebih besar dikecilkan otomatis ke 4096 px. Format: JPG, PNG, WebP, AVIF. Foto HEIC dari iPhone diubah dulu ke JPG (Pengaturan > Kamera > Format > Paling Kompatibel).

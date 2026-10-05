@@ -26,8 +26,8 @@ Everything is editable without touching code. An admin signs in with Google on t
 ## Stack
 
 - **Vite 8**, vanilla ES modules, no framework. Each section is its own lazily loaded module.
-- **three.js** for the heart explorer, with a custom `MeshPhysicalMaterial` shader patch for per-part colour, highlighting, x-ray, the depolarisation wave and cut faces. Picking renders part ids into an 11×11 target around the pointer and takes the nearest hit, so thin structures such as the conduction fibres and chordae are easy to tap.
-- **Python** (NumPy, SciPy, scikit-image, trimesh, fast-simplification) to sculpt the heart as signed distance fields, mesh it, label every vertex with its part, bake ambient occlusion and activation times, then **glTF Transform + meshoptimizer** to pack it (908 KB).
+- **three.js** for the heart explorer, with its own shaders for per-part colour, highlighting, x-ray, the depolarisation wave and cut faces, lit by studio lighting baked once at load from the physical material. Picking renders part ids into an 11×11 target around the pointer and takes the nearest hit, so thin structures such as the conduction fibres and chordae are easy to tap.
+- **Python** (NumPy, SciPy, scikit-image, trimesh, fast-simplification) to sculpt the heart as signed distance fields, mesh it, label every vertex with its part, bake ambient occlusion and activation times, then **glTF Transform + meshoptimizer** to pack and simplify it (466 KB).
 - **Firebase** Auth + Firestore for the admin, read by the portal over plain REST. Visitors never load the Firebase SDK; it is fetched only when someone opens the editor.
 - **Netlify Functions + Netlify Blobs** for photo uploads: the browser strips metadata and makes the smaller copies, a function checks the admin's Firebase token and the file's real type, rate limits, and stores it under a content hash.
 - **sharp** at build time for the bundled photos (AVIF and WebP sizes, the original kept for zoom).

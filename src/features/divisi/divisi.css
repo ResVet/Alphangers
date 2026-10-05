@@ -39,7 +39,9 @@
 .dv-copy{position:relative;min-width:0}
 .dv-no{display:flex;align-items:baseline;gap:10px;font-family:var(--mono);font-size:11px;letter-spacing:.14em;color:var(--dim)}
 .dv-no b{font-family:var(--disp);font-weight:800;font-size:clamp(46px,5vw,76px);line-height:1;letter-spacing:-.04em;color:transparent;-webkit-text-stroke:1.2px rgba(134,242,94,.55)}
-.dv-name{margin-top:clamp(6px,1vh,12px);font-family:var(--disp);font-weight:800;font-size:clamp(58px,9.2vw,148px);line-height:.88;letter-spacing:-.05em;overflow-wrap:anywhere}
+.dv-name{margin-top:clamp(6px,1vh,12px);font-family:var(--disp);font-weight:800;font-size:clamp(58px,9.2vw,148px);line-height:.88;letter-spacing:-.05em;overflow-wrap:normal}
+/* measures a name's longest word for fitNames() in divisi.js */
+.dv-probe{position:absolute;left:-9999px;top:0;margin:0;white-space:nowrap;visibility:hidden;pointer-events:none}
 .dv-full{margin-top:clamp(8px,1.4vh,14px);font-family:var(--ser);font-style:italic;font-size:clamp(22px,2.4vw,34px);line-height:1.15;color:var(--grx)}
 .dv-tag{margin-top:14px;display:inline-flex;align-items:center;gap:9px;font-family:var(--mono);font-size:10.5px;letter-spacing:.2em;text-transform:uppercase;color:var(--mut)}
 .dv-tag::before{content:"";width:7px;height:7px;border-radius:50%;background:var(--glow,var(--grx));box-shadow:0 0 0 3px rgba(238,242,232,.06)}

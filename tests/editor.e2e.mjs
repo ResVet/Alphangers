@@ -198,3 +198,21 @@ test('Panel: the /admin/ editor inside the page, drafts carried both ways', asyn
   assert.deepEqual(errors, []);
   await context.close();
 });
+
+test('switching back to Lihat leaves no outline behind', async () => {
+  const { page, context, errors } = await open();
+  await page.waitForSelector('.ed-dock.is-admin');
+  await page.click('.ed-seg:has-text("Edit")');
+  const sess = page.locator('.jw-s[data-ref]').first();
+  await sess.scrollIntoViewIfNeeded();
+  await sess.click({ position: { x: 300, y: 30 } });
+  await page.waitForFunction(() => getComputedStyle(document.querySelector('.ed-sel')).opacity === '1');
+  await page.click('.ed-seg:has-text("Lihat")');
+  await page.mouse.wheel(0, 400);
+  await page.waitForTimeout(300);
+  assert.equal(await page.evaluate(() => getComputedStyle(document.querySelector('.ed-sel')).opacity), '0');
+  assert.equal(await page.evaluate(() => getComputedStyle(document.querySelector('.ed-hl')).opacity), '0');
+  assert.equal(await page.locator('.ed-bar').isHidden(), true);
+  assert.deepEqual(errors, []);
+  await context.close();
+});

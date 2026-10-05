@@ -551,6 +551,8 @@ export function mountAnatomi(root, { heart, portal }) {
     if (!hoverNext || hoverBusy || hoverTimer) return;
     const wait = 60 - (performance.now() - hoverT);
     if (wait > 0) { hoverTimer = setTimeout(() => { hoverTimer = 0; hoverPick(); }, wait); return; }
+    // nothing to point at while the camera is still gliding: try again once it settles
+    if (scene.moving?.()) { hoverTimer = setTimeout(() => { hoverTimer = 0; hoverPick(); }, 120); return; }
     const ev = hoverNext;
     hoverNext = null;
     hoverBusy = true;
@@ -568,7 +570,9 @@ export function mountAnatomi(root, { heart, portal }) {
     inside = true;
     hoverPick(e);
   });
+  canvas.addEventListener('pointerenter', (e) => { if (e.pointerType === 'mouse') scene?.setPointerInside(true); });
   canvas.addEventListener('pointerleave', () => {
+    scene?.setPointerInside(false);
     inside = false;
     hoverNext = null;
     clearTimeout(hoverTimer);

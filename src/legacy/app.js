@@ -251,7 +251,19 @@ if('IntersectionObserver' in window){
     H.classList.toggle('foot-off', !vis.foot);
     wake();
   }, {rootMargin: '80px 0px 80px 0px'});
-  [['.hero','hero'],['.mq','mq'],['#siklus','pulse'],['.foot','foot']].forEach(function(a){ var el = $(a[0]); if(!el) return; el.setAttribute('data-vis', a[1]); vo.observe(el); });
+  [['.hero','hero'],['.mq','mq'],['.foot','foot']].forEach(function(a){ var el = $(a[0]); if(!el) return; el.setAttribute('data-vis', a[1]); vo.observe(el); });
+  // The heartbeat section draws a hologram and a 3D ECG every frame, so it counts as visible only
+  // while its sticky stage really shows: watching the whole section with a margin kept it drawing
+  // while the 3D heart explorer below it was in use, and the two fought over the GPU.
+  var stageEl = $('#stage');
+  if(stageEl){
+    stageEl.setAttribute('data-vis', 'pulse');
+    new IntersectionObserver(function(es){
+      // a sliver at the screen edge (the stage ends where the next section starts) is not enough
+      es.forEach(function(e){ vis.pulse = e.isIntersecting && e.intersectionRatio >= 0.05; });
+      wake();
+    }, { threshold: [0, 0.05] }).observe(stageEl);
+  }
 } else { vis.pulse = vis.foot = true; }
 
 // Page positions the loop needs, read once per layout change instead of once per frame.

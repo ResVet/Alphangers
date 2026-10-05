@@ -59,9 +59,9 @@
   {
    "id": "didis",
    "name": "Didis",
-   "full": "",
-   "tag": "",
-   "desc": "",
+   "full": "Divisi Disiplin",
+   "tag": "Tertib kelas",
+   "desc": "Ngurus absensi dan ngingetin aturan kelas, termasuk datang tepat waktu ke kuliah dan praktikum.",
    "photos": []
   },
   {
@@ -84,7 +84,7 @@
    "id": "pleno",
    "name": "Pleno",
    "full": "",
-   "tag": "",
+   "tag": "Diskusi skenario",
    "desc": "Koordinasi pleno tiap skenario.",
    "photos": []
   },
@@ -92,7 +92,7 @@
    "id": "praktikum",
    "name": "Praktikum",
    "full": "",
-   "tag": "",
+   "tag": "Urusan lab",
    "desc": "Koordinasi praktikum: kelompok, jadwal, dan perlengkapan yang perlu dibawa.",
    "photos": []
   },
