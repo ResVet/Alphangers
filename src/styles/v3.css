@@ -44,7 +44,7 @@ html.touch .grain{animation:none}
 /* nothing animates where nobody can see it; on touch screens the ambient light holds still,
    so the GPU is not asked for a new frame sixty times a second while the page sits there */
 html.touch .blob{animation:none}
-html.hero-off .float,html.hero-off .sheen,html.hero-off .cue svg,html.hero-off .bpm-h,html.hero-off .snd svg{animation-play-state:paused}
+html.hero-off .float,html.hero-off .halo-bob,html.hero-off .sheen,html.hero-off .cue svg,html.hero-off .bpm-h,html.hero-off .snd svg{animation-play-state:paused}
 html.foot-off .clock i{animation-play-state:paused}
 @keyframes gr{0%{transform:translate(0,0)}14%{transform:translate(-3%,-4%)}28%{transform:translate(4%,-2%)}42%{transform:translate(-4%,3%)}57%{transform:translate(3%,4%)}71%{transform:translate(-2%,-3%)}85%{transform:translate(4%,2%)}100%{transform:translate(0,0)}}
 
@@ -149,6 +149,9 @@ html.js body.go .oval path{stroke-dashoffset:0;transition:stroke-dashoffset 1.3s
 .totem{position:relative;width:clamp(190px,21vw,320px);perspective:1100px;-webkit-tap-highlight-color:transparent;touch-action:manipulation}
 .halo{position:absolute;width:162%;height:auto;aspect-ratio:1/1;left:-30.98%;top:-15.68%;pointer-events:none;transform:translateZ(-14px);transition:opacity 1.4s var(--eo) .35s}
 .totem.pre .halo{opacity:0}
+/* touch screens: the ring as a flat layer around the emblem (see app.js), bobbing with it */
+.halo-bob{position:absolute;inset:0;pointer-events:none;animation:float 7s ease-in-out infinite}
+.halo-bob .halo{transform:none}
 .float{position:relative;transform-style:preserve-3d;animation:float 7s ease-in-out infinite}
 @keyframes float{0%,100%{transform:translateY(0)}50%{transform:translateY(-10px)}}
 .tilt{position:relative;aspect-ratio:375/429;transform-style:preserve-3d;will-change:transform}
@@ -466,7 +469,7 @@ html.fine #cr{display:flex}
   .cta{height:48px;padding:0 20px}
 }
 @media (prefers-reduced-motion:reduce){
-  .blob,.grain,.float,.sheen,.cue svg,.clock i,.folder .f-front{animation:none!important}
+  .blob,.grain,.float,.halo-bob,.sheen,.cue svg,.clock i,.folder .f-front{animation:none!important}
   .oval path,.ch i,.ly,.spec,.sheen,.halo,.cap,.p-rv,.p-ttl .w i,.rail,.tag{transition:none!important}
   .rv{transition-duration:.01s}
   .pulse{height:auto}

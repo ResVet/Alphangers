@@ -309,6 +309,16 @@ function progFrame(y, force){
 // hero: emblem, halo, tilt
 var totem = $('#totem'), tilt = $('#tilt'), halo = $('#halo'), hctx = halo.getContext('2d'), haloS = 0, haloD = 1, bezel = null;
 var bpmN = $('#bpmN'), bpmH = $('#bpmH');
+// The ring is redrawn every frame. On touch screens, inside the emblem's 3D layers, mobile
+// Safari put each new drawing and the layer's moving 3D transform on screen in different frames,
+// so the ring shivered against the emblem, worst during the tap spin. There it becomes a flat
+// layer behind the emblem that bobs with it, and the emblem tilts and spins inside the ring.
+if(TOUCH){
+  var haloBob = document.createElement('div');
+  haloBob.className = 'halo-bob'; haloBob.setAttribute('aria-hidden', 'true');
+  totem.insertBefore(haloBob, totem.firstChild);
+  haloBob.appendChild(halo);
+}
 function haloSize(){
   var r = halo.getBoundingClientRect(), d = dprCap(TOUCH ? 1.5 : 2);
   if(!r.width) return;
