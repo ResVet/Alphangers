@@ -58,11 +58,24 @@ function sessionFields(ctx, { withDate = true } = {}) {
     { name: 'dz', label: 'Dosen', type: 'people', people: ctx.store.get('dosen').list, wide: true, empty: 'Belum ada dosen. Cari lalu pilih.' },
     { name: 'pj', label: 'Dosen ini penanggung jawab (PJ)', type: 'checkbox' },
     { name: 'tim', label: 'Diajar tim dosen per kelompok', type: 'checkbox' },
-    { name: 'n', label: 'Catatan', type: 'textarea', max: 300, rows: 2, wide: true, placeholder: 'Ruangan, bawaan, link Zoom' },
+    { name: 'n', label: 'Catatan', type: 'textarea', max: 300, rows: 2, wide: true, placeholder: 'Ruangan, bawaan' },
+    { name: 'label', label: 'Tag', type: 'tags', options: knownTags(ctx), wide: true, placeholder: 'Tag baru, misal: Bawa jas lab', hint: 'Ketuk untuk pasang atau lepas. Maksimal 4.' },
+    { type: 'section', label: 'Online' },
+    { name: 'online', label: 'Sesi ini online (dari tempat masing-masing)', type: 'checkbox' },
+    { name: 'tautan', label: 'Link Zoom, Google Meet, dan sejenisnya', type: 'url', wide: true, placeholder: 'https://zoom.us/j/...', hint: 'Muncul sebagai tombol Gabung online. Boleh kosong kalau link-nya belum ada.' },
     { type: 'section', label: 'Pembatalan' },
     { name: 'batal', label: 'Sesi ini dibatalkan', type: 'checkbox' },
     { name: 'alasan', label: 'Alasan (tampil di jadwal)', max: 200, wide: true, placeholder: 'Contoh: dosen dinas luar, diganti Kamis' },
   ].filter(Boolean);
+}
+
+// "Kelas gabungan" (Alpha and Beta together) is always offered; any tag used elsewhere in the
+// schedule comes back as a choice too
+const GABUNGAN = 'Kelas gabungan';
+function knownTags(ctx) {
+  const seen = new Map([[GABUNGAN.toLowerCase(), GABUNGAN]]);
+  for (const b of ctx.store.get('schedule').bloks) for (const d of b.days) for (const x of d.s) for (const t of x.label || []) if (!seen.has(t.toLowerCase())) seen.set(t.toLowerCase(), t);
+  return [...seen.values()];
 }
 
 /** Writes a session (new or moved) into the drafts, keeping lecturer codes and both documents in step. */
@@ -105,6 +118,9 @@ function putSession(ctx, values, from) {
       if (values.pj) s.pj = true;
       if (values.tim) s.tim = true;
       if (values.n) s.n = values.n;
+      if (values.label?.length) s.label = values.label;
+      const link = String(values.tautan || '').trim();
+      if (values.online || link) { s.online = true; if (link) s.tautan = link; }
       if (values.batal) { s.batal = true; if (values.alasan) s.alasan = values.alasan; }
       dayOf(blok, values.date, true).s.push(s);
     },
@@ -144,6 +160,7 @@ function sessionValue(ctx, ref) {
     s,
     value: {
       t: s.t, k: s.k, date: ref.date, s: s.s, e: s.e || '', n: s.n || '', pj: !!s.pj, tim: !!s.tim, batal: !!s.batal, alasan: s.alasan || '',
+      online: !!(s.online || s.tautan), tautan: s.tautan || '', label: (s.label || []).slice(),
       dz: (s.dz || []).map((c) => blok.codes[c]).filter(Boolean),
     },
   };
@@ -199,6 +216,32 @@ async function cancelSession(ctx, ref, on) {
   if (r?.errors) alertDialog('Belum bisa', r.errors);
 }
 
+// Online or back to the classroom, with the meeting link, straight from the session's bar.
+async function onlineSession(ctx, ref) {
+  const cur = sessionValue(ctx, ref);
+  if (!cur) return;
+  const v = await openForm({
+    title: 'Sesi online',
+    sub: cur.s.t,
+    fields: [
+      { name: 'online', label: 'Sesi ini online (dari tempat masing-masing)', type: 'checkbox' },
+      { name: 'tautan', label: 'Link Zoom, Google Meet, dan sejenisnya', type: 'url', wide: true, placeholder: 'https://zoom.us/j/...', hint: 'Kosongkan link dan hapus centang untuk kembali tatap muka.' },
+    ],
+    value: { online: cur.value.online || !cur.s.online, tautan: cur.value.tautan },
+    submit: 'Simpan',
+    onSubmit: (vals) => {
+      const link = String(vals.tautan || '').trim();
+      return editDay(ctx, ref.date, (day) => {
+        const s = day.s[ref.index];
+        if (!s) return false;
+        delete s.online; delete s.tautan;
+        if (vals.online || link) { s.online = true; if (link) s.tautan = link; }
+      }, 'Sesi online');
+    },
+  });
+  return v;
+}
+
 async function blokForm(ctx, blok) {
   const sch = ctx.store.get('schedule');
   const v = await openForm({
@@ -236,6 +279,7 @@ const jadwal = {
     return [
       { label: 'Ubah', primary: true, run: () => editSession(ctx, ref) },
       cur.s.batal ? { label: 'Aktifkan lagi', run: () => cancelSession(ctx, ref, false) } : { label: 'Batalkan', run: () => cancelSession(ctx, ref, true) },
+      { label: cur.value.online ? 'Online ✓' : 'Online', run: () => onlineSession(ctx, ref) },
       { label: 'Duplikat', run: () => { const r = safeEdit(ctx, () => putSession(ctx, { ...cur.value, s: cur.value.e || cur.value.s, e: '' }, null)); if (r?.errors) alertDialog('Belum bisa', r.errors); } },
       { label: 'Hapus', danger: true, run: async () => {
         if (!(await confirmDialog('Hapus sesi ini?', cur.s.t, { ok: 'Hapus', danger: true }))) return;

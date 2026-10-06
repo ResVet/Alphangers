@@ -147,6 +147,13 @@ async function run({ portal, texts, views, bundledDivisi, signIn: wantSignIn }) 
       },
     };
 
+    // the Panel view (an iframe on this origin) lists every page text with what the page ships
+    window.__alphaPageTexts = () => {
+      const m = new Map();
+      document.querySelectorAll('[data-k]').forEach((el) => { if (!m.has(el.dataset.k)) m.set(el.dataset.k, texts.original(el)); });
+      return [...m];
+    };
+
     const overlay = createOverlay({ adapters: ADAPTERS, ctx });
     let view = 'view', panel = null, switching = null;
 

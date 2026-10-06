@@ -199,6 +199,58 @@ test('Panel: the /admin/ editor inside the page, drafts carried both ways', asyn
   await context.close();
 });
 
+test('online session with a join link, tags, and the same controls in the Panel', async () => {
+  const { page, context, errors } = await open();
+  await page.waitForSelector('.ed-dock.is-admin');
+  await page.click('.ed-seg:has-text("Edit")');
+  const sess = page.locator('.jw-s[data-ref]').first();
+  await sess.scrollIntoViewIfNeeded();
+  await sess.click({ position: { x: 300, y: 30 } });
+  await page.click('.ed-bar-b:has-text("Online")');
+  await page.fill('.ed-sheet input[name=tautan]', 'https://meet.google.com/abc-defg-hij');
+  await submit(page);
+  await page.waitForSelector('.jw-s .jw-join');
+  assert.equal(await page.locator('.jw-join').first().getAttribute('href'), 'https://meet.google.com/abc-defg-hij');
+  assert.equal(await sess.locator('.jw-online').count(), 1);
+
+  await sess.click({ position: { x: 300, y: 30 } });
+  await page.click('.ed-bar-b:has-text("Ubah")');
+  await page.click('.ed-sheet .ed-chip:has-text("Kelas gabungan")');
+  await page.fill('.ed-sheet .ed-chips + .ed-li input', 'Bawa jas lab');
+  await page.keyboard.press('Enter');
+  await submit(page);
+  await page.waitForSelector('.jw-tag.is-gab');
+  assert.deepEqual(await sess.locator('.jw-tag').allTextContents(), ['Kelas gabungan', 'Bawa jas lab']);
+
+  // the Panel shows the same session with its tags and link, and can cancel it
+  await page.click('.ed-seg:has-text("Panel")');
+  const frame = page.frameLocator('.ed-panel-f');
+  await frame.locator('.key-b').first().waitFor({ timeout: 20000 });
+  await frame.locator('.key-b', { hasText: 'Jadwal' }).click();
+  const online = frame.locator('.sess:has(.chip.kind-online)');
+  const tabs = frame.locator('[aria-label="Pilih blok"] .seg-b:not(.add)');
+  for (let i = 0, n = await tabs.count(); i < n && !(await online.count()); i++) await tabs.nth(i).click();
+  await online.first().locator('button:has-text("Edit")').click();
+  assert.deepEqual(await frame.locator('.sess.open button.chip.toggle[aria-pressed=true]').allTextContents(), ['Kelas gabungan', 'Bawa jas lab']);
+  assert.equal(await frame.locator('.sess.open input[type=url]').inputValue(), 'https://meet.google.com/abc-defg-hij');
+  await frame.locator('.sess.open label:has-text("Sesi ini dibatalkan")').click();
+  await frame.locator('.sess.open input[placeholder^="Contoh: dosen dinas"]').fill('Libur nasional');
+
+  // divisi, class photo and page texts are in the Panel too
+  await frame.locator('.key-b', { hasText: 'Link' }).click();
+  await frame.locator('button:has-text("Ubah divisi")').click();
+  assert.equal(await frame.locator('h2.sub-title:has-text("Divisi") + div .card').count(), 8);
+  await frame.locator('h2.sub-title:has-text("Teks halaman") + div .fld').nth(5).waitFor();
+
+  await page.click('.ed-seg:has-text("Lihat")');
+  await page.waitForSelector('.ed-panel', { state: 'detached' });
+  await page.waitForSelector('.jw-s.is-batal');
+  assert.deepEqual(await page.locator('.jw-s-why').allTextContents(), ['Libur nasional']);
+  assert.equal(await page.locator('.jw-s.is-batal .jw-join').count(), 0, 'no join button on a cancelled session');
+  assert.deepEqual(errors, []);
+  await context.close();
+});
+
 test('switching back to Lihat leaves no outline behind', async () => {
   const { page, context, errors } = await open();
   await page.waitForSelector('.ed-dock.is-admin');

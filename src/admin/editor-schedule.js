@@ -265,6 +265,9 @@ export function renderSchedule(host, ctx) {
           'div',
           { class: 'row-actions' },
           h('button', { type: 'button', class: 'btn ghost sm', onclick: () => addSession(day) }, 'Tambah sesi'),
+          day.s.length && day.s.every((x) => x.batal)
+            ? h('button', { type: 'button', class: 'btn ghost sm', onclick: () => cancelDay(day, false) }, 'Aktifkan semua')
+            : day.s.length ? h('button', { type: 'button', class: 'btn ghost sm danger-text', onclick: () => cancelDay(day, true) }, 'Batalkan semua') : null,
           h('button', { type: 'button', class: 'btn ghost sm danger-text', onclick: () => removeDay(di) }, 'Hapus hari'),
         ),
       ),
@@ -305,6 +308,17 @@ export function renderSchedule(host, ctx) {
     );
   }
 
+  // the whole day off (or back on), the same as "Batalkan semua hari ini" on the page
+  function cancelDay(day, on) {
+    for (const x of day.s) {
+      if (on) x.batal = true;
+      else { delete x.batal; delete x.alasan; }
+    }
+    ctx.changed();
+    ctx.rerender();
+    toast(on ? 'Semua sesi di hari ini ditandai dibatalkan.' : 'Semua sesi di hari ini aktif lagi.');
+  }
+
   async function removeDay(di) {
     const day = blok.days[di];
     if (day.s.length) {
@@ -317,6 +331,44 @@ export function renderSchedule(host, ctx) {
   }
 
   /* ---- sessions ---- */
+
+  // Tags for one session: tap a known one to toggle it, or type a new one. "Kelas gabungan"
+  // (Alpha and Beta together) is always offered, and tags used elsewhere come back as choices.
+  function knownTags() {
+    const seen = new Map([['kelas gabungan', 'Kelas gabungan']]);
+    for (const b of data.bloks) for (const d of b.days) for (const x of d.s) for (const t of x.label || []) if (!seen.has(t.toLowerCase())) seen.set(t.toLowerCase(), t);
+    return [...seen.values()];
+  }
+  function tagsEditor(s, sp, paintSummary) {
+    const box = h('div', { class: 'chips edit' });
+    const has = (t) => (s.label || []).some((x) => x.toLowerCase() === t.toLowerCase());
+    const set = (tags) => { if (tags.length) s.label = tags; else delete s.label; ctx.changed(); paint(); paintSummary(); };
+    const full = () => (s.label || []).length >= 4;
+    const paint = () => {
+      fresh.disabled = addB.disabled = full();
+      replace(box, ...[...new Set([...knownTags(), ...(s.label || [])])].map((t) =>
+      h('button', { type: 'button', class: 'chip toggle', 'aria-pressed': String(has(t)), disabled: full() && !has(t), onclick: () => {
+        set(has(t) ? s.label.filter((x) => x.toLowerCase() !== t.toLowerCase()) : [...(s.label || []), t]);
+      } }, t)));
+    };
+    const id = `tag-${sp.join('-')}`;
+    const fresh = h('input', { id, type: 'text', maxLength: 30, placeholder: 'Tag baru, misal: Bawa jas lab', autocomplete: 'off' });
+    const add = () => {
+      const t = fresh.value.trim().replace(/\s+/g, ' ');
+      if (!t) return;
+      fresh.value = '';
+      if (!has(t) && !full()) set([...(s.label || []), t]);
+    };
+    const addB = h('button', { type: 'button', class: 'btn ghost sm', onclick: add }, 'Tambah tag');
+    fresh.addEventListener('keydown', (e) => { if (e.key === 'Enter') { e.preventDefault(); add(); } });
+    paint();
+    return h('div', { class: 'fld wide', dataset: { path: sp.concat('label').join('.') } },
+      h('label', { htmlFor: id }, 'Tag'),
+      box,
+      h('div', { class: 'tag-add' }, fresh, addB),
+      h('p', { class: 'hint' }, 'Ketuk untuk pasang atau lepas. Maksimal 4.'),
+      h('p', { class: 'msg' }));
+  }
 
   function addSession(day, copyOf) {
     const last = day.s[day.s.length - 1];
@@ -350,6 +402,9 @@ export function renderSchedule(host, ctx) {
         ...dosenChips(s),
         s.pj ? h('span', { class: 'chip muted' }, 'PJ') : null,
         s.tim ? h('span', { class: 'chip muted' }, 'Tim') : null,
+        ...(s.label || []).map((t) => h('span', { class: 'chip muted' }, t)),
+        s.online || s.tautan ? h('span', { class: 'chip kind-online' }, 'Online') : null,
+        s.batal ? h('span', { class: 'chip kind-batal' }, 'Dibatalkan') : null,
       );
     paintSummary();
 
@@ -448,6 +503,20 @@ export function renderSchedule(host, ctx) {
         checkbox({ label: 'Dosen di atas adalah PJ', obj: s, prop: 'pj', path: sp.concat('pj'), ctx, onCommit: paintSummary }),
         checkbox({ label: 'Diampu tim dosen', obj: s, prop: 'tim', path: sp.concat('tim'), ctx, onCommit: paintSummary }),
         input({ label: 'Catatan (opsional)', obj: s, prop: 'n', path: sp.concat('n'), ctx, type: 'textarea', rows: 2, max: 300, wide: true, write: optional }),
+        tagsEditor(s, sp, paintSummary),
+        h('p', { class: 'sub-h wide' }, 'Online'),
+        checkbox({ label: 'Sesi ini online (dari tempat masing-masing)', obj: s, prop: 'online', path: sp.concat('online'), ctx, onCommit: (c) => {
+          // unticked: back to the classroom, so the meeting link goes too
+          if (!c.checked) { delete s.tautan; ctx.changed(); ctx.rerender(); } else paintSummary();
+        } }),
+        input({ label: 'Link Zoom, Google Meet, dan sejenisnya (opsional)', obj: s, prop: 'tautan', path: sp.concat('tautan'), ctx, type: 'url', inputmode: 'url', max: 2048, wide: true, placeholder: 'https://zoom.us/j/...', hint: 'Muncul di jadwal sebagai tombol Gabung online. Link saja sudah menandai sesi online.', write: (v) => optional(v.trim()), onCommit: () => {
+          if (s.tautan && !s.online) { s.online = true; ctx.changed(); ctx.rerender(); } else paintSummary();
+        } }),
+        h('p', { class: 'sub-h wide' }, 'Pembatalan'),
+        checkbox({ label: 'Sesi ini dibatalkan', obj: s, prop: 'batal', path: sp.concat('batal'), ctx, onCommit: (c) => {
+          if (!c.checked) { delete s.alasan; ctx.changed(); ctx.rerender(); } else paintSummary();
+        } }),
+        input({ label: 'Alasan pembatalan (tampil di jadwal, opsional)', obj: s, prop: 'alasan', path: sp.concat('alasan'), ctx, max: 200, wide: true, placeholder: 'Contoh: dosen dinas luar, diganti Kamis', write: optional }),
       ),
     );
     return li;

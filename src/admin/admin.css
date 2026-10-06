@@ -1722,3 +1722,26 @@ iframe[src*='/__/auth/iframe'] {
 @media (max-width: 560px) {
   .who:has(.who-live) .who-name { display: none; }
 }
+
+/* session tags, online and cancelled marks */
+.chip.kind-online { color: var(--grx); background: rgba(134, 242, 94, 0.1); }
+.chip.kind-batal { color: #fff; background: rgba(255, 51, 71, 0.75); }
+button.chip.toggle { appearance: none; border: 1px dashed var(--line2); cursor: pointer; min-height: 32px; }
+button.chip.toggle[aria-pressed="true"] { border-style: solid; border-color: var(--grx); color: var(--grx); background: rgba(134, 242, 94, 0.1); }
+button.chip.toggle:disabled { opacity: 0.4; cursor: not-allowed; }
+.chips.edit { display: flex; flex-wrap: wrap; gap: 6px; align-items: center; }
+.tag-add { display: flex; gap: 8px; margin-top: 8px; }
+.tag-add input { flex: 1; min-width: 0; }
+.sub-h { margin: 14px 0 0; font: 600 11px/1 var(--mono); letter-spacing: 0.14em; text-transform: uppercase; color: var(--mut); }
+.sub-h.wide { grid-column: 1 / -1; }
+
+/* divisi, class photo and page texts under the channel list */
+.sub-title { margin: 40px 0 12px; font-size: 22px; }
+.ph-list { list-style: none; margin: 8px 0 0; padding: 0; display: grid; gap: 10px; }
+.ph { display: grid; grid-template-columns: 96px minmax(0, 1fr); gap: 10px 12px; align-items: start; padding: 10px; border: 1px solid var(--line); border-radius: 10px; }
+.ph img, .kelas-ph img { display: block; width: 96px; height: 64px; object-fit: cover; border-radius: 6px; background: var(--line); }
+.ph-f { display: grid; gap: 8px; min-width: 0; }
+.ph .row-actions { grid-column: 1 / -1; justify-content: flex-end; }
+.kelas-ph { display: flex; flex-wrap: wrap; gap: 14px; align-items: center; }
+.kelas-ph img { width: 192px; height: 144px; max-width: 100%; }
+.kelas-ph > div { display: grid; gap: 10px; min-width: 0; }

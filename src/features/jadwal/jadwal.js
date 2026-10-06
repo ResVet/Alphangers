@@ -261,13 +261,16 @@ export function mountJadwal(root, { schedule, dosen, now } = {}) {
         '<span class="jw-s-to"><span class="jw-sr">sampai </span>' + (s.end ? formatTime(s.end) : 'selesai') + '</span></div>' +
       '<div class="jw-s-body">' +
         '<p class="jw-s-meta">' + (s.cancelled ? '<span class="jw-batal">Dibatalkan</span>' : '') + '<span class="jw-kind">' + esc(s.kindLabel) + '</span>' +
-          (s.blok.loc ? '<span class="jw-loc">' + esc(s.blok.loc) + '</span>' : '') +
+          s.tags.map((t) => '<span class="jw-tag' + (/^kelas gabungan$/i.test(t) ? ' is-gab" title="Kelas Alpha dan Beta bersama' : '') + '">' + esc(t) + '</span>').join('') +
+          (s.online ? '<span class="jw-online">Online</span>' : s.blok.loc ? '<span class="jw-loc">' + esc(s.blok.loc) + '</span>' : '') +
           '<span class="jw-now-tag">lagi jalan</span></p>' +
         '<h4 class="jw-s-t">' + esc(s.title) + '</h4>' +
         (s.cancelled && s.cancelReason ? '<p class="jw-s-why">' + esc(s.cancelReason) + '</p>' : '') +
         (s.note ? '<p class="jw-s-note">' + esc(s.note) + '</p>' : '') +
         peopleHTML(s) +
         '<div class="jw-s-add">' +
+          // the meeting link of an online session; not offered once it is cancelled
+          (s.online && /^https:\/\//i.test(s.link) && !s.cancelled ? '<a class="jw-mini jw-join" href="' + esc(s.link) + '" target="_blank" rel="noopener noreferrer">Gabung online<span class="jw-sr"> ke ' + esc(s.title) + '</span></a>' : '') +
           '<button type="button" class="jw-mini" data-add aria-expanded="false" aria-controls="' + menuId + '">+ Kalender</button>' +
           '<span class="jw-s-addm" id="' + menuId + '" hidden>' +
             '<a class="jw-mini" href="' + esc(googleCalendarUrl(s)) + '" target="_blank" rel="noopener">Google Calendar</a>' +

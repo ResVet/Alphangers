@@ -43,8 +43,10 @@ Di atas tiap bagian ada baris alat untuk menambah: **+ Sesi**, **+ Dosen**, **+ 
 
 - **Batalkan** di bar aksi sebuah sesi: isi alasannya (boleh kosong). Sesi tetap tampil, dengan label merah Dibatalkan, alasannya, dan pita merah di kartunya. Sesi yang dibatalkan tidak dihitung di "Lagi jalan", "Berikutnya", dan hitung mundur ujian, dan ikut terekspor ke kalender sebagai dibatalkan. **Aktifkan lagi** mengembalikannya.
 - **Batalkan semua hari ini** di baris alat jadwal membatalkan semua sesi di tanggal yang sedang tampil. **Aktifkan semua** kebalikannya.
+- **Online** di bar aksi sebuah sesi menandai sesi itu online (ikut dari tempat masing-masing) dan menyimpan link Zoom, Google Meet, atau sejenisnya. Di jadwal, label lokasi blok diganti label hijau Online, dan kalau ada linknya muncul tombol **Gabung online** yang membuka link itu di tab baru. Link harus `https://`. Link saja sudah cukup untuk menandai sesi online; hapus centang dan kosongkan link untuk kembali tatap muka. Sesi online yang dibatalkan tidak menampilkan tombol gabung. Di kalender, link ikut tersimpan sebagai lokasi acara.
+- **Tag** ada di formulir **Ubah**: ketuk tag untuk memasang atau melepasnya, atau ketik tag baru lalu Enter. Maksimal 4 tag per sesi, masing-masing sampai 30 huruf. **Kelas gabungan** (kelas Alpha dan Beta bareng) selalu tersedia dan tampil kuning; tag lain yang pernah kamu pakai di sesi mana pun ikut muncul sebagai pilihan. Tag tampil di samping jenis sesi, bisa dicari di pencarian, dan ikut terekspor ke kalender.
 - **+ Sesi** menambah sesi di tanggal yang sedang tampil. Dosen dipilih dengan mengetik namanya; kode dosen dibuat otomatis dan dicatat di jadwal dan di data dosen sekaligus.
-- **Ubah** membuka formulir lengkap sesi itu, termasuk memindahnya ke tanggal lain. **Duplikat** menyalin sesi tepat sesudahnya.
+- **Ubah** membuka formulir lengkap sesi itu (termasuk tag, online, dan pembatalan), juga untuk memindahnya ke tanggal lain. **Duplikat** menyalin sesi tepat sesudahnya.
 - **Libur**, **Ubah blok**, dan **+ Blok** ada di baris alat. Ketuk tombol blok (Blok 1, Blok 2, ...) di mode Edit untuk mengubah atau menghapus blok itu.
 
 ### Foto divisi dan foto kelas
@@ -82,11 +84,15 @@ Tiap konten punya tiga mode: **Form** untuk edit biasa, **JSON** untuk edit teks
 
 ## Lima jenis konten
 
-### Link Drive
+### Link dan halaman
 
 Kartu-kartu link di portal. Urutan di editor sama dengan urutan di portal; pakai tombol panah untuk memindah. Link harus `https://`, dan editor memberi peringatan kalau bukan folder `drive.google.com`. Channel Try Out tidak punya link karena membuka CBT di portal.
 
-Dokumen yang sama juga menyimpan teks halaman yang sudah diubah (`site.t`), foto kelas (`site.photo`), dan daftar divisi beserta fotonya (`divisi`). Ketiganya paling enak diubah langsung dari halaman portal; di panel admin kelihatan di mode JSON. Selama `divisi` belum ada di dokumen, portal memakai daftar divisi bawaan dari repo.
+Dokumen yang sama juga menyimpan daftar divisi beserta fotonya (`divisi`), foto kelas (`site.photo`), dan teks halaman yang sudah diubah (`site.t`). Ketiganya ada di bawah daftar channel, dengan kemampuan yang sama seperti mode Edit:
+
+- **Divisi**: selama portal masih memakai daftar bawaan dari repo, klik **Ubah divisi** untuk menyalinnya ke sini. Setelah itu tiap divisi punya kolom nama, label, kepanjangan, dan deskripsi (kolom kosong menampilkan teks bawaannya samar), tombol urutan dan hapus, serta daftar fotonya: urutan (tiga teratas jadi tumpukan), keterangan, teks untuk pembaca layar, **Lepas**, dan **+ Tambah foto**. **Tambah divisi** membuat divisi baru.
+- **Foto kelas**: **Ganti foto** mengunggah foto baru, **Pakai foto bawaan** kembali ke foto dari repo.
+- **Teks halaman**: semua teks yang bisa diketik di mode Edit, plus akhiran kalimat pembuka. Kosongkan sebuah kolom untuk kembali ke tulisan bawaan.
 
 ### Pengumuman
 
@@ -94,7 +100,7 @@ Judul, isi, label (info, deadline, ujian, penting), tanggal posting, tenggat, li
 
 ### Jadwal
 
-Pilih blok di tab atas. Di dalam blok ada info blok, daftar kode dosen, lalu hari dan sesi. Klik sesi untuk mengubah jam, judul, jenis, dan dosennya. Untuk menambah dosen ke sesi, ketik sebagian namanya (tanpa gelar) lalu pilih; kode dosennya dibuat otomatis. **Duplikat** menyalin sesi, berguna untuk sesi yang mirip. Editor memberi peringatan kalau ada jam yang bentrok di hari yang sama.
+Pilih blok di tab atas. Di dalam blok ada info blok, daftar kode dosen, lalu hari dan sesi. Klik sesi untuk mengubah jam, judul, jenis, dosen, catatan, tag, online beserta linknya, dan pembatalan beserta alasannya. Tombol **Batalkan semua** di kepala tiap hari membatalkan semua sesi hari itu (**Aktifkan semua** kebalikannya). Untuk menambah dosen ke sesi, ketik sebagian namanya (tanpa gelar) lalu pilih; kode dosennya dibuat otomatis. **Duplikat** menyalin sesi, berguna untuk sesi yang mirip. Editor memberi peringatan kalau ada jam yang bentrok di hari yang sama.
 
 ### Dosen
 

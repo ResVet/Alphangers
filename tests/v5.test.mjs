@@ -262,3 +262,48 @@ test('only real image files are accepted, and keys are content hashes', () => {
   assert.equal(KEY_RE.test('0123456789abcdef01234567-1280.webp'), true);
   for (const k of ['../x.webp', '0123456789abcdef01234567-1280.svg', '0123456789abcdef01234567-1280.webp/x', 'x.webp']) assert.equal(KEY_RE.test(k), false, k);
 });
+
+// ---------- online sessions and tags
+
+function withSession(date, index, patch) {
+  const s = structuredClone(schedule);
+  for (const b of s.bloks) for (const d of b.days) if (d.d === date) Object.assign(d.s[index], patch);
+  return s;
+}
+const sessionAt = (r, date, index) => r.data.bloks.flatMap((b) => b.days).find((d) => d.d === date).s[index];
+
+test('online, its link and tags validate', () => {
+  const r = validate('schedule', withSession('2026-10-05', 0, { tautan: 'https://zoom.us/j/123', label: ['Kelas gabungan', 'kelas GABUNGAN', ' Bawa jas lab '] }));
+  assert.equal(r.ok, true, JSON.stringify(r.errors));
+  const s = sessionAt(r, '2026-10-05', 0);
+  assert.equal(s.online, true, 'a link alone marks the session online');
+  assert.equal(s.tautan, 'https://zoom.us/j/123');
+  assert.deepEqual(s.label, ['Kelas gabungan', 'Bawa jas lab'], 'tags are trimmed and deduplicated ignoring case');
+
+  const off = sessionAt(validate('schedule', withSession('2026-10-05', 0, { online: false, label: [] })), '2026-10-05', 0);
+  assert.equal('online' in off, false);
+  assert.equal('label' in off, false);
+
+  assert.ok(validate('schedule', withSession('2026-10-05', 0, { tautan: 'http://zoom.us/j/1' })).errors.length, 'http link refused');
+  assert.ok(validate('schedule', withSession('2026-10-05', 0, { tautan: 'javascript:alert(1)' })).errors.length, 'script link refused');
+  assert.ok(validate('schedule', withSession('2026-10-05', 0, { label: ['a', 'b', 'c', 'd', 'e'] })).errors.length, 'five tags refused');
+  const long = validate('schedule', withSession('2026-10-05', 0, { label: ['x'.repeat(31)] }));
+  assert.equal(sessionAt(long, '2026-10-05', 0).label[0].length, 30, 'a tag over 30 characters is cut');
+  assert.ok(long.warnings.length, 'and the cut is reported');
+});
+
+test('the model and the calendar carry online, link and tags', () => {
+  const m = createModel(withSession('2026-10-05', 1, { online: true, tautan: 'https://meet.google.com/abc-defg-hij', label: ['Kelas gabungan'] }), dosen);
+  const s = m.sessionsOn('2026-10-05')[1];
+  assert.equal(s.online, true);
+  assert.equal(s.link, 'https://meet.google.com/abc-defg-hij');
+  assert.deepEqual(s.tags, ['Kelas gabungan']);
+  const ics = sessionCalendar(s, { stamp: 0 }).replace(/\r\n /g, '');
+  assert.match(ics, /LOCATION:https:\/\/meet\.google\.com\/abc-defg-hij/);
+  assert.match(ics, /URL:https:\/\/meet\.google\.com\/abc-defg-hij/);
+  assert.match(ics, /CATEGORIES:[^\r\n]*,Kelas gabungan/);
+  const plain = m.sessionsOn('2026-10-05')[0];
+  assert.equal(plain.online, false);
+  assert.deepEqual(plain.tags, []);
+  assert.doesNotMatch(sessionCalendar(plain, { stamp: 0 }), /\r\nURL:/);
+});

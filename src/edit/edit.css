@@ -141,6 +141,7 @@ html.editing .dv-print[data-slot="0"] .dv-pic{animation-play-state:paused}
 .ed-chips{display:flex;flex-wrap:wrap;gap:6px}
 .ed-chip{height:36px;padding:0 14px;border-radius:999px;border:1px solid var(--ed-line);font-size:13.5px;color:var(--ink)}
 .ed-chip[aria-pressed="true"]{background:var(--grx);border-color:var(--grx);color:#07100a}
+.ed-chip:disabled{opacity:.4;cursor:not-allowed}
 .ed-people{display:grid;gap:8px}
 .ed-picked{display:flex;flex-wrap:wrap;gap:6px}
 .ed-pchip{display:inline-flex;align-items:center;gap:2px;padding:2px 2px 2px 12px;border-radius:999px;background:rgba(134,242,94,.12);border:1px solid rgba(134,242,94,.35);font-size:13.5px}

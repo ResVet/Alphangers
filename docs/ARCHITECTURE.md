@@ -43,7 +43,7 @@ Design tokens live in `src/styles/tokens.css` (colours, type, radii, easing). Th
 
 ## Content
 
-Five content keys: `links`, `announcements`, `schedule`, `dosen`, `heart`. Besides the channel list, `links` carries `site.t` (page texts the admin changed, keyed by the `data-k` attribute of the element they replace), `site.photo` (the class photo) and `divisi` (the divisions and their photos). Each is optional; without them the page uses the text in the markup and `src/data/divisi.json`. Schedule sessions may carry `batal` (cancelled) and `alasan` (the reason).
+Five content keys: `links`, `announcements`, `schedule`, `dosen`, `heart`. Besides the channel list, `links` carries `site.t` (page texts the admin changed, keyed by the `data-k` attribute of the element they replace), `site.photo` (the class photo) and `divisi` (the divisions and their photos). Each is optional; without them the page uses the text in the markup and `src/data/divisi.json`. Schedule sessions may carry `batal` (cancelled) and `alasan` (the reason), `online` and `tautan` (an `https` meeting link, which alone also marks the session online), and `label` (up to four tags of at most 30 characters, deduplicated ignoring case; "Kelas gabungan" is styled as the joint Alpha and Beta class).
 
 ```
             bundled JSON (src/data)                    always present, in the build
@@ -69,7 +69,7 @@ Every heading and paragraph in the static markup that the admin may change has a
 
 ### Schedule model
 
-`src/lib/schedule-model.js` is pure (no DOM) and covered by unit tests. It resolves lecturer codes per block, gives every session a stable id and a reference back to its place in the document (block, date, index) for the editor, and answers questions such as "what is on now and next", "next exam", "which sessions does this lecturer teach here", and text search. Cancelled sessions stay in the day but are skipped by "now and next" and the exam countdown, are found by searching "batal", and are exported with `STATUS:CANCELLED`. All times are Palembang time: a session at 08.00 starts at 08.00 WIB whatever time zone the phone is set to. `src/lib/ics.js` writes RFC 5545 calendar files (with line folding and escaping) and Google Calendar links.
+`src/lib/schedule-model.js` is pure (no DOM) and covered by unit tests. It resolves lecturer codes per block, gives every session a stable id and a reference back to its place in the document (block, date, index) for the editor, and answers questions such as "what is on now and next", "next exam", "which sessions does this lecturer teach here", and text search. Cancelled sessions stay in the day but are skipped by "now and next" and the exam countdown, are found by searching "batal", and are exported with `STATUS:CANCELLED`. Online sessions put their link (or "Online") in the calendar `LOCATION` and `URL`, and tags go into `CATEGORIES`. All times are Palembang time: a session at 08.00 starts at 08.00 WIB whatever time zone the phone is set to. `src/lib/ics.js` writes RFC 5545 calendar files (with line folding and escaping) and Google Calendar links.
 
 ## The 3D heart
 
@@ -127,9 +127,9 @@ The v3 shell (`src/legacy/`) runs one `requestAnimationFrame` loop for the hero,
 | --- | --- |
 | `tests/schedule-model.test.mjs` | dates, WIB clock, now/next, exams, search, ics output |
 | `tests/validate.test.mjs`, `tests/content.test.mjs` | the validator and every content fallback path |
-| `tests/v5.test.mjs` | page texts, photo records and divisions in the validator, cancelled sessions in the model and `.ics`, draft injection, metadata stripping, upload token verification and file sniffing |
+| `tests/v5.test.mjs` | page texts, photo records and divisions in the validator, cancelled sessions in the model and `.ics`, online sessions, meeting links and tags in the validator, model and `.ics`, draft injection, metadata stripping, upload token verification and file sniffing |
 | `tests/firestore.rules.test.mjs` | the security rules, on the emulator |
 | `tests/jadwal-dosen.e2e.mjs` | schedule and lecturer sections at 7 viewports, keyboard, reduced motion, storage blocked, axe |
 | `tests/admin.e2e.mjs` | the setup guide, the real Google sign-in screen, and the editor signed in against a mock backend |
-| `tests/editor.e2e.mjs` | the live editor on the mock build: visitors never download it, a non-admin can edit nothing; cancelling a session, typing a page text, undo, redo and publishing; editing a lecturer, a session, a channel, an announcement and a heart note; uploading a division photo and renaming a division in place, on desktop and phone; the Panel view carrying a draft into the framed `/admin/` and back |
+| `tests/editor.e2e.mjs` | the live editor on the mock build: visitors never download it, a non-admin can edit nothing; cancelling a session, typing a page text, undo, redo and publishing; editing a lecturer, a session, a channel, an announcement and a heart note; uploading a division photo and renaming a division in place, on desktop and phone; the Panel view carrying a draft into the framed `/admin/` and back; an online session with a join link and tags, then the same session's tags, link and cancellation in the Panel, and the Panel's divisi and page-text sections |
 | `tests/portal.e2e.mjs` | the built site under the production headers at 6 viewports: section order, channels and panels, try out, search, lecturers, the heart, no sideways scroll, no console errors, no CSP violations, no requests to other hosts except the Firestore content reads (answered as an empty database); plus reduced motion, storage blocked, no WebGL and axe |

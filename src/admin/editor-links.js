@@ -3,6 +3,7 @@ import { h, focusSoon, $ } from './dom.js';
 import { input, issueBadge } from './fields.js';
 import { confirmDialog } from './ui.js';
 import { slugify } from './format.js';
+import { renderSite } from './editor-site.js';
 
 function uniqueId(base, taken) {
   let id = base || 'channel';
@@ -125,4 +126,5 @@ export function renderLinks(host, ctx) {
     h('ol', { class: 'cards' }, cards),
     h('div', { class: 'add-row' }, h('button', { type: 'button', class: 'btn', onclick: add }, 'Tambah channel')),
   );
+  renderSite(host, ctx);
 }

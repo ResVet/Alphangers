@@ -272,6 +272,11 @@ function resolveSession(raw, blok, date, dosenById, index = 0) {
     // still listed, struck through on the page, skipped by "now / next" and the exam countdown
     cancelled: !!raw.batal,
     cancelReason: raw.batal && raw.alasan ? String(raw.alasan) : '',
+    // online: joined from anywhere; link is the meeting link, when the admin set one
+    online: !!(raw.online || raw.tautan),
+    link: raw.tautan ? String(raw.tautan) : '',
+    // the admin's own tags, e.g. "Kelas gabungan" (Alpha and Beta together)
+    tags: Array.isArray(raw.label) ? raw.label.map(String) : [],
     lecturers: resolveLecturers(raw.dz, blok, dosenById),
     // where the session sits in the schedule document, for the live editor
     ref: { blokId: blok.id, date, index },
@@ -280,7 +285,7 @@ function resolveSession(raw, blok, date, dosenById, index = 0) {
 
 function sessionHaystack(s) {
   const people = s.lecturers.map((l) => (l.dosen ? l.dosen.name : '') + ' ' + l.code).join(' ');
-  return compact([s.title, s.kindLabel, s.note, people, s.blok.name, s.tim ? 'tim' : '', s.cancelled ? 'batal dibatalkan' : ''].join('|'));
+  return compact([s.title, s.kindLabel, s.note, people, s.blok.name, s.tim ? 'tim' : '', s.cancelled ? 'batal dibatalkan' : '', s.online ? 'online daring zoom meet' : '', s.tags.join(' ')].join('|'));
 }
 
 /**

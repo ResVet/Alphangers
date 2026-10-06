@@ -197,6 +197,15 @@
 .jw-batal{display:inline-flex;align-items:center;gap:7px;height:24px;padding:0 10px;border-radius:999px;background:var(--jw-red);color:#fff;
   font-weight:600;letter-spacing:.18em;box-shadow:0 6px 18px -6px rgba(255,51,71,.8)}
 .jw-batal::before{content:"";width:6px;height:6px;border-radius:50%;background:#fff}
+/* online: joined from anywhere, with the meeting link as the first action */
+.jw-online{display:inline-flex;align-items:center;gap:7px;height:24px;padding:0 10px;border:1px solid rgba(134,242,94,.45);border-radius:999px;color:var(--grx)}
+.jw-online::before{content:"";width:6px;height:6px;border-radius:50%;background:var(--grx);box-shadow:0 0 0 3px rgba(134,242,94,.16)}
+.jw-s.is-batal .jw-online{opacity:.5}
+/* the admin's own tags; "Kelas gabungan" (Alpha and Beta together) in amber */
+.jw-tag{display:inline-flex;align-items:center;height:24px;padding:0 9px;border:1px dashed var(--line2);border-radius:999px;color:var(--ink)}
+.jw-tag.is-gab{border-style:solid;border-color:rgba(244,198,90,.55);color:var(--amb)}
+.jw-s.is-batal .jw-tag{opacity:.5}
+.jw-mini.jw-join{background:var(--grx);border-color:var(--grx);color:#07100a;font-weight:600}
 .jw-s-why{margin-top:10px;display:flex;gap:8px;font-size:14.5px;line-height:1.45;color:#ffb3ba;max-width:60ch}
 .jw-s-why::before{content:"Alasan";flex:none;padding-top:2px;font-family:var(--mono);font-size:10px;letter-spacing:.18em;text-transform:uppercase;color:var(--jw-red)}
 
@@ -273,6 +282,7 @@
   .jw-chip:hover:not([aria-pressed="true"]){border-color:rgba(134,242,94,.5)}
   .jw-ro-t:hover,.jw-p-n:hover,.jw-link:hover{color:var(--grx);text-decoration-color:currentColor}
   .jw-mini:hover{color:var(--grx);border-color:rgba(134,242,94,.5)}
+  .jw-mini.jw-join:hover{color:#07100a;background:#a4ff7f;border-color:#a4ff7f}
   .jw-hit:hover{color:var(--grx)}
   .jw-s:hover:not(.is-now){background-color:rgba(238,242,232,.02)}
 }

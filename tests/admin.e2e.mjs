@@ -89,7 +89,7 @@ try {
     await shot(p, 'signin-390');
     await p.getByRole('button', { name: 'Masuk dengan Google' }).click();
     await p.locator('.editor .card').first().waitFor();
-    check('sign in leads to the editor', await p.locator('h1', { hasText: 'Link Drive' }).isVisible());
+    check('sign in leads to the editor', await p.locator('h1', { hasText: 'Link dan halaman' }).isVisible());
     await p.context().close();
   }
 
@@ -255,7 +255,7 @@ try {
     await shot(p, 'heart-1280');
 
     // reset to bundled
-    await nav(p, 'Link Drive');
+    await nav(p, 'Link dan halaman');
     await p.getByRole('button', { name: 'Kembalikan ke bawaan' }).click();
     await p.getByRole('button', { name: 'Kembalikan', exact: true }).click();
     await p.waitForTimeout(300);

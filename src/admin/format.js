@@ -1,7 +1,7 @@
 // Formatting and naming shared by the editors, the diff view and history.
 
 export const KEY_INFO = {
-  links: { title: 'Link Drive', short: 'Link', list: 'channels', noun: 'channel' },
+  links: { title: 'Link dan halaman', short: 'Link', list: 'channels', noun: 'channel' },
   announcements: { title: 'Pengumuman', short: 'Info', list: 'items', noun: 'pengumuman' },
   schedule: { title: 'Jadwal', short: 'Jadwal', list: 'bloks', noun: 'blok' },
   dosen: { title: 'Dosen', short: 'Dosen', list: 'list', noun: 'dosen' },

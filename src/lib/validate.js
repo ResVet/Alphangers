@@ -36,7 +36,7 @@ export const HEART_IDS = [
 // Upper bounds. They sit well above what the real data uses, so they only bite
 // on a broken or hostile document.
 export const LIMITS = {
-  channels: 40, announcements: 100, bloks: 20, days: 120, sessions: 30, codes: 80,
+  channels: 40, announcements: 100, bloks: 20, days: 120, sessions: 30, codes: 80, tags: 4,
   dosen: 1500, phones: 4, dosenBloks: 20, heartList: 16, heartRelated: 10,
   siteTexts: 600, divisi: 16, photos: 40, srcset: 6,
 };
@@ -492,7 +492,7 @@ function validateSession(ctx, p, x, codes) {
     err(ctx, p, 'Sesi harus berupa objek.');
     return null;
   }
-  noteUnknown(ctx, p, x, ['s', 'e', 't', 'k', 'dz', 'pj', 'tim', 'n', 'batal', 'alasan']);
+  noteUnknown(ctx, p, x, ['s', 'e', 't', 'k', 'dz', 'pj', 'tim', 'n', 'batal', 'alasan', 'online', 'tautan', 'label']);
   const s = time(ctx, p.concat('s'), x.s, { required: true });
   let e = null;
   if (x.e !== null && x.e !== undefined && x.e !== '') {
@@ -517,6 +517,22 @@ function validateSession(ctx, p, x, codes) {
     out.batal = true;
     const why = text(ctx, p.concat('alasan'), x.alasan, { max: 200 });
     if (why) out.alasan = why;
+  }
+  // Online: everyone joins from their own place, through the meeting link when there is one
+  // (Zoom, Google Meet, Teams...). A link alone also marks the session online.
+  const link = httpsUrl(ctx, p.concat('tautan'), x.tautan);
+  if (flag(ctx, p.concat('online'), x.online) || link) {
+    out.online = true;
+    if (link) out.tautan = link;
+  }
+  // Tags of the admin's own, shown next to the session kind ("Kelas gabungan", "Bawa jas lab")
+  const tags = list(ctx, p.concat('label'), x.label, LIMITS.tags, { required: false });
+  const seenTag = new Set();
+  for (const [j, raw] of tags.entries()) {
+    const tag = text(ctx, p.concat('label', j), raw, { max: 30 });
+    if (!tag || seenTag.has(tag.toLowerCase())) continue;
+    seenTag.add(tag.toLowerCase());
+    (out.label = out.label || []).push(tag);
   }
   return out;
 }

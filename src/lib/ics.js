@@ -99,6 +99,8 @@ export function describe(session) {
   if (who) lines.push(who);
   if (session.cancelled) lines.push('Sesi ini dibatalkan' + (session.cancelReason ? ': ' + session.cancelReason : '.'));
   if (session.note) lines.push('Catatan: ' + session.note);
+  if (session.online) lines.push('Online' + (session.link ? ': ' + session.link : ', dari tempat masing-masing.'));
+  if (session.tags && session.tags.length) lines.push('Tag: ' + session.tags.join(', '));
   if (session.openEnd) {
     lines.push('Di jadwal tertulis ' + formatTime(session.start) + ' sampai selesai. Di kalender dibuat ' + OPEN_END_MINUTES / 60 + ' jam.');
   }
@@ -116,9 +118,11 @@ function eventLines(session, stamp) {
     'SUMMARY:' + escapeText((session.cancelled ? 'DIBATALKAN: ' : '') + session.title),
     // calendar apps show a cancelled event struck through instead of dropping it
     session.cancelled ? 'STATUS:CANCELLED' : null,
-    session.blok.loc ? 'LOCATION:' + escapeText(session.blok.loc) : null,
+    // online sessions: the meeting link (or just "Online") instead of the block's room
+    session.online ? 'LOCATION:' + escapeText(session.link || 'Online') : session.blok.loc ? 'LOCATION:' + escapeText(session.blok.loc) : null,
+    session.online && /^https:\/\/[^\s]+$/i.test(session.link) ? 'URL:' + session.link : null,
     'DESCRIPTION:' + escapeText(describe(session)),
-    'CATEGORIES:' + escapeText(session.kindLabel),
+    'CATEGORIES:' + [session.kindLabel, ...(session.tags || [])].map(escapeText).join(','),
     'END:VEVENT',
   ].filter(Boolean);
 }
@@ -180,7 +184,8 @@ export function googleCalendarUrl(session) {
     ctz: TZID,
     details: describe(session),
   });
-  if (session.blok.loc) params.set('location', session.blok.loc);
+  if (session.online) params.set('location', session.link || 'Online');
+  else if (session.blok.loc) params.set('location', session.blok.loc);
   return 'https://calendar.google.com/calendar/render?' + params.toString();
 }
 

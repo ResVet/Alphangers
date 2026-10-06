@@ -134,6 +134,43 @@ function chipsField(f, value) {
   return box;
 }
 
+// Tags: tap the ones already used to toggle them, or type a new one. Keeps the chosen order.
+function tagsField(f, value) {
+  const chosen = [...(value || [])];
+  const known = [...new Set([...(f.options || []), ...chosen])];
+  const box = h('div', { class: 'ed-chips', role: 'group' });
+  const MAX = f.max || 4;
+  const paint = () => {
+    box.textContent = '';
+    const full = chosen.length >= MAX;
+    fresh.disabled = addB.disabled = full;
+    for (const t of known) {
+      const on = chosen.some((c) => c.toLowerCase() === t.toLowerCase());
+      box.append(h('button', { type: 'button', class: 'ed-chip', 'aria-pressed': String(on), disabled: full && !on, onclick: () => {
+        const i = chosen.findIndex((c) => c.toLowerCase() === t.toLowerCase());
+        if (i >= 0) chosen.splice(i, 1); else chosen.push(t);
+        paint();
+      } }, t));
+    }
+  };
+  const fresh = h('input', { id: f.id, class: 'ed-li-in', type: 'text', maxLength: 30, placeholder: f.placeholder || 'Tag baru', autocomplete: 'off' });
+  const add = () => {
+    const t = fresh.value.trim().replace(/\s+/g, ' ');
+    if (!t) return;
+    if (!known.some((k) => k.toLowerCase() === t.toLowerCase())) known.push(t);
+    if (!chosen.some((c) => c.toLowerCase() === t.toLowerCase()) && chosen.length < MAX) chosen.push(t);
+    fresh.value = '';
+    paint();
+    if (!fresh.disabled) fresh.focus();
+  };
+  const addB = h('button', { type: 'button', class: 'ed-btn is-sm', onclick: () => add() }, '+ Tambah tag');
+  fresh.addEventListener('keydown', (e) => { if (e.key === 'Enter') { e.preventDefault(); add(); } });
+  paint();
+  const el = h('div', { class: 'ed-listw' }, box, h('div', { class: 'ed-li' }, fresh, addB));
+  el.read = () => { if (fresh.value.trim()) add(); return chosen.slice(); };
+  return el;
+}
+
 // Lecturers for a session, searched by name, shown in the order chosen.
 function peopleField(f, value) {
   const people = f.people || [];
@@ -188,6 +225,7 @@ export function openForm({ title, sub, fields, value = {}, submit = 'Simpan', ex
       let control;
       if (f.type === 'list') control = listField(fld, value[f.name]);
       else if (f.type === 'chips') control = chipsField(fld, value[f.name]);
+      else if (f.type === 'tags') control = tagsField(fld, value[f.name]);
       else if (f.type === 'people') control = peopleField(fld, value[f.name]);
       else if (f.type === 'custom') control = f.render(value);
       else control = inputFor(fld, value[f.name]);
