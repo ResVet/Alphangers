@@ -1,4 +1,28 @@
 {
   "v": 1,
-  "banks": []
+  "banks": [
+    {
+      "id": "b2",
+      "kv": 1,
+      "name": "Blok 2",
+      "title": "Kimia dan Fisika Kehidupan",
+      "sem": "Semester 1",
+      "n": 279,
+      "topics": 10,
+      "file": "/cbt/b2.c9425f2cfe.bin",
+      "bytes": 103272
+    },
+    {
+      "id": "b3",
+      "kv": 1,
+      "name": "Blok 3",
+      "title": "Karakter Biologi Tubuh Manusia",
+      "sem": "Semester 1",
+      "n": 200,
+      "topics": 10,
+      "file": "/cbt/b3.524c3d515b.bin",
+      "bytes": 82701,
+      "by": "Batu Alphangers"
+    }
+  ]
 }
