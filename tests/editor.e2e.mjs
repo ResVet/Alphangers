@@ -16,10 +16,12 @@ before(async () => {
 });
 after(async () => { await browser?.close(); srv?.server.close(); });
 
-async function open({ width = 1440, height = 900, query = '?admin&mock=admin' } = {}) {
+async function open({ width = 1440, height = 900, query = '?admin&mock=admin', time = null } = {}) {
   const mobile = width < 900;
   const context = await browser.newContext({ viewport: { width, height }, isMobile: mobile, hasTouch: mobile, timezoneId: 'Asia/Jakarta' });
   const page = await context.newPage();
+  // a fixed date where the schedule shows several sessions; the clock runs on from there
+  if (time) await page.clock.install({ time: new Date(time) });
   const errors = [];
   page.on('pageerror', (e) => errors.push(e.message));
   await page.route('https://firestore.googleapis.com/**', (r) => r.abort());
@@ -51,7 +53,7 @@ test('a signed-in non-admin gets told so and nothing is editable', async () => {
 });
 
 test('edit mode: cancel a session, type a page text, undo, redo, publish', async () => {
-  const { page, context, errors } = await open();
+  const { page, context, errors } = await open({ time: '2026-10-06T08:00:00+07:00' });
   await page.waitForSelector('.ed-dock.is-admin');
   await page.click('.ed-seg:has-text("Edit")');
   assert.ok(await page.locator('.ed-text').count() > 20, 'page texts are editable');
