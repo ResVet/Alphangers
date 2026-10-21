@@ -21,14 +21,14 @@ const wait = (ms = 120) => new Promise((r) => setTimeout(r, ms));
 
 // Made-up classmates, written in capitals like the class list. NIMs are 04011999 + suffix.
 const ROSTER = [
-  ['261001', 'ADINDA PUTRI MAHARANI', 'A1'], ['261002', 'BAGUS SETYO NUGROHO', 'A1'], ['261003', 'CITRA AYU LESTARI', 'A1'],
-  ['261004', 'DEWI KARTIKA SARI', 'A2'], ['261005', 'EKO PRASETYO WIBOWO', 'A2'], ['261006', 'FAJAR RAMADHAN SIREGAR', 'A2'],
-  ['261007', 'GALUH PRAMESWARI', 'A3'], ['261008', 'HENDRA GUNAWAN TANJUNG', 'A3'], ['261009', 'I GUSTI AYU MADE SRIASIH', 'A3'],
-  ['261010', 'JOSUA PARULIAN SITORUS', 'B1'], ['261011', 'KEZIA ANGELINA WIJAYA', 'B1'], ['261012', 'LAILATUL FITRIANI', 'B1'],
-  ['261013', 'MUHAMMAD RIZKY AL-FARISI', 'B2'], ['261014', 'NADIA SALSABILA HARAHAP', 'B2'], ['261015', 'OKTAVIANUS DANIEL', 'B2'],
-  ['261016', 'PUTU EKA WIRAWAN', 'B3'], ['261017', 'RAHMA AULIA PUTRI', 'B3'], ['261018', 'SATRIA DWI ANGGORO', 'B3'],
-  ['261019', 'TIARA NUR HALIZA', 'B3'], ['261020', 'WAHYU ADI KUSUMA', 'B3'],
-].map(([n, name, grp]) => ({ nim: '04011999' + n, name, grp }));
+  ['261001', 'ADINDA PUTRI MAHARANI'], ['261002', 'BAGUS SETYO NUGROHO'], ['261003', 'CITRA AYU LESTARI'],
+  ['261004', 'DEWI KARTIKA SARI'], ['261005', 'EKO PRASETYO WIBOWO'], ['261006', 'FAJAR RAMADHAN SIREGAR'],
+  ['261007', 'GALUH PRAMESWARI'], ['261008', 'HENDRA GUNAWAN TANJUNG'], ['261009', 'I GUSTI AYU MADE SRIASIH'],
+  ['261010', 'JOSUA PARULIAN SITORUS'], ['261011', 'KEZIA ANGELINA WIJAYA'], ['261012', 'LAILATUL FITRIANI'],
+  ['261013', 'MUHAMMAD RIZKY AL-FARISI'], ['261014', 'NADIA SALSABILA HARAHAP'], ['261015', 'OKTAVIANUS DANIEL'],
+  ['261016', 'PUTU EKA WIRAWAN'], ['261017', 'RAHMA AULIA PUTRI'], ['261018', 'SATRIA DWI ANGGORO'],
+  ['261019', 'TIARA NUR HALIZA'], ['261020', 'WAHYU ADI KUSUMA'],
+].map(([n, name]) => ({ nim: '04011999' + n, name }));
 
 // Who signed in with which Google account: [Google name, email, match, hours ago]. 261004 is
 // held by an account that looks nothing like Dewi; the real Dewi shows up in the log.
@@ -76,7 +76,7 @@ function createCbtMock(scenario) {
     if (!ready) return { status: 200, body: structuredClone({ ready: false, source: null, people: [], accounts, log, counts: { people: 0, claimed: 0, blocked: 0 } }) };
     const list = [...people.values()]
       .filter((p) => !p.dropped)
-      .map((p) => ({ nim: p.nim, name: p.name, grp: p.grp, ...(p.added ? { added: true } : {}), blocked: p.blocked, claim: claims.get(p.nim) || null }));
+      .map((p) => ({ nim: p.nim, name: p.name, ...(p.added ? { added: true } : {}), blocked: p.blocked, claim: claims.get(p.nim) || null }));
     const counts = { people: list.length, claimed: list.filter((p) => p.claim).length, blocked: list.filter((p) => p.blocked).length };
     return { status: 200, body: structuredClone({ ready: true, source: 'blobs', people: list, accounts, log, counts }) };
   }
@@ -141,7 +141,7 @@ function createCbtMock(scenario) {
       if (listed) return no(409, 'exists', 'NIM ini sudah ada di daftar.');
       // a removed classmate comes back as the class list has them
       if (p) p.dropped = false;
-      else people.set(nim, { nim, name, grp: '', blocked: false, added: true, dropped: false });
+      else people.set(nim, { nim, name, blocked: false, added: true, dropped: false });
       note({ kind: op, nim });
     } else {
       if (!listed) return no(404, 'not-found', 'NIM ini nggak ada di daftar kelas.');

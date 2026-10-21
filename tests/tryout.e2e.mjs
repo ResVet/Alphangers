@@ -138,7 +138,7 @@ for (const [w, h] of [[390, 844], [1280, 800]]) {
     await shot(s, 'nim-error');
     await claim(s, '04011999999001');
     await s.page.waitForSelector('.to-pv-q');
-    assert.equal(await s.ev(() => document.querySelector('.to-pv-q b').textContent), 'Dina A. P.');
+    assert.equal(await s.ev(() => document.querySelector('.to-pv-q b').textContent), 'Dina Ayu Pratiwi');
     assert.match(await s.ev(() => document.getElementById('toPassNim').textContent), /04011999999001/);
     await axe(s, 'preview');
     await shot(s, 'nim-preview');
@@ -172,7 +172,7 @@ for (const [w, h] of [[390, 844], [1280, 800]]) {
     const wm = await s.ev(() => { const el = document.getElementById('toWm'); return { hidden: el.hidden, bg: getComputedStyle(el).backgroundImage, pe: getComputedStyle(el).pointerEvents, aria: el.getAttribute('aria-hidden') }; });
     assert.equal(wm.hidden, false);
     assert.deepEqual([wm.pe, wm.aria], ['none', 'true']);
-    assert.ok(decodeURIComponent(wm.bg).includes('DINA AYU PRATIWI ·· 9001'), 'watermark carries the name and the last four NIM digits');
+    assert.ok(decodeURIComponent(wm.bg).includes('Dina Ayu Pratiwi ·· 9001'), 'watermark carries the name and the last four NIM digits');
     assert.ok(await s.ev(() => getComputedStyle(document.querySelector('#toQ .to-pwm')).backgroundImage.startsWith('url(')), 'pictures carry the watermark too');
     assert.equal(await s.ev(() => getComputedStyle(document.getElementById('toQt')).whiteSpace), 'pre-line');
     await axe(s, 'question with a picture');
@@ -222,7 +222,7 @@ for (const [w, h] of [[390, 844], [1280, 800]]) {
     await s.page.goBack(); await s.page.waitForSelector('#toScore');
     await s.page.goBack(); await s.page.waitForSelector('.to-start');
     await s.page.goBack(); await s.page.waitForSelector('#toAcct [data-act="gout"]');
-    assert.match(await s.ev(() => document.getElementById('toAcct').textContent), /Masuk sebagai Dina A. P./);
+    assert.match(await s.ev(() => document.getElementById('toAcct').textContent), /Masuk sebagai Dina Ayu Pratiwi/);
     assert.ok(await s.ev(() => !!localStorage.getItem('alpha.cbt.v1')));
     await s.page.click('#toAcct [data-act="gout"]');
     await s.page.waitForFunction(() => /Khusus anak Alpha/.test(document.getElementById('toAcct').textContent));

@@ -67,7 +67,7 @@ function signErr(e) {
   return 'auth';
 }
 
-const pickWho = (w) => ({ short: String(w.short || w.name || ''), name: String(w.name || ''), nim: String(w.nim || '') });
+const pickWho = (w) => ({ name: String(w.name || ''), nim: String(w.nim || '') });
 const okWho = (w) => !!w && typeof w === 'object' && typeof w.name === 'string' && !!w.name;
 
 export function createAccess(deps) {

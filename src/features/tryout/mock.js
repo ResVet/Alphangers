@@ -18,8 +18,8 @@ const files = import.meta.glob('../../../tests/fixtures/cbt/*.bin', { query: '?u
 const byName = Object.fromEntries(Object.entries(files).map(([path, url]) => [path.split('/').pop(), url]));
 
 const ROSTER = {
-  '04011999999001': { short: 'Dina A. P.', name: 'DINA AYU PRATIWI' },
-  '04011999999002': { short: 'Bagas N.', name: 'BAGAS NUGROHO' },
+  '04011999999001': { name: 'Dina Ayu Pratiwi' },
+  '04011999999002': { name: 'Bagas Nugroho' },
 };
 const TAKEN = '04011999999002';
 const USER = { uid: 'mock-dina-7Qx2LmN4', email: 'dina.pratiwi@example.com' };
@@ -88,10 +88,10 @@ export async function mockDeps() {
       const nim = body && typeof body.nim === 'string' ? body.nim : '';
       if (!/^\d{6,20}$/.test(nim)) return json(400, { error: 'NIM harus angka.', code: 'bad-nim' });
       if (scenario === 'slow') return json(429, { error: 'Terlalu sering.', code: 'slow' });
-      if (server.bound[uid]) return json(200, body.confirm ? me(uid) : { preview: ROSTER[server.bound[uid]].short });
+      if (server.bound[uid]) return json(200, body.confirm ? me(uid) : { preview: ROSTER[server.bound[uid]].name });
       if (!ROSTER[nim]) return json(404, { error: 'Tidak ada.', code: 'not-found' });
       if (nim === TAKEN) return json(409, { error: 'Sudah dipakai.', code: 'taken' });
-      if (!body.confirm) return json(200, { preview: ROSTER[nim].short });
+      if (!body.confirm) return json(200, { preview: ROSTER[nim].name });
       server.bound[uid] = nim;
       storeSet(sessionStorage, SERVER, server);
       return json(200, me(uid));

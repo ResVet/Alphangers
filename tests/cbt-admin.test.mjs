@@ -10,7 +10,7 @@ afterEach(() => { globalThis.fetch = realFetch; });
 
 const STATE = {
   ready: true, source: 'blobs',
-  people: [{ nim: '04011999261001', name: 'ADINDA PUTRI', grp: 'A1', blocked: false, claim: { uid: 'u1', email: 'a@gmail.com', gname: 'Adinda', at: '2026-10-20T03:00:00.000Z', match: 'name' } }],
+  people: [{ nim: '04011999261001', name: 'ADINDA PUTRI', blocked: false, claim: { uid: 'u1', email: 'a@gmail.com', gname: 'Adinda', at: '2026-10-20T03:00:00.000Z', match: 'name' } }],
   accounts: [], log: [], counts: { people: 1, claimed: 1, blocked: 0 },
 };
 
@@ -144,7 +144,8 @@ test('the server says "kunci utama", this page says "kode setup"', async () => {
 });
 
 // The view's pure helpers (src/admin/editor-cbt.js).
-import { displayName, setupSecret, logLine } from '../src/admin/editor-cbt.js';
+import { setupSecret, logLine } from '../src/admin/editor-cbt.js';
+import { displayName } from '../src/lib/names.js';
 
 test('names in capitals are shown the way people write them', () => {
   assert.equal(displayName('MUHAMMAD RIZKY AL-FARISI'), 'Muhammad Rizky Al-Farisi');

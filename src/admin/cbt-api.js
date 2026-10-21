@@ -75,7 +75,6 @@ function normalise(b) {
       .map((p) => ({
         nim: p.nim,
         name: text(p.name),
-        grp: text(p.grp),
         added: p.added === true,
         blocked: p.blocked === true,
         claim: p.claim && typeof p.claim === 'object'

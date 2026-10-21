@@ -13,7 +13,8 @@ import { generateKeyPairSync, createSign } from 'node:crypto';
 import { fileURLToPath, pathToFileURL } from 'node:url';
 import { LABEL, SealError, derive, seal, open, openJson, toB64u, fromB64u, hashHex } from '../src/lib/seal.js';
 import { AuthError } from '../netlify/lib/auth.mjs';
-import { createCbt, shortName, matchClaim, cleanName, TTL } from '../netlify/lib/cbt.mjs';
+import { createCbt, matchClaim, cleanName, TTL } from '../netlify/lib/cbt.mjs';
+import { displayName } from '../src/lib/names.js';
 
 const newSecret = () => toB64u(crypto.getRandomValues(new Uint8Array(32)));
 const SECRET = newSecret();
@@ -22,13 +23,13 @@ const T0 = Date.parse('2026-10-22T01:00:00Z');
 const ORIGIN = 'https://alphangers.test';
 
 const PEOPLE = [
-  { nim: '09011282631001', name: 'DIMAS PRATAMA SAPUTRA', grp: 'A1' },
-  { nim: '09011282631002', name: 'M. FARHAN ALFARIZQI', grp: 'A1' },
-  { nim: '09011282631003', name: 'SITI NUR HALIZAH', grp: 'A2' },
-  { nim: '09011282631004', name: 'MUHAMMAD RIZKY AKBAR', grp: 'A2' },
-  { nim: '09011282631005', name: 'ANINDYA PUTRI KIRANA', grp: 'B1', blocked: true },
-  { nim: '09011282631006', name: 'NAUFAL HAKIM', grp: 'B1' },
-  { nim: '09011282631007', name: "NUR'AINI SALSABILA", grp: 'B2' },
+  { nim: '09011282631001', name: 'DIMAS PRATAMA SAPUTRA' },
+  { nim: '09011282631002', name: 'M. FARHAN ALFARIZQI' },
+  { nim: '09011282631003', name: 'SITI NUR HALIZAH' },
+  { nim: '09011282631004', name: 'MUHAMMAD RIZKY AKBAR' },
+  { nim: '09011282631005', name: 'ANINDYA PUTRI KIRANA', blocked: true },
+  { nim: '09011282631006', name: 'NAUFAL HAKIM' },
+  { nim: '09011282631007', name: "NUR'AINI SALSABILA" },
 ];
 const [DIMAS, FARHAN, SITI, RIZKY, ANIN, NAUFAL] = PEOPLE.map((p) => p.nim);
 const BANKS = [{ id: 'b2', kv: 1 }, { id: 'b3', kv: 2 }];
@@ -240,7 +241,7 @@ test('/me: claim before binding, ok after, with one key per bank and the offline
   assert.equal(r.headers.get('cache-control'), 'no-store');
   assert.deepEqual(r.body, {
     state: 'ok',
-    who: { short: 'Dimas P. S.', name: 'DIMAS PRATAMA SAPUTRA', nim: DIMAS },
+    who: { name: 'Dimas Pratama Saputra', nim: DIMAS },
     keys: { b2: { kv: 1, k: await bankKey(SECRET, 'b2', 1) }, b3: { kv: 2, k: await bankKey(SECRET, 'b3', 2) } },
     ttl: TTL,
   });
@@ -272,12 +273,12 @@ test('/me is closed for a blocked NIM, a blocked account and a NIM no longer on 
   // ANIN is blocked on the class list itself; she claims like anyone else
   assert.equal((await t.claim('anin', ANIN, true)).body.state, 'closed');
   const a = await t.me('anin');
-  assert.deepEqual(a.body, { state: 'closed', who: { short: 'Anindya P. K.', name: 'ANINDYA PUTRI KIRANA', nim: ANIN } });
+  assert.deepEqual(a.body, { state: 'closed', who: { name: 'Anindya Putri Kirana', nim: ANIN } });
   // an account blocked by an admin, bound and not bound
   await t.claim('naufal', NAUFAL, true);
   await t.admin('blockAccount', { uid: 'uNaufal' });
   await t.admin('blockAccount', { uid: 'uEve' });
-  assert.deepEqual((await t.me('naufal')).body, { state: 'closed', who: { short: 'Naufal H.', name: 'NAUFAL HAKIM', nim: NAUFAL } });
+  assert.deepEqual((await t.me('naufal')).body, { state: 'closed', who: { name: 'Naufal Hakim', nim: NAUFAL } });
   assert.deepEqual((await t.me('eve')).body, { state: 'closed', who: null });
   // a claim left on a NIM the list no longer has (here: the class list was rebuilt without it)
   const claims = t.store.doc('claims');
@@ -297,7 +298,7 @@ test('claim: preview, then confirm binds; confirming again changes nothing', asy
   const t = ready();
   const p = await t.claim('farhan', FARHAN);
   assert.equal(p.status, 200);
-  assert.deepEqual(p.body, { preview: 'M. Farhan A.' });
+  assert.deepEqual(p.body, { preview: 'M. Farhan Alfarizqi' });
   assert.equal(t.store.doc('claims'), null, 'a preview binds nothing');
   const c = await t.claim('farhan', FARHAN, true);
   assert.equal(c.body.state, 'ok');
@@ -352,7 +353,7 @@ test('a blocked NIM answers like any other until it is bound, then closed (and l
   const shape = (r) => ({ status: r.status, keys: Object.keys(r.body).sort(), code: r.body.code });
   // preview: same shape as for an allowed NIM
   assert.deepEqual(shape(await t.claim('anin', ANIN)), shape(await t.claim('naufal', NAUFAL)));
-  assert.deepEqual((await t.claim('anin', ANIN)).body, { preview: 'Anindya P. K.' });
+  assert.deepEqual((await t.claim('anin', ANIN)).body, { preview: 'Anindya Putri Kirana' });
   // taken: same answer whoever holds what
   await t.claim('naufal', NAUFAL, true);
   await t.claim('anin', ANIN, true);
@@ -379,7 +380,7 @@ test('a blocked account is closed and cannot bind or preview anything', async ()
   }
   assert.equal(t.store.doc('claims'), null);
   await t.admin('unblockAccount', { uid: 'uEve' });
-  assert.equal((await t.claim('eve', SITI)).body.preview, 'Siti N. H.');
+  assert.equal((await t.claim('eve', SITI)).body.preview, 'Siti Nur Halizah');
 });
 
 test('two accounts confirming the same NIM at once: exactly one gets it', async () => {
@@ -482,7 +483,7 @@ test('admin view: the whole class with claims, how each claim matches, and count
   assert.equal(v.body.ready, true);
   assert.equal(v.body.source, 'env');
   assert.equal(v.body.people.length, PEOPLE.length);
-  assert.deepEqual(row(v, DIMAS), { nim: DIMAS, name: 'DIMAS PRATAMA SAPUTRA', grp: 'A1', blocked: false, claim: { uid: 'uDimas', email: 'dimaspratama09@gmail.com', gname: 'Dimas Pratama', at: new Date(T0).toISOString(), match: 'name' } });
+  assert.deepEqual(row(v, DIMAS), { nim: DIMAS, name: 'DIMAS PRATAMA SAPUTRA', blocked: false, claim: { uid: 'uDimas', email: 'dimaspratama09@gmail.com', gname: 'Dimas Pratama', at: new Date(T0).toISOString(), match: 'name' } });
   assert.equal(row(v, FARHAN).claim.match, 'nim');
   assert.equal(row(v, SITI).claim.match, 'none');
   assert.equal(row(v, ANIN).blocked, true, 'blocked on the class list itself');
@@ -566,11 +567,11 @@ test('admin: add a person, then remove them; removing releases their claim', asy
   const nim = '09011282631050';
   let r = await t.admin('add', { nim, name: '  Rania   Az-Zahra  ' });
   assert.equal(r.status, 200);
-  assert.deepEqual(row(r, nim), { nim, name: 'Rania Az-Zahra', grp: '', added: true, blocked: false, claim: null });
+  assert.deepEqual(row(r, nim), { nim, name: 'Rania Az-Zahra', added: true, blocked: false, claim: null });
   assert.deepEqual(r.body.counts, { people: 8, claimed: 0, blocked: 1 });
   assert.deepEqual(t.store.doc('config').add, [{ nim, name: 'Rania Az-Zahra', at: new Date(T0).toISOString(), by: 'admin.kelas@gmail.com' }]);
   assert.deepEqual(r.body.log[0], { at: new Date(T0).toISOString(), kind: 'add', nim, by: 'admin.kelas@gmail.com' });
-  assert.deepEqual((await t.claim('eve', nim)).body, { preview: 'Rania A.' });
+  assert.deepEqual((await t.claim('eve', nim)).body, { preview: 'Rania Az-Zahra' });
   assert.equal((await t.claim('eve', nim, true)).body.who.name, 'Rania Az-Zahra');
   assert.equal((await t.admin('add', { nim, name: 'Lagi' })).body.code, 'exists');
   assert.equal((await t.admin('add', { nim: DIMAS, name: 'Dimas' })).status, 409);
@@ -592,7 +593,7 @@ test('admin: add a person, then remove them; removing releases their claim', asy
   assert.equal((await t.me('dimas')).body.state, 'claim');
   assert.equal((await t.claim('dimas', DIMAS)).status, 404);
   r = await t.admin('add', { nim: DIMAS, name: 'Dimas Saja' });
-  assert.deepEqual(row(r, DIMAS), { nim: DIMAS, name: 'DIMAS PRATAMA SAPUTRA', grp: 'A1', blocked: false, claim: null });
+  assert.deepEqual(row(r, DIMAS), { nim: DIMAS, name: 'DIMAS PRATAMA SAPUTRA', blocked: false, claim: null });
   assert.deepEqual(t.store.doc('config').drop, []);
   assert.equal((await t.claim('dimas', DIMAS, true)).body.state, 'ok');
 });
@@ -807,27 +808,23 @@ test('every error is an Indonesian sentence with a code, and no student-facing t
 
 // ---------- names
 
-test('short names: given name written out, the rest as initials, Muhammad and abbreviations kept short', () => {
+test('display names: the class list name written out in full, in title case', () => {
   const cases = {
-    'DIMAS PRATAMA SAPUTRA': 'Dimas P. S.',
-    'M. FARHAN ALFARIZQI': 'M. Farhan A.',
-    'MUHAMMAD RIZKY AKBAR': 'M. Rizky A.',
-    'MOCH. ILHAM': 'M. Ilham',
-    'MUH FADLI RAMADHAN': 'M. Fadli R.',
-    'MOHAMMAD': 'Mohammad',
-    'SITI NUR HALIZAH': 'Siti N. H.',
-    "NUR'AINI SALSABILA": "Nur'aini S.",
-    'A. RAHMAN HAKIM': 'A. Rahman H.',
-    'I GUSTI AYU MADE SARI': 'I. Gusti A. M. S.',
-    'MUHAMMAD AL FATIH': 'M. Al Fatih',
-    'AHMAD FAUZI BIN ABDULLAH': 'Ahmad F. A.',
-    'SRI-WAHYUNI PUTRI': 'Sri-Wahyuni P.',
-    'NAUFAL': 'Naufal',
-    'Rania Az-Zahra': 'Rania A.',
-    'M. A.': 'M. A.',
+    'DIMAS PRATAMA SAPUTRA': 'Dimas Pratama Saputra',
+    'M. FARHAN ALFARIZQI': 'M. Farhan Alfarizqi',
+    'MOCH. ILHAM': 'Moch. Ilham',
+    'MUHAMMAD AL FATIH': 'Muhammad Al Fatih',
+    "NUR'AINI SALSABILA": "Nur'aini Salsabila",
+    "SITI NUR 'AINI": "Siti Nur 'Aini",
+    'SRI-WAHYUNI PUTRI': 'Sri-Wahyuni Putri',
+    'M.FARID': 'M.Farid',
+    'I GUSTI AYU MADE SARI': 'I Gusti Ayu Made Sari',
+    '  NAUFAL   HAKIM ': 'Naufal Hakim',
+    'Rania Az-Zahra': 'Rania Az-Zahra',
+    'Gita ayu Lestari': 'Gita ayu Lestari',
     '': '',
   };
-  for (const [full, short] of Object.entries(cases)) assert.equal(shortName(full), short, full);
+  for (const [full, shown] of Object.entries(cases)) assert.equal(displayName(full), shown, full);
 });
 
 test('match: how much a Google account looks like the person it claimed', () => {
@@ -874,7 +871,7 @@ const SECRET_TEXT = [
 ];
 function privateDir(change = (x) => x) {
   const files = {
-    roster: { v: 1, cls: 'Alpha', source: 'absen.xlsx', people: structuredClone(PEOPLE.slice(0, 3)).concat([{ nim: ANIN, name: 'ANINDYA PUTRI KIRANA', grp: 'B1', blocked: true }]) },
+    roster: { v: 1, cls: 'Alpha', source: 'absen.xlsx', people: structuredClone(PEOPLE.slice(0, 3)).concat([{ nim: ANIN, name: 'ANINDYA PUTRI KIRANA', blocked: true }]) },
     b2: {
       id: 'b2', name: 'Blok 2', title: 'Kimia dan Fisika Kehidupan', sem: 'Semester 1',
       topics: { kim: 'Kimia dasar', fis: 'Biofisika' },
@@ -956,7 +953,7 @@ test('the seal script writes sealed banks and pictures, the public manifest and 
   const data = await import(pathToFileURL(join(out, 'netlify/data/cbt.mjs')).href);
   assert.deepEqual(data.BANKS, [{ id: 'b2', kv: 1 }, { id: 'b3', kv: 2 }]);
   const roster = await openJson(await derive(m, LABEL.rosterKey), fromB64u(data.ROSTER), LABEL.rosterAad);
-  assert.deepEqual(roster, { v: 1, people: [...PEOPLE.slice(0, 3), { nim: ANIN, name: 'ANINDYA PUTRI KIRANA', grp: 'B1', blocked: true }] });
+  assert.deepEqual(roster, { v: 1, people: [...PEOPLE.slice(0, 3), { nim: ANIN, name: 'ANINDYA PUTRI KIRANA', blocked: true }] });
 
   const key = await derive(m, LABEL.bankKey('b3', 2));
   const bank = await openJson(key, file(b3), LABEL.bankAad('b3', 2));
@@ -1057,6 +1054,7 @@ test('the seal script refuses bad input and then writes nothing', () => {
     'NIM with letters': (f) => (f.roster.people[0].nim = '0901128263100X'),
     'name with digits': (f) => (f.roster.people[0].name = 'DIMAS 2'),
     'blocked not a boolean': (f) => (f.roster.people[0].blocked = 'ya'),
+    'a field the class list does not have': (f) => (f.roster.people[0].grp = 'A1'),
     'no people': (f) => (f.roster.people = []),
   };
   const before = JSON.stringify(PEOPLE);

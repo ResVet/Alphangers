@@ -128,7 +128,7 @@ private folder (never committed)                      in the repository and the 
                                                                           netlify/data/cbt.mjs  sealed class list, bank versions
 
 student ── Google sign-in ──▶ GET  /api/cbt/me     ──▶ { state: 'ok', keys } ──▶ /cbt/<id>.bin opened in the browser
-                              POST /api/cbt/claim  NIM, shortened-name preview, confirm
+                              POST /api/cbt/claim  NIM, full-name preview, confirm
 admin ──── Panel, Peserta try out ──▶ GET/POST /api/cbt/admin   block, unblock, release, blockAccount, add, remove, install
 ```
 

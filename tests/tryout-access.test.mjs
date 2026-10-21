@@ -10,7 +10,7 @@ import { derive, seal, LABEL, toB64u, parseSecret } from '../src/lib/seal.js';
 const SECRET = parseSecret('0FBDA8R_Sb0sG6c56YmPo8pDvaVoFtX-6LGsqK-faK8');
 const HOUR = 3600e3;
 const T0 = Date.UTC(2026, 9, 21, 8, 0, 0);
-const WHO = { short: 'Dina A. P.', name: 'DINA AYU PRATIWI', nim: '04011999999001' };
+const WHO = { name: 'Dina Ayu Pratiwi', nim: '04011999999001' };
 
 const BANK = {
   id: 'b3', name: 'Blok 3', title: 'Karakter Biologi Tubuh Manusia', sem: 'Semester 1', topics: { sel: 'Sel' },
@@ -64,7 +64,7 @@ async function rig({ cache, online = true, me, claim, user = { uid: 'u1', email:
     if (url === '/api/cbt/claim') {
       const body = JSON.parse(init.body);
       calls.claim.push(body);
-      return claim ? claim(json, body, okBody) : json(200, body.confirm ? okBody() : { preview: 'Dina A. P.' });
+      return claim ? claim(json, body, okBody) : json(200, body.confirm ? okBody() : { preview: 'Dina Ayu Pratiwi' });
     }
     calls.files.push(url);
     if (blobs[url]) return new Response(blobs[url], { status: 200 });
@@ -189,13 +189,13 @@ test('a slow re-check does not hold the bank; a late "claim" answer still wipes 
 });
 
 test('claim: preview, not found, taken, too many tries, network, then confirm binds', async () => {
-  const answers = { '04011999999001': [200, { preview: 'Dina A. P.' }], '04011999999002': [409, { code: 'taken', error: 'x' }], '04011999999003': [429, { code: 'slow', error: 'x' }] };
+  const answers = { '04011999999001': [200, { preview: 'Dina Ayu Pratiwi' }], '04011999999002': [409, { code: 'taken', error: 'x' }], '04011999999003': [429, { code: 'slow', error: 'x' }] };
   const r = await rig({
     me: (json) => json(200, { state: 'claim' }),
     claim: (json, body, okBody) => (body.confirm ? json(200, okBody()) : json(...(answers[body.nim] || [404, { code: 'not-found', error: 'x' }]))),
   });
   assert.equal((await r.access.signIn()).s, 'claim');
-  assert.deepEqual(await r.access.claim('04011999999001', false), { preview: 'Dina A. P.' });
+  assert.deepEqual(await r.access.claim('04011999999001', false), { preview: 'Dina Ayu Pratiwi' });
   assert.deepEqual(await r.access.claim('04011000000000', false), { error: 'not-found' });
   assert.deepEqual(await r.access.claim('04011999999002', false), { error: 'taken' });
   assert.deepEqual(await r.access.claim('04011999999003', false), { error: 'slow' });
@@ -253,7 +253,7 @@ test('blocked storage: the access lives in memory for this page', async () => {
 });
 
 test('watermark: name and the last four NIM digits, escaped inside the SVG', () => {
-  const css = watermarkCss({ short: 'X', name: `O'NEIL <B> & "C"`, nim: '04011182631023' });
+  const css = watermarkCss({ name: `O'NEIL <B> & "C"`, nim: '04011182631023' });
   assert.match(css, /^url\("data:image\/svg\+xml,/);
   const svg = decodeURIComponent(css.slice('url("data:image/svg+xml,'.length, -2));
   assert.ok(svg.includes('O&#39;NEIL &lt;B&gt; &amp; &quot;C&quot; ·· 1023'), svg);

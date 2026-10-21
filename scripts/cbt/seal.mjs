@@ -1,5 +1,5 @@
 // Seals the try out for the site, from a private folder that is never committed:
-//   roster.json        { v, cls, source, people: [{ nim, name, grp, blocked? }] }
+//   roster.json        { v, cls, source, people: [{ nim, name, blocked? }] }
 //   banks/<id>.json    a question bank in the site format; pictures as paths in the folder, or
 //                      an empty path for img/<bank id>/<picture id>.<ext>. Other files there
 //                      (working files, notes) are skipped.
@@ -96,15 +96,14 @@ if (rosterIn !== undefined) {
     rosterIn.people.forEach((p, i) => {
       const where = `roster.json people[${i}]`;
       if (!isObj(p)) return bad(where, 'not an object');
-      onlyKeys(p, ['nim', 'name', 'grp', 'blocked'], where);
+      onlyKeys(p, ['nim', 'name', 'blocked'], where);
       if (typeof p.nim !== 'string' || !NIM_RE.test(p.nim)) bad(where, 'nim must be 6 to 20 digits');
       else if (seen.has(p.nim)) bad(where, 'a nim that is already on the list');
       seen.add(p.nim);
       const name = cleanName(p.name);
       if (!name) bad(where, "name must be 2 to 80 letters, spaces and . ' -");
-      if (p.grp !== undefined && (typeof p.grp !== 'string' || p.grp.length > 20 || UNSAFE.test(p.grp))) bad(where, 'grp must be short text');
       if (p.blocked !== undefined && typeof p.blocked !== 'boolean') bad(where, 'blocked must be true or false');
-      people.push({ nim: p.nim, name, grp: p.grp ?? '', ...(p.blocked ? { blocked: true } : {}) });
+      people.push({ nim: p.nim, name, ...(p.blocked ? { blocked: true } : {}) });
     });
   }
 }

@@ -900,7 +900,7 @@ var TRY = (function(){
   // home: pick a blok
   var LOCK = '<svg viewBox="0 0 24 24" aria-hidden="true"><rect x="5" y="10.5" width="14" height="10" rx="2.2"/><path d="M8.5 10.5V7.8a3.5 3.5 0 0 1 7 0v2.7"/></svg>';
   function acctHtml(){
-    var a = ACC ? ACC.account() : null, nm = a ? (a.who ? a.who.short : a.email) : '';
+    var a = ACC ? ACC.account() : null, nm = a ? (a.who ? a.who.name : a.email) : '';
     if(nm) return '<div class="to-acct p-rv" id="toAcct" tabindex="-1" style="--pd:.38s"><span class="to-av" aria-hidden="true">' + esc(nm.charAt(0).toUpperCase()) + '</span>' +
       '<p>Masuk sebagai <b>' + esc(nm) + '</b>' + (a.who ? '' : '<small>NIM belum dicocokkan</small>') + '</p><button class="to-link2" type="button" data-act="gout">Keluar</button></div>';
     return '<div class="to-acct out p-rv" id="toAcct" tabindex="-1" style="--pd:.38s"><span class="to-av" aria-hidden="true">' + LOCK + '</span><p>Khusus anak Alpha. Masuk pakai Google, sekali cocokkan NIM, beres.</p></div>';
@@ -1508,7 +1508,7 @@ var TRY = (function(){
       '<p class="to-pass-e">' + (mail ? esc(mail) : 'akun Google kamu') + '</p></div>';
   }
   function whoHtml(acc, sw){
-    var nm = acc ? (acc.who ? acc.who.short : acc.email) : '';
+    var nm = acc ? (acc.who ? acc.who.name : acc.email) : '';
     if(!nm) return '';
     return '<p class="to-who"><span class="to-av" aria-hidden="true">' + esc(nm.charAt(0).toUpperCase()) + '</span><span>Masuk sebagai <b>' + esc(nm) + '</b></span>' +
       (sw ? '<button class="to-link2" type="button" data-act="gswitch">Ganti akun</button>' : '') + '</p>';

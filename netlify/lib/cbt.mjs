@@ -15,6 +15,7 @@
 //   log     { v, ev: [...] }                                    newest first, at most 200
 // plus `secret`, the master secret when an admin installed it instead of setting CBT_SECRET.
 import { LABEL, BANK_ID, derive, openJson, parseSecret, fromB64u, toB64u } from '../../src/lib/seal.js';
+import { displayName } from '../../src/lib/names.js';
 import { AuthError } from './auth.mjs';
 import { json } from './media.mjs';
 
@@ -99,30 +100,6 @@ const TITLES = new Set([
   'mr', 'mrs', 'ms', 'miss', 'sdr', 'sdri',
 ]);
 const fold = (s) => String(s || '').normalize('NFD').replace(/\p{M}/gu, '').toLowerCase();
-const letters = (w) => fold(w).replace(/[^a-z]/g, '');
-const titleCase = (w) => w.toLowerCase().replace(/(^|-)(\p{L})/gu, (_, a, b) => a + b.toUpperCase());
-const initial = (w) => (/\p{L}/u.exec(w)?.[0].toUpperCase() ?? '') + '.';
-
-/**
- * The short name shown when someone types a NIM, so a typo does not bind the wrong person
- * without giving away the full name: the given name written out, every later word an initial.
- * DIMAS PRATAMA SAPUTRA is "Dimas P. S.". When a name starts with an abbreviation ("M.",
- * "Moch.", a single letter) or with Muhammad in any spelling, the first word that is not one is
- * the given name and the ones before it stay initials: M. FARHAN ALFARIZQI and MUHAMMAD FARHAN
- * ALFARIZQI are both "M. Farhan A.". Al and similar particles stay whole before the given name
- * ("M. Al Fatih") and are left out after it ("AHMAD FAUZI BIN ABDULLAH" is "Ahmad F. A.").
- */
-export function shortName(full) {
-  const words = String(full || '').trim().split(/\s+/).filter((w) => /\p{L}/u.test(w));
-  const abbr = (w, i) => /\.$/.test(w) || letters(w).length < 2 || MUHAMMAD.test(letters(w)) || (i === 0 && letters(w) === 'm');
-  const particle = (w) => PARTICLES.has(letters(w));
-  let v = words.findIndex((w, i) => !abbr(w, i) && !particle(w));
-  if (v < 0) v = words.findIndex((w) => !/\.$/.test(w) && letters(w).length > 1);
-  if (v < 0) return words.map(initial).join(' ');
-  const before = words.slice(0, v).map((w) => (particle(w) ? titleCase(w) : initial(w)));
-  const after = words.slice(v + 1).filter((w) => !particle(w)).map(initial);
-  return [...before, titleCase(words[v]), ...after].join(' ');
-}
 
 // The words of a name that say something: folded to plain lowercase, titles, particles and
 // single-letter initials left out, every spelling of Muhammad made one word.
@@ -159,7 +136,7 @@ function readRoster(doc) {
   const people = new Map();
   for (const p of doc.people) {
     if (!isObj(p) || !isNim(p.nim) || typeof p.name !== 'string' || people.has(p.nim)) throw new Error('class list');
-    people.set(p.nim, { nim: p.nim, name: p.name, grp: typeof p.grp === 'string' ? p.grp : '', blocked: p.blocked === true });
+    people.set(p.nim, { nim: p.nim, name: p.name, blocked: p.blocked === true });
   }
   return people;
 }
@@ -190,7 +167,7 @@ function everyone(roster, config) {
   const drop = new Set(config.drop);
   const out = new Map();
   for (const p of roster.values()) if (!drop.has(p.nim)) out.set(p.nim, p);
-  for (const a of config.add) if (!out.has(a.nim)) out.set(a.nim, { nim: a.nim, name: a.name, grp: '', added: true });
+  for (const a of config.add) if (!out.has(a.nim)) out.set(a.nim, { nim: a.nim, name: a.name, added: true });
   return out;
 }
 
@@ -323,7 +300,7 @@ export function createCbt({ store, verify, isAdmin, env = {}, roster = '', banks
   function answer(k, s, uid) {
     const nim = s.byUid.get(uid);
     const p = nim ? s.known(nim) : null;
-    const who = p ? { short: shortName(p.name), name: p.name, nim } : null;
+    const who = p ? { name: displayName(p.name), nim } : null;
     if (s.accounts.has(uid)) return { state: 'closed', who };
     if (!nim) return { state: 'claim' };
     if (!s.people.has(nim) || s.blocked.has(nim)) return { state: 'closed', who };
@@ -413,7 +390,7 @@ export function createCbt({ store, verify, isAdmin, env = {}, roster = '', banks
       await note(conflict, true);
       return err(409, 'taken');
     }
-    if (!confirm) return ok({ preview: shortName(person.name) });
+    if (!confirm) return ok({ preview: displayName(person.name) });
     const { outcome } = await update('claims', readClaims, (doc) => {
       if (Object.values(doc.nim).some((x) => x.uid === user.uid)) return { outcome: 'bound' };
       if (Object.hasOwn(doc.nim, nim)) return { outcome: 'taken' };
@@ -440,7 +417,7 @@ export function createCbt({ store, verify, isAdmin, env = {}, roster = '', banks
     const people = [...everyone(k.people, config).values()].map((p) => {
       const x = Object.hasOwn(claims, p.nim) ? claims[p.nim] : null;
       return {
-        nim: p.nim, name: p.name, grp: p.grp, ...(p.added ? { added: true } : {}), blocked: blocked.has(p.nim),
+        nim: p.nim, name: p.name, ...(p.added ? { added: true } : {}), blocked: blocked.has(p.nim),
         claim: x ? { uid: x.uid, email: x.email, gname: x.gname, at: x.at, match: matchClaim(p, x) } : null,
       };
     });

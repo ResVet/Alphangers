@@ -7,6 +7,7 @@ import { confirmDialog, openDialog, toast } from './ui.js';
 import { fold, fmtRelative, fmtWhen } from './format.js';
 import { cbtAdmin, explainCbt, checkNewPerson } from './cbt-api.js';
 import { heldSetupCode } from './setup-link.js';
+import { displayName } from '../lib/names.js';
 
 export const TRYOUT = {
   key: 'tryout',
@@ -52,13 +53,6 @@ const HOW = [
 
 // Log entries worth a second look get an amber mark.
 const WARN = new Set(['conflict', 'closed']);
-
-/** The class list is written in capitals; names are shown the way people write them. */
-export function displayName(s) {
-  const t = String(s || '').trim();
-  if (t !== t.toUpperCase()) return t; // typed by an admin in mixed case: keep it
-  return t.toLowerCase().replace(/(^|[\s.-])(\p{L})/gu, (m, sep, ch) => sep + ch.toUpperCase());
-}
 
 /** The field takes the code itself or the whole setup link. */
 export function setupSecret(raw) {
@@ -384,7 +378,7 @@ export function renderTryout(host, { backend, user }) {
   function visible() {
     const test = FILTERS.find(([id]) => id === ui.filter)[2];
     const terms = fold(ui.q).split(/\s+/).filter(Boolean);
-    const hay = (p) => [fold(names.get(p.nim)), p.nim, fold(p.grp), fold(p.claim?.gname), fold(p.claim?.email)].join(' ');
+    const hay = (p) => [fold(names.get(p.nim)), p.nim, fold(p.claim?.gname), fold(p.claim?.email)].join(' ');
     return data.people
       .filter((p) => ui.keep.has(p.nim) || (test(p) && terms.every((t) => hay(p).includes(t))))
       .sort((a, b) => names.get(a.nim).localeCompare(names.get(b.nim), 'id'));
@@ -443,7 +437,7 @@ export function renderTryout(host, { backend, user }) {
         'button',
         { type: 'button', class: 'disclose', 'data-k': `${p.nim}:open`, 'aria-expanded': isOpen ? 'true' : 'false', 'aria-controls': isOpen ? panelId : null, onclick: () => toggle(p.nim) },
         h('span', { class: 'person-name cbt-name' }, name),
-        h('span', { class: 'person-meta mono' }, [p.nim, p.grp].filter(Boolean).join(' · ')),
+        h('span', { class: 'person-meta mono' }, p.nim),
       ),
       h(
         'div',

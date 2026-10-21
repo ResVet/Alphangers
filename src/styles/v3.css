@@ -833,14 +833,16 @@ html.fine .to-fig:not(.ld):not(.bad) .to-fz:hover{box-shadow:0 0 0 2px var(--grx
 .to-pv-q b{font-family:var(--disp);font-weight:700;font-size:clamp(30px,4.6vw,42px);line-height:1.05;letter-spacing:-.02em;color:var(--grx)}
 .to-pv-q span{font-family:var(--mono);font-size:13px;letter-spacing:.12em;color:var(--mut)}
 .to-pv .to-gerr:empty+.to-fh{margin-top:14px}
-.to-pass{position:relative;display:flex;flex-direction:column;width:min(100%,360px);aspect-ratio:1.586;padding:18px 20px 16px;border-radius:18px;overflow:hidden;border:1px solid rgba(134,242,94,.24);
+/* the card shows the whole name: a long one makes it taller. overflow:clip, unlike hidden, keeps the
+   automatic minimum height that aspect-ratio gives a box, so the content is never cut */
+.to-pass{position:relative;display:flex;flex-direction:column;width:min(100%,360px);aspect-ratio:1.586;padding:18px 20px 16px;border-radius:18px;overflow:hidden;overflow:clip;border:1px solid rgba(134,242,94,.24);
   background:radial-gradient(110% 90% at 100% 0%,rgba(63,174,42,.26),transparent 58%),linear-gradient(155deg,#112313,#0a150b 70%);box-shadow:0 30px 60px -32px rgba(0,0,0,.95),inset 0 1px 0 rgba(238,242,232,.07)}
 .to-pass::before{content:"";position:absolute;inset:0;pointer-events:none;background-image:linear-gradient(rgba(126,240,90,.05) 1px,transparent 1px),linear-gradient(90deg,rgba(126,240,90,.05) 1px,transparent 1px);background-size:18px 18px;
   -webkit-mask-image:linear-gradient(160deg,#000,transparent 72%);mask-image:linear-gradient(160deg,#000,transparent 72%)}
 .to-pass>*{position:relative}
-.to-pass-t{display:flex;justify-content:space-between;gap:10px;font-family:var(--mono);font-size:9.5px;letter-spacing:.24em;text-transform:uppercase;color:var(--mut)}
+.to-pass-t{display:flex;justify-content:space-between;gap:10px;margin-bottom:10px;font-family:var(--mono);font-size:9.5px;letter-spacing:.24em;text-transform:uppercase;color:var(--mut)}
 .to-pass-t span:first-child{color:var(--grx)}
-.to-pass-n{margin-top:auto;font-family:var(--disp);font-weight:700;font-size:22px;line-height:1.1;letter-spacing:-.01em;color:var(--dim)}
+.to-pass-n{margin-top:auto;font-family:var(--disp);font-weight:700;font-size:22px;line-height:1.1;letter-spacing:-.01em;color:var(--dim);overflow-wrap:anywhere}
 .to-pass.named .to-pass-n{color:var(--ink)}
 .to-pass-nim{margin-top:4px;font-family:var(--mono);font-size:13px;letter-spacing:.14em;color:var(--mut);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .to-pass.named .to-pass-nim{color:var(--grx)}
