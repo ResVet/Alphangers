@@ -19,6 +19,7 @@ Class portal for **Class Alpha**, Program Studi Pendidikan Dokter, Fakultas Kedo
 | **Foto kelas** | The whole class in one photo, the last thing before the footer. |
 | **Search** | `Ctrl K` / `⌘ K` / `/` searches sessions, lecturers, channels and heart parts at once, and accepts Indonesian or English spelling (`genetik` finds "Genetic"). |
 | **Pengumuman** | Announcements posted from the admin editor, with deadlines and countdowns. Hidden when there is nothing current. |
+| **Try out CBT** | The class's own question banks, Blok 2 (279 questions) and Blok 3 (200, written by the Batu division), in Latihan with the answer and explanation right away or Simulasi CBT with a timer and answers at the end, plus pictures, flags, filters by topic and a review of every attempt. Only Kelas Alpha can open them: a classmate signs in with Google and matches their NIM once, and admins can close the try out for any person or account. Works offline after the first open. |
 | **Offline** | Installable as an app. After one visit the schedule, lecturer list and heart still open without signal. |
 
 Everything is editable without touching code. An admin signs in with Google on the portal itself (the Admin button in the footer, `/?admin`, or `Ctrl Shift E`) and switches between **Lihat**, **Edit** and **Panel**: in edit mode every heading and paragraph can be typed over, and every session, lecturer, channel, announcement, division and photo can be added, changed or removed. Changes stay a draft, with undo and redo, until **Terbitkan** saves them to Firestore. **Panel** opens the full form editor (forms per block and lecturer, JSON, version history) over the page with the same drafts; it also still works on its own at `/admin/`. See [docs/ADMIN.md](docs/ADMIN.md). Until Firebase is configured, the site runs entirely from the JSON in this repository and makes no third-party requests.
@@ -29,7 +30,8 @@ Everything is editable without touching code. An admin signs in with Google on t
 - **three.js** for the heart explorer, with its own shaders for per-part colour, highlighting, x-ray, the depolarisation wave and cut faces, lit by studio lighting baked once at load from the physical material. Picking renders part ids into an 11×11 target around the pointer and takes the nearest hit, so thin structures such as the conduction fibres and chordae are easy to tap.
 - **Python** (NumPy, SciPy, scikit-image, trimesh, fast-simplification) to sculpt the heart as signed distance fields, mesh it, label every vertex with its part, bake ambient occlusion and activation times, then **glTF Transform + meshoptimizer** to pack and simplify it (466 KB).
 - **Firebase** Auth + Firestore for the admin, read by the portal over plain REST. Visitors never load the Firebase SDK; it is fetched only when someone opens the editor.
-- **Netlify Functions + Netlify Blobs** for photo uploads: the browser strips metadata and makes the smaller copies, a function checks the admin's Firebase token and the file's real type, rate limits, and stores it under a content hash.
+- **Netlify Functions + Netlify Blobs** for photo uploads (the browser strips metadata and makes the smaller copies, a function checks the admin's Firebase token and the file's real type, rate limits, and stores it under a content hash) and for try out access (who may open the sealed banks, the blocked list, the log).
+- **WebCrypto** (AES-256-GCM, HKDF) to seal the try out banks and the class list at build time and open them in the browser.
 - **sharp** at build time for the bundled photos (AVIF and WebP sizes, the original kept for zoom).
 - **Playwright** and `node:test` for tests; **Netlify** for hosting, with a strict Content Security Policy.
 
@@ -48,11 +50,13 @@ Node 20 or newer. Python 3.11+ is only needed to rebuild data or the heart model
 
 | Command | Does |
 | --- | --- |
-| `npm test` | Unit tests: schedule model, validator, content layer, photo metadata stripping, upload token checks |
-| `npm run test:e2e` | Builds (plus a mock-backend build in `dist-mock/`), then runs the browser suites: portal (6 viewports, reduced motion, storage blocked, no WebGL, axe), schedule and lecturers, admin, and the live editor |
+| `npm test` | Unit tests: schedule model, validator, content layer, photo metadata stripping, upload token checks, try out sealing, function and access state |
+| `npm run test:e2e` | Builds (plus a mock-backend build in `dist-mock/`), then runs the browser suites: portal (6 viewports, reduced motion, storage blocked, no WebGL, axe), schedule and lecturers, admin, the live editor, the try out and the Peserta try out tab |
 | `npm run test:rules` | Firestore security rules against the emulator (needs Java 21) |
 | `npm run data` | Rebuilds `src/data/schedule.json` from the checked transcripts in `content/jadwal/`, and `dosen.json` when given the lecturer sheet (`npm run data -- path/to/kontak-dosen.xlsx`; the sheet itself is not in the repo) |
 | `npm run heart` | Rebuilds the heart model from `scripts/heart/` into `public/models/` |
+| `npm run cbt:seal` | Seals the try out from a private folder kept outside the repo: `npm run cbt:seal -- --private ../cbt-private` writes `public/cbt/`, `src/data/cbt.json` and `netlify/data/cbt.mjs` (see [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md#try-out-access)) |
+| `npm run cbt:fixtures` | Rebuilds the made-up try out banks in `tests/fixtures/cbt/` that mock builds and tests use |
 | `npm run media` | Prepares a bundled photo: `npm run media -- photo.jpg public/img/divisi/name "alt text"` writes the sizes and prints the record to paste into a content file |
 
 ## Repository map
@@ -67,12 +71,12 @@ src/features/           jadwal, dosen, anatomi (3D heart), info (announcements),
 src/lib/                content layer, validator, schedule model, calendar export, page texts, photos
 src/edit/               the editor that runs on the portal (loaded only for admins)
 src/admin/              the /admin/ form editor and the Firebase backend both editors use
-netlify/                upload and photo-serving functions
+netlify/                upload, photo-serving and try out access functions
 src/data/               bundled content (the fallback for everything)
-content/                cleaned schedule text and the try out question bank
+content/                cleaned schedule text
 scripts/heart/          the heart model pipeline
 scripts/media.mjs       photo sizes for bundled images
-public/                 static files: model, photos, icons, service worker, manifest
+public/                 static files: model, photos, icons, sealed try out files, service worker, manifest
 tests/                  unit, browser and rules tests
 docs/                   architecture, security, admin and Firebase guides
 ```
@@ -80,7 +84,7 @@ docs/                   architecture, security, admin and Firebase guides
 ## Documentation
 
 - [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md): how the page is put together, the content layer, the heart pipeline and renderer.
-- [docs/SECURITY.md](docs/SECURITY.md): threat model, headers, Firestore rules, the live editor, photo uploads, privacy.
+- [docs/SECURITY.md](docs/SECURITY.md): threat model, headers, Firestore rules, the live editor, photo uploads, try out access, privacy.
 - [docs/ADMIN.md](docs/ADMIN.md): editing on the page and in `/admin/` (Bahasa Indonesia).
 - [docs/FIREBASE_SETUP.md](docs/FIREBASE_SETUP.md): connecting Firebase, step by step (Bahasa Indonesia).
 

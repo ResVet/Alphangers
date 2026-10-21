@@ -145,12 +145,17 @@ for (const vp of VIEWPORTS) {
     await s.page.waitForSelector('#dosenRoot dialog[open]', { timeout: 10000 });
     await s.page.keyboard.press('Escape');
 
-    // try out opens from its hash and reaches the setup screen
+    // try out opens from its hash with the bank cards and their counts; a bank asks for sign-in,
+    // and nothing is fetched from Google until the student taps the button (finish() checks)
     await s.ev(() => { location.hash = 'tryout'; });
     await s.page.waitForFunction(() => !!document.querySelector('.to-blk.on') && !document.querySelector('#curtain.move'), null, { timeout: 20000 });
-    await s.page.click('.to-blk.on');
-    await s.page.waitForSelector('.to-start', { timeout: 10000 });
-    assert.ok(await s.ev(() => document.querySelector('#panel').scrollWidth <= innerWidth), 'try out setup fits');
+    const counts = await s.ev(() => [...document.querySelectorAll('.to-blk.on .to-bm')].map((e) => e.textContent));
+    assert.equal(counts.length, 2, 'Blok 2 and Blok 3');
+    for (const c of counts) assert.match(c, /^\d+ soal · \d+ topik · Semester 1$/);
+    await s.page.click('.to-blk.on[data-b="b3"]');
+    await s.page.waitForSelector('.to-gate[data-gate="masuk"] [data-act="gin"]', { timeout: 10000 });
+    assert.ok(await s.ev(() => document.querySelector('#panel').scrollWidth <= innerWidth), 'try out sign-in fits');
+    assert.equal(await s.ev(() => performance.getEntriesByType('resource').some((e) => /\/assets\/(firebase-auth|index\.esm|backend-firebase)[^/]*\.js/.test(e.name))), false, 'no Firebase before the sign-in tap');
     await s.page.keyboard.press('Escape');
     await s.page.waitForFunction(() => !document.querySelector('#curtain.move'), null, { timeout: 15000 });
 

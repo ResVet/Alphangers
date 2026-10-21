@@ -16,7 +16,8 @@
 [build.environment]
   NODE_VERSION = "22"
 
-# Photo upload and serving (Netlify Functions + Blobs). See docs/ADMIN.md.
+# Photo upload and serving, and who may open the try out (Netlify Functions +
+# Blobs). See docs/ADMIN.md.
 [functions]
   directory = "netlify/functions"
   node_bundler = "esbuild"
@@ -118,6 +119,18 @@
   for = "/models/*"
   [headers.values]
     Cache-Control = "public, max-age=604800"
+
+# Sealed try out files (scripts/cbt/seal.mjs): the question banks and their
+# pictures, encrypted. Each name carries a hash of its bytes, so a changed file
+# always gets a new name and a cached copy never goes stale. Useless without a
+# key from /api/cbt; still kept out of search results and away from other
+# sites' pages.
+[[headers]]
+  for = "/cbt/*"
+  [headers.values]
+    Cache-Control = "public, max-age=31536000, immutable"
+    X-Robots-Tag = "noindex"
+    Cross-Origin-Resource-Policy = "same-origin"
 
 # Optional: serve the Firebase sign-in handler from this site's own domain.
 # This makes the redirect fallback work in browsers that block third-party

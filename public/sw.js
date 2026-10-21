@@ -1,7 +1,7 @@
 // Service worker for the portal. It keeps the last good copy of the page and everything it
 // loaded, so the schedule, lecturer list and heart still open in a lecture hall with no
 // signal. The admin page and other sites are never touched.
-const VERSION = 'v5-1';
+const VERSION = 'v5-2';
 const SHELL = 'alpha-shell-' + VERSION;
 const FILES = 'alpha-files-' + VERSION;
 const MEDIA = 'alpha-media-v1';
@@ -44,8 +44,9 @@ self.addEventListener('fetch', (event) => {
     return;
   }
 
-  // hashed build files never change: cache first
-  if (url.pathname.startsWith('/assets/')) {
+  // hashed build files and the sealed try out files never change: cache first. The sealed
+  // files are what lets a signed-in classmate open the try out offline.
+  if (url.pathname.startsWith('/assets/') || url.pathname.startsWith('/cbt/')) {
     event.respondWith((async () => {
       const hit = await caches.match(req);
       if (hit) return hit;

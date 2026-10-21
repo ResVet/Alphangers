@@ -65,7 +65,7 @@ Every heading and paragraph in the static markup that the admin may change has a
 
 - **Schedule.** The three block schedules (a PDF and two spreadsheets) were transcribed by hand into `content/jadwal/blok-*.txt`, one session per line, and checked against the originals. `scripts/build_data.py` turns them into `src/data/schedule.json`: blocks with dates, room and coordinator, days with sessions, session kind, lecturer codes and notes. Where the official sheet itself was ambiguous (two sessions in one slot, "sampai selesai" end times) the transcript keeps a note and the UI shows it.
 - **Lecturers.** The faculty contact sheet, merged with the codes used in each block, into `src/data/dosen.json`. Names are normalised for sorting (titles such as dr., Prof. and degrees are ignored), phones are stored in three forms (dialable, display, WhatsApp). Lecturer phone numbers are public by the class's decision; student numbers are not included.
-- **Try out bank.** `content/bank/bank.json`, curated from the class's question sets with explanations, lazily imported when the try out opens.
+- **Try out banks.** One per block, written by the class: Blok 2 curated from the class's question sets, Blok 3 from the Batu division's try out, kept word for word. They live in a private folder outside the repository and reach the site only sealed (see [Try out access](#try-out-access)).
 
 ### Schedule model
 
@@ -117,9 +117,31 @@ The v3 shell (`src/legacy/`) runs one `requestAnimationFrame` loop for the hero,
 
 `netlify/functions/media-upload.mjs` (`POST /api/media`, `DELETE /api/media/:key`) accepts a request only from the site's own origin with a Firebase ID token, verifies the token's RS256 signature against Google's published keys, issuer, audience and expiry (`netlify/lib/auth.mjs`, WebCrypto, no SDK), and checks that the user is in `/admins` by reading Firestore with the caller's own token. It then sniffs the real file type from its first bytes, refuses anything that is not JPEG, PNG, WebP or AVIF or is over 5.8 MB, and stores it in Netlify Blobs under a key made from the SHA-256 of the bytes, so the same file uploaded twice is stored once and a key can never be guessed or overwritten. Requests are rate limited per IP by Netlify and per admin inside the function. `netlify/functions/media.mjs` serves `/media/:key` with immutable caching and a sandboxing CSP; the service worker keeps the newest 80 photos for offline use.
 
+## Try out access
+
+Only Kelas Alpha may open the try out banks, and admins can shut individual people or Google accounts out. The repository is public, so the banks, their pictures and the class list ship only as ciphertext, and a small function hands out the keys.
+
+```
+private folder (never committed)                      in the repository and the build
+  roster.json, banks/<id>.json, img/, secret.txt ──▶ npm run cbt:seal ──▶ public/cbt/<id>.<hash>.bin, <id>-<img>.<hash>.bin
+                                                                          src/data/cbt.json     bank names and counts
+                                                                          netlify/data/cbt.mjs  sealed class list, bank versions
+
+student ── Google sign-in ──▶ GET  /api/cbt/me     ──▶ { state: 'ok', keys } ──▶ /cbt/<id>.bin opened in the browser
+                              POST /api/cbt/claim  NIM, shortened-name preview, confirm
+admin ──── Panel, Peserta try out ──▶ GET/POST /api/cbt/admin   block, unblock, release, blockAccount, add, remove, install
+```
+
+- **Sealing** (`src/lib/seal.js`, `scripts/cbt/seal.mjs`). Keys come from one master secret through HKDF-SHA256, one per purpose and bank version (`bank/<id>/v<kv>`, the class list). Files are AES-256-GCM with the file's identity as additional data and an IV derived from the content, so sealing is deterministic: running the script again changes nothing, and a changed bank gets a new hashed name. The script validates every bank strictly and writes nothing if anything is wrong.
+- **The function** (`netlify/functions/cbt.mjs`, logic in `netlify/lib/cbt.mjs` with the store, token check and data passed in). It verifies the Firebase ID token with `netlify/lib/auth.mjs`, opens the class list with the master secret (`CBT_SECRET`, or one an admin installed in Blobs), and keeps bindings, the blocked list and a log as JSON documents in the `cbt` Blobs store, each written on an ETag condition and retried on a lost race. A student binds their account to a NIM once; an allowed, bound account gets every bank's key, anything else the same `closed` answer.
+- **The page** (`src/features/tryout/access.js` and the try out module in `src/legacy/app.js`). Firebase Auth (`src/lib/firebase-auth.js`, shared with the admin) loads only when the student taps sign in or a cached session needs a fresh token. Keys are cached in `localStorage` (`alpha.cbt.v1`) for up to 7 days so the try out works offline, and checked again when a bank is opened more than an hour after the last check. Opened banks and decrypted pictures (`blob:` URLs) stay in memory. A faint watermark with the student's name and the last four NIM digits covers every question and picture. Scores, progress and history stay on the device and hold question ids, not question text.
+- **The admin tab** (`src/admin/editor-cbt.js`, `src/admin/cbt-api.js`). The class list with each binding and how well the Google account matches the class list name, the blocked accounts and the log. Every action goes straight to the server; there is no draft and no Simpan.
+- **Mock builds.** `?mock&cbt=claim|ok|closed|setup|slow|offline` runs the page against `tests/fixtures/cbt/`, banks sealed with a throwaway secret by `npm run cbt:fixtures`. The admin mock (`/admin/?mock`) has its own in-memory server; add `&cbt=ready` to start with the secret installed or `&cbt=down` for a failing first load.
+- **Adding a bank.** Put `banks/<id>.json` (and its pictures under `img/<id>/`) in the private folder, run `npm run cbt:seal -- --private <folder>`, commit the changed `public/cbt/`, `src/data/cbt.json` and `netlify/data/cbt.mjs`, and deploy. Raising a bank's `kv` changes its key, which locks out everyone who kept the old one.
+
 ## Offline and install
 
-`public/sw.js` serves pages network-first with the last good copy as the offline fallback, hashed build files cache-first, uploaded photos (`/media/`) cache-first, and other same-origin files (model, images, sound) from cache while refreshing them. It never touches `/admin/`, `/api/` or other hosts. `public/manifest.webmanifest` makes the portal installable with shortcuts to the schedule, the lecturers and the heart.
+`public/sw.js` serves pages network-first with the last good copy as the offline fallback, hashed build files cache-first, uploaded photos (`/media/`) and sealed try out files (`/cbt/`) cache-first, and other same-origin files (model, images, sound) from cache while refreshing them. It never touches `/admin/`, `/api/` or other hosts. `public/manifest.webmanifest` makes the portal installable with shortcuts to the schedule, the lecturers and the heart.
 
 ## Tests
 
@@ -129,7 +151,11 @@ The v3 shell (`src/legacy/`) runs one `requestAnimationFrame` loop for the hero,
 | `tests/validate.test.mjs`, `tests/content.test.mjs` | the validator and every content fallback path |
 | `tests/v5.test.mjs` | page texts, photo records and divisions in the validator, cancelled sessions in the model and `.ics`, online sessions, meeting links and tags in the validator, model and `.ics`, draft injection, metadata stripping, upload token verification and file sniffing |
 | `tests/firestore.rules.test.mjs` | the security rules, on the emulator |
+| `tests/cbt.test.mjs` | sealing, the seal script, and the try out function: tokens, binding and previews, concurrent binds, every admin operation, malformed documents failing closed, the secret from the environment or Blobs |
+| `tests/tryout-access.test.mjs`, `tests/cbt-admin.test.mjs` | the page's access state (cache, hourly check, offline, sign-out, pictures) and the admin tab's API client and setup link |
 | `tests/jadwal-dosen.e2e.mjs` | schedule and lecturer sections at 7 viewports, keyboard, reduced motion, storage blocked, axe |
 | `tests/admin.e2e.mjs` | the setup guide, the real Google sign-in screen, and the editor signed in against a mock backend |
 | `tests/editor.e2e.mjs` | the live editor on the mock build: visitors never download it, a non-admin can edit nothing; cancelling a session, typing a page text, undo, redo and publishing; editing a lecturer, a session, a channel, an announcement and a heart note; uploading a division photo and renaming a division in place, on desktop and phone; the Panel view carrying a draft into the framed `/admin/` and back; an online session with a join link and tags, then the same session's tags, link and cancellation in the Panel, and the Panel's divisi and page-text sections |
 | `tests/portal.e2e.mjs` | the built site under the production headers at 6 viewports: section order, channels and panels, try out, search, lecturers, the heart, no sideways scroll, no console errors, no CSP violations, no requests to other hosts except the Firestore content reads (answered as an empty database); plus reduced motion, storage blocked, no WebGL and axe |
+| `tests/tryout.e2e.mjs` | the try out on the mock build at phone and desktop size: sign-in, NIM check and preview, practice with pictures and the watermark, results and review, sign-out, a closed account, setup, offline, too many attempts, an in-app browser; no CSP violations, no other hosts, axe |
+| `tests/admin-cbt.e2e.mjs` | the Peserta try out tab: setup code from the field and from a link, search and filters, blocking and unblocking, releasing and blocking an account, adding and removing people, keyboard only, phone sizes and inside the Panel |

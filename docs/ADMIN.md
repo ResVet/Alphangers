@@ -10,6 +10,8 @@ Ketiganya memakai draf yang sama. Teks yang kamu ketik di Edit sudah ada waktu P
 
 Kalau Firebase belum disambungkan, panel admin menampilkan langkah setup. Ikuti [FIREBASE_SETUP.md](FIREBASE_SETUP.md) dulu.
 
+Siapa yang boleh membuka try out diatur di tab **Peserta try out** di Panel. Lihat [Peserta try out](#peserta-try-out).
+
 ## Edit langsung di halaman
 
 ### Masuk
@@ -109,6 +111,41 @@ Cari dengan nama, spesialisasi, atau sebagian nomor. Nomor telepon dirapikan oto
 ### Jantung 3D
 
 Teks untuk tiap bagian model jantung. Pilih bagian dari daftar atau pakai tombol sebelumnya dan berikutnya. ID bagian tidak bisa diubah karena terikat ke model 3D.
+
+## Peserta try out
+
+Tab **Peserta try out** di Panel mengatur siapa yang boleh membuka soal try out kelas: Blok 2, Blok 3, dan blok berikutnya. Di sini tidak ada tombol Simpan: setiap tindakan langsung dikirim ke server dan berlaku saat itu juga.
+
+Teman sekelas membuka try out dengan masuk pakai akun Google, lalu mencocokkan NIM sekali. Yang bisa masuk hanya orang yang ada di daftar kelas (dari absen tutor Kelas Alfa).
+
+### Pertama kali: pasang kode setup
+
+Kalau tertulis **Server try out belum siap**, server belum punya kode setup, jadi daftar kelas belum bisa dibuka dan belum ada yang bisa masuk try out. Buka link setup (yang berakhiran `#tryout/pasang=`), atau tempel kodenya (boleh juga link-nya) di kolom **Kode setup**, lalu tekan **Pasang**. Cukup sekali. Kode langsung dihapus dari alamat halaman dan tidak disimpan di perangkat. Kalau setelah login kolomnya masih kosong, buka link itu sekali lagi.
+
+Kode yang sama juga bisa disimpan sebagai variabel lingkungan `CBT_SECRET` di pengaturan situs Netlify. Kalau sudah begitu, tab ini langsung siap dan langkah di atas tidak perlu. Simpan kode itu baik-baik dan jangan dibagikan: siapa pun yang memegangnya bisa membuka semua soal.
+
+### Membaca daftar
+
+- Angka di atas: orang di daftar, yang sudah masuk, dan yang diblokir.
+- Tiap baris berisi nama dan NIM, lalu akun Google yang dipakai. Labelnya: **cocok via NIM** (email memuat NIM), **cocok**, **mirip** (hanya sebagian nama yang sama), **perlu dicek** (tidak ada yang mirip).
+- Cari pakai nama, NIM, atau email. Saring: Semua, Sudah masuk, Belum masuk, Perlu dicek, Diblokir.
+- Klik nama untuk melihat detail dan tombolnya.
+
+### Tombol dan kapan dipakai
+
+- **Blokir**: orang ini tidak bisa membuka soal. Dia tetap bisa masuk, tapi hanya melihat pesan netral, dan teman lain tidak bisa tahu. **Buka blokir** mengembalikan aksesnya.
+- **Lepas akun**: akun Google yang terikat dilepas dari NIM ini, jadi NIM-nya bebas lagi. Pakai kalau ada yang salah ketik NIM atau masuk dengan akun yang salah. Akun itu masih bisa mengetik NIM yang belum terpakai.
+- **Blokir akun Google ini**: untuk akun penyusup, misalnya akun asing yang memakai NIM teman. Akun itu tidak bisa membuka soal dengan NIM mana pun. Biarkan "Lepaskan juga NIM" tercentang supaya pemilik NIM bisa masuk dengan akunnya sendiri. Blokirnya bisa dibuka lagi di bagian **Akun Google yang diblokir**.
+- **Tambah orang**: menambah nama dan NIM (angka saja, 6 sampai 20 digit).
+- **Hapus dari daftar**: NIM itu tidak bisa dipakai lagi dan akunnya ikut dilepas. Akun itu masih bisa mengetik NIM lain yang belum terpakai, jadi untuk menutup satu akun sepenuhnya pakai **Blokir akun Google ini**.
+
+### Catatan
+
+Bagian **Catatan** menampilkan kejadian terbaru: akun yang mencoba NIM yang sudah dipakai akun lain (tanda kuning, sering jadi tanda penyusup), yang masuk dengan NIM yang diblokir, dan semua tindakan admin. Tombol **Lihat** membuka baris orangnya.
+
+### Kapan berlaku
+
+Perubahan berlaku begitu perangkat peserta mengecek ke server lagi, yaitu saat membuka bank soal, paling lama sekitar satu jam sekali selama online. Perangkat yang terus offline menyimpan kunci soal paling lama 7 hari. Untuk menutup satu bank seketika bagi semua yang pernah membukanya, kunci bank itu harus diganti lalu situs di-deploy ulang (lihat bagian Try out access di `docs/ARCHITECTURE.md`).
 
 ## Error dan peringatan
 

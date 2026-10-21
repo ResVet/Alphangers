@@ -12,6 +12,7 @@ import { renderDosen, revealDosen } from './editor-dosen.js';
 import { renderHeart, revealHeart } from './editor-heart.js';
 import { renderRaw } from './raw.js';
 import { renderHistory } from './history.js';
+import { renderTryout, TRYOUT } from './editor-cbt.js';
 
 const EDITORS = {
   links: { render: renderLinks },
@@ -32,9 +33,14 @@ export function startApp(root, { backend, user, docs, embed = false }) {
   let key = keys[0];
   let mode = 'form';
   let busy = false;
+  // The "Peserta try out" tab is not a document: no draft, modes or save bar. While it is open,
+  // `key` and `mode` keep pointing at the last document, so everything else works as before.
+  let tryout = false;
+  let tryoutView = null;
 
   // Shell
   const navButtons = {};
+  const tryoutBtn = h('button', { type: 'button', class: 'key-b key-tryout', onclick: () => go(TRYOUT.key) }, TRYOUT.title);
   const nav = h(
     'nav',
     { class: 'keys', 'aria-label': 'Konten' },
@@ -44,6 +50,7 @@ export function startApp(root, { backend, user, docs, embed = false }) {
       navButtons[k] = { b, dot };
       return b;
     }),
+    tryoutBtn,
   );
   const title = h('h1', { tabIndex: -1 });
   const source = h('p', { class: 'meta source' });
@@ -52,6 +59,7 @@ export function startApp(root, { backend, user, docs, embed = false }) {
   const issues = h('div', { class: 'issues-sum' });
   const modeBar = h('div', { class: 'seg', role: 'group', 'aria-label': 'Mode' });
   const editor = h('div', { class: 'editor' });
+  const tryoutHost = h('div', { class: 'cbt', hidden: true });
   const saveState = h('p', { class: 'savebar-state', 'aria-live': 'polite' });
   const discardBtn = h('button', { type: 'button', class: 'btn ghost', onclick: discard }, 'Batalkan perubahan');
   const saveBtn = h('button', { type: 'button', class: 'btn primary', onclick: () => ctx().save() }, 'Simpan');
@@ -93,6 +101,7 @@ export function startApp(root, { backend, user, docs, embed = false }) {
         ),
         issues,
         editor,
+        tryoutHost,
       ),
       h('div', { class: 'savebar' }, h('div', { class: 'savebar-in' }, saveState, h('div', { class: 'row-actions' }, discardBtn, saveBtn))),
     ),
@@ -127,6 +136,7 @@ export function startApp(root, { backend, user, docs, embed = false }) {
   function paintChrome() {
     const doc = docs[key];
     for (const k of keys) navButtons[k].dot.hidden = !docs[k].dirty;
+    if (tryout) return;
     stateChip.className = `state ${doc.dirty ? 'dirty' : doc.base.exists ? 'saved' : 'bundled'}`;
     stateChip.textContent = doc.dirty ? 'Belum disimpan' : doc.base.exists ? 'Tersimpan' : 'Versi bawaan';
     const errs = doc.result ? doc.result.errors.length : 0;
@@ -177,6 +187,17 @@ export function startApp(root, { backend, user, docs, embed = false }) {
   /* ---------- head, banners, body ---------- */
 
   function paintHead() {
+    root.firstElementChild.classList.toggle('is-tryout', tryout);
+    tryoutBtn.setAttribute('aria-current', tryout ? 'page' : 'false');
+    if (tryout) {
+      title.textContent = TRYOUT.title;
+      document.title = `${TRYOUT.title} · Admin Alphangers`;
+      source.textContent = TRYOUT.sub;
+      source.title = '';
+      for (const { b } of Object.values(navButtons)) b.setAttribute('aria-current', 'false');
+      clear(banners);
+      return;
+    }
     const doc = docs[key];
     const info = KEY_INFO[key];
     title.textContent = info.title;
@@ -222,6 +243,14 @@ export function startApp(root, { backend, user, docs, embed = false }) {
   function renderBody() {
     const y = window.scrollY;
     clear(editor);
+    editor.hidden = tryout;
+    tryoutHost.hidden = !tryout;
+    if (tryout) {
+      if (tryoutView) tryoutView.shown();
+      else tryoutView = renderTryout(tryoutHost, { backend, user });
+      paintChrome();
+      return;
+    }
     const c = ctx();
     if (mode === 'json') renderRaw(editor, c);
     else if (mode === 'history') renderHistory(editor, c);
@@ -241,10 +270,13 @@ export function startApp(root, { backend, user, docs, embed = false }) {
       if (!ok) return;
       uiState[key].rawPending = false;
     }
-    const changedKey = k !== key;
-    key = k;
-    mode = m;
-    const hash = `#${k}${m === 'form' ? '' : '/' + m}`;
+    const changedKey = k !== (tryout ? TRYOUT.key : key);
+    tryout = k === TRYOUT.key;
+    if (!tryout) {
+      key = k;
+      mode = m;
+    }
+    const hash = tryout ? `#${k}` : `#${k}${m === 'form' ? '' : '/' + m}`;
     if (location.hash !== hash) history.replaceState(null, '', hash);
     renderAll();
     if (changedKey) {
@@ -289,7 +321,9 @@ export function startApp(root, { backend, user, docs, embed = false }) {
   document.addEventListener('keydown', (e) => {
     if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 's') {
       e.preventDefault();
-      if (!document.querySelector('dialog[open]')) ctx().save();
+      if (document.querySelector('dialog[open]')) return;
+      if (tryout) toast(TRYOUT.noSave);
+      else ctx().save();
     }
   });
   window.addEventListener('hashchange', () => fromHash());
@@ -302,7 +336,8 @@ export function startApp(root, { backend, user, docs, embed = false }) {
 
   function fromHash() {
     const [k, m] = location.hash.replace(/^#/, '').split('/');
-    go(keys.includes(k) ? k : keys[0], MODES.some(([x]) => x === m) ? m : 'form');
+    if (k === TRYOUT.key) go(k);
+    else go(keys.includes(k) ? k : keys[0], MODES.some(([x]) => x === m) ? m : 'form');
   }
   fromHash();
 }

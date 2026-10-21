@@ -1,23 +1,24 @@
 # Security
 
-Alphangers is a public class portal. It holds no student data and has no user accounts except the admin. The goals are: nobody but the owner can change what the class sees, a broken or hostile content document cannot break or hijack the page, and visiting the site does not leak anything about the visitor to third parties.
+Alphangers is a public class portal. Its only student data belongs to the try out: the class list (names, NIMs and tutorial groups), which ships sealed, and, for each classmate who signs in to the try out, their Google email and display name and the NIM they bound. The goals are: nobody but the owner can change what the class sees, only the class (minus anyone it shuts out) can open the try out, a broken or hostile content document cannot break or hijack the page, and visiting the site does not leak anything about the visitor to third parties.
 
 Report a problem privately to the repository owner on GitHub rather than in a public issue.
 
 ## What is public
 
-- Everything in this repository and the built site: schedule, lecturer names, specialties and phone numbers, Drive links and the try out bank. Lecturer phone numbers are published by the class's decision so classmates can reach lecturers about sessions. Student phone numbers are not in the data.
+- Everything in this repository and the built site: schedule, lecturer names, specialties and phone numbers, and Drive links. Lecturer phone numbers are published by the class's decision so classmates can reach lecturers about sessions. Student phone numbers are not in the data.
 - The Firebase web config (see below). It identifies the project; it grants nothing.
+- Not public: the try out banks, their pictures and the class list. They are in the repository and the build only sealed; see [Try out access](#try-out-access).
 
 ## The portal page
 
 - **One outside host for visitors.** Fonts, scripts, the 3D model, photos and media are all served from the site. The only other host a visitor's page contacts is `firestore.googleapis.com`, for public reads of the five content documents, with `credentials: 'omit'` (and none at all while `firebaseConfig` is `null`). The portal end-to-end suite fails if any other host is requested, and the editor suite checks that no editor or Firebase SDK code is downloaded for a visitor.
 - **Content Security Policy** (from `netlify.toml`):
   `default-src 'self'; script-src 'self' 'wasm-unsafe-eval' https://apis.google.com; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; font-src 'self' data:; media-src 'self'; connect-src 'self' https://firestore.googleapis.com https://identitytoolkit.googleapis.com https://securetoken.googleapis.com; worker-src 'self'; manifest-src 'self'; frame-src 'self' https://alphangers-1ba79.firebaseapp.com; object-src 'none'; base-uri 'none'; form-action 'none'; frame-ancestors 'none'; upgrade-insecure-requests`.
-  No inline scripts (the one bootstrap line lives in `public/boot.js`). `wasm-unsafe-eval` is needed only for the meshoptimizer decoder that unpacks the heart model. The Google sign-in hosts (`apis.google.com`, the project's auth domain as a frame, and the two Firebase Auth endpoints) are exactly the set `/admin/` already allows; they are used only after the admin opens the live editor. Inline styles are allowed because the page sets CSS custom properties from script and paints blurred photo previews (`data:` images, validated) as backgrounds; inline CSS cannot run code. The portal suite runs the built site under these exact headers and fails on any violation.
+  No inline scripts (the one bootstrap line lives in `public/boot.js`). `wasm-unsafe-eval` is needed only for the meshoptimizer decoder that unpacks the heart model. The Google sign-in hosts (`apis.google.com`, the project's auth domain as a frame, and the two Firebase Auth endpoints) are exactly the set `/admin/` already allows; they are used only after the admin opens the live editor or a student taps the try out's sign-in button. Inline styles are allowed because the page sets CSS custom properties from script and paints blurred photo previews (`data:` images, validated) as backgrounds; inline CSS cannot run code. The portal suite runs the built site under these exact headers and fails on any violation.
 - **Other headers.** HSTS (two years, subdomains), `X-Content-Type-Options: nosniff`, `Referrer-Policy: strict-origin-when-cross-origin`, a Permissions-Policy that turns off camera, microphone, geolocation, payment and similar (motion sensors stay on for the hero's tilt effect), `X-Frame-Options: DENY` and `frame-ancestors 'none'` against clickjacking.
 - **Rendering.** Content from Firestore or the cache is validated (next section) and then written with `textContent` and attributes. Where a module builds HTML strings for speed (the schedule and lecturer rows), every value passes through an escaping helper. Links are `https:` only and open with `rel="noopener noreferrer"`.
-- **Storage.** The portal stores only conveniences on the visitor's device: the content cache, try out progress and scores, the last date picked in the schedule, and whether the intro has been seen. All of it is wrapped so a browser that blocks storage still gets a working page (covered by tests).
+- **Storage.** The portal stores only conveniences on the visitor's device: the content cache, try out progress and scores, a signed-in classmate's try out keys (see [Try out access](#try-out-access)), the last date picked in the schedule, and whether the intro has been seen. All of it is wrapped so a browser that blocks storage still gets a working page (covered by tests).
 - **Service worker.** Same-origin GET requests only. It never caches `/admin/`, never touches other hosts, and is served with `Cache-Control: no-cache` so a fix reaches visitors on their next load.
 
 ## Firebase content store
@@ -101,11 +102,11 @@ Removing a photo from a division does not delete the file, so undo and history c
 
 ### Secrets
 
-There are none in the repository. The web config is public by design, there are no service account keys, and admin identity is a Firebase UID, not an email address. `.firebaserc` holds only the project id.
+There are none in the repository. The try out's master secret lives only in the Netlify environment or the `cbt` Blobs store and in the private folder kept outside the repository. The web config is public by design, there are no service account keys, and admin identity is a Firebase UID, not an email address. `.firebaserc` holds only the project id.
 
 ### Tests
 
-`tests/v5.test.mjs` covers the upload function's token check and file sniffing, the photo path rules, page texts, and the editor's metadata stripping; `tests/editor.e2e.mjs` covers the live editor end to end against the mock backend, including that visitors never download it and that announcement text with markup stays text. `tests/firestore.rules.test.mjs` runs against the Firestore emulator and covers public reads, denied listing, non-admin and unverified writes, wrong providers, stale `rev`, missing or forged history snapshots, extra fields, spoofed authors and timestamps, oversized documents, resets, history immutability, the `admins` collection, and default deny. `tests/content.test.mjs` covers the portal's fallbacks (remote newer, invalid, network down, storage blocked, no config), and `tests/validate.test.mjs` covers the validator.
+`tests/v5.test.mjs` covers the upload function's token check and file sniffing, the photo path rules, page texts, and the editor's metadata stripping; `tests/editor.e2e.mjs` covers the live editor end to end against the mock backend, including that visitors never download it and that announcement text with markup stays text. `tests/firestore.rules.test.mjs` runs against the Firestore emulator and covers public reads, denied listing, non-admin and unverified writes, wrong providers, stale `rev`, missing or forged history snapshots, extra fields, spoofed authors and timestamps, oversized documents, resets, history immutability, the `admins` collection, and default deny. `tests/content.test.mjs` covers the portal's fallbacks (remote newer, invalid, network down, storage blocked, no config), and `tests/validate.test.mjs` covers the validator. `tests/cbt.test.mjs` covers the sealing, the seal script and the try out function (forged and foreign tokens, previews that do not depend on blocks, concurrent binds, every admin operation, malformed documents failing closed, the secret from the environment or Blobs); `tests/tryout.e2e.mjs` checks that a closed account's screen never says why and that no question text reaches a signed-out visitor.
 
 ### Accepted risks
 
@@ -116,9 +117,32 @@ There are none in the repository. The web config is public by design, there are 
 - The upload rate limit inside the function is per function instance; the platform limit is the one that holds across instances.
 - If popups are blocked, sign-in falls back to a redirect, which can fail in browsers that block third-party storage unless the optional same-domain auth proxy in `netlify.toml` is set up. A redirect that comes back empty, and a browser that refuses storage to the auth domain outright (some private windows), each get their own message asking for popups or a normal window. This affects only the admin, and fails closed.
 
+## Try out access
+
+The try out banks (Blok 2, Blok 3 and any later block) are for Kelas Alpha only, and the class can shut individual people out of every try out. Hiding a button would not hold on a public repository, so the banks, their pictures and the class list are in the repository and the build only as ciphertext, and a function decides who gets the keys.
+
+- **Sealed files.** `npm run cbt:seal` reads a private folder that is never committed (the plaintext banks and pictures, the class list taken from the tutors' attendance sheet, and the master secret) and writes `public/cbt/*.bin`, `src/data/cbt.json` (bank names and counts only) and `netlify/data/cbt.mjs` (the sealed class list and the bank versions). It refuses a private folder inside the repository. Each file is AES-256-GCM under a key derived from the master secret with HKDF-SHA256, one key per bank version and one for the class list (`src/lib/seal.js`). The additional data names the file (bank and version, one picture, the class list), so a file cannot pass for another, and the IV is an HMAC of the content under a separate derived key, so two contents never share an IV and re-sealing unchanged content gives the same bytes.
+- **Who gets a key.** `/api/cbt` (`netlify/functions/cbt.mjs`, logic in `netlify/lib/cbt.mjs`) checks the Firebase ID token exactly like the upload function (Google account, verified email). A student binds the account to a NIM on the class list once, after seeing a shortened name ("Dimas P. S.") that catches typos without showing the full name. One NIM per account and one account per NIM; only an admin can release a binding. A bound account whose NIM is on the list and not blocked, and which is not itself blocked, gets the key of every bank. Anything else gets the same `closed` answer, and the claim step answers alike for blocked and allowed NIMs, so nobody can use it to find out who is blocked. No page lists blocked names, and the student-facing text never gives a reason.
+- **State.** Bindings, the blocked list and the last 200 events are JSON documents in the `cbt` Blobs store, each written only if its ETag still matches, so two requests can never bind one NIM or one account. A malformed document fails closed with a 503; it is never read as "nobody is bound" or "nobody is blocked".
+- **Admin operations** need the same `/admins/{uid}` check as everything else. The admin view shows each binding with how well the Google account matches the class list name, logs attempts on a NIM that is already bound, and can block a whole Google account as well as a NIM.
+- **The master secret** comes from `CBT_SECRET` in the Netlify environment, or from one an admin installed from the admin page; either counts only if it opens the sealed class list, and an installed one cannot be replaced while it still does. It never appears in the repository, the build, logs or responses, and the admin page drops it from the address bar before Firebase loads.
+- **Limits.** Per account and function instance: 12 NIM attempts, 120 `/me` and 240 admin calls per 10 minutes. Across instances, 300 requests a minute per IP, because the whole class can share one campus address. POSTs from another origin and bodies over 4 KB are refused.
+- **On the device.** Keys are cached in `localStorage` with their expiry (7 days) so the try out works offline, re-checked when a bank is opened more than an hour after the last check, and dropped on sign-out or as soon as the server answers `closed`. Opened banks and decrypted pictures live in memory only; scores and history keep question ids, not question text. A faint watermark with the student's name and the last four digits of their NIM is drawn over every question and picture.
+
+### Accepted risks (try out)
+
+- A classmate who may take the try out can still show, copy or photograph questions for someone who may not. The watermark makes a leaked screenshot traceable, nothing more.
+- A key stays valid until its bank's `kv` changes. A device that already opened a bank keeps working offline for up to 7 days after its owner is blocked, and anyone who copied a key keeps it. To cut access completely, raise `kv` for that bank in the private folder, re-seal and deploy.
+- Someone with a spare Google account can claim a classmate's NIM first. The real student is then told the NIM is already used by another Google account, the attempt is logged, and the admin view flags the impostor's account (its email and Google name do not match the class list); an admin releases the NIM and blocks that account.
+- The shortened name in the claim preview can be fetched for any NIM on the list by any signed-in Google account, within the limits above.
+- The Blok 2 bank was public in this repository before October 2026 and is still in the git history.
+- The source files the question writers share (outside this site) are as open as they are shared.
+
 ## Checklist when changing things
 
 - A new HTML page needs its own CSP block in `netlify.toml`; header rules on Netlify are combined, so keep page rules on exact paths.
 - New content fields go through `src/lib/validate.js` first, then the rules' size limit still applies.
 - Never render content with `innerHTML` without the escaping helper.
 - Run `npm run test:e2e` before deploying: it catches CSP violations, console errors and stray third-party requests.
+- Never commit the private try out folder or anything decrypted from it. After sealing, `public/cbt/`, `src/data/cbt.json` and `netlify/data/cbt.mjs` are the only try out files that change.
+- Try out text a student sees never says why an account is closed.

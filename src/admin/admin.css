@@ -1745,3 +1745,493 @@ button.chip.toggle:disabled { opacity: 0.4; cursor: not-allowed; }
 .kelas-ph { display: flex; flex-wrap: wrap; gap: 14px; align-items: center; }
 .kelas-ph img { width: 192px; height: 144px; max-width: 100%; }
 .kelas-ph > div { display: grid; gap: 10px; min-width: 0; }
+
+/* ---------- try out participants (#tryout) ---------- */
+
+/* Not a document: no state chip, banners, modes, tools or save bar while it is open. */
+.app.is-tryout :is(.doc-head .state, .banners, .toolbar, .issues-sum, .savebar) {
+  display: none;
+}
+
+/* short pages (not ready yet) keep their content at the top instead of stretching rows */
+.app.is-tryout .main {
+  padding-bottom: 72px;
+  align-content: start;
+}
+
+/* The sixth tab is set apart from the five content documents. */
+.key-b.key-tryout {
+  position: relative;
+  margin-left: 13px;
+}
+
+.key-b.key-tryout::before {
+  content: '';
+  position: absolute;
+  left: -8px;
+  top: 9px;
+  bottom: 9px;
+  width: 1px;
+  background: var(--line2);
+}
+
+@media (min-width: 1100px) {
+  .key-b.key-tryout {
+    margin: 17px 0 0;
+  }
+
+  .key-b.key-tryout::before {
+    left: 12px;
+    right: 12px;
+    top: -9px;
+    bottom: auto;
+    width: auto;
+    height: 1px;
+  }
+}
+
+.cbt {
+  display: grid;
+  gap: 18px;
+  align-content: start;
+  min-width: 0;
+}
+
+.cbt-status.is-ready,
+.cbt-status.is-setup {
+  border: 1px solid var(--line);
+  border-radius: var(--r2);
+  background: var(--bg2);
+  padding: 16px 18px;
+  display: grid;
+  gap: 8px;
+  align-content: start;
+}
+
+.cbt-status.is-setup {
+  border-color: rgba(244, 198, 90, 0.35);
+}
+
+.cbt-status-head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px 12px;
+}
+
+.cbt-status h2 {
+  font-size: 19px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.cbt-status h2:focus {
+  outline: none;
+}
+
+.cbt-status > p:not(.meta) {
+  color: var(--mut);
+  max-width: 68ch;
+}
+
+.cbt-dot {
+  width: 9px;
+  height: 9px;
+  flex: none;
+  border-radius: 50%;
+  background: var(--grx);
+  box-shadow: 0 0 0 4px rgba(134, 242, 94, 0.16);
+}
+
+.is-setup .cbt-dot {
+  background: var(--amb);
+  box-shadow: 0 0 0 4px rgba(244, 198, 90, 0.16);
+}
+
+.cbt-wait {
+  color: var(--mut);
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.cbt-wait::before,
+.cbt-doing::before {
+  content: '';
+  width: 10px;
+  height: 10px;
+  flex: none;
+  border-radius: 50%;
+  border: 2px solid rgba(134, 242, 94, 0.25);
+  border-top-color: var(--grx);
+  animation: cbt-spin 0.8s linear infinite;
+}
+
+@keyframes cbt-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+.cbt-setup {
+  margin-top: 6px;
+}
+
+.cbt-setup-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.cbt-setup-row input {
+  flex: 1 1 260px;
+}
+
+.cbt-setup-row .btn {
+  min-width: 104px;
+}
+
+.cbt-counts {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  border: 1px solid var(--line);
+  border-radius: var(--r2);
+  background: var(--bg2);
+}
+
+.cbt-counts li {
+  padding: 14px 18px;
+  display: grid;
+  gap: 6px;
+  min-width: 0;
+}
+
+.cbt-counts li + li {
+  border-left: 1px solid var(--line);
+}
+
+.cbt-counts .n {
+  font: 600 30px/1 var(--disp);
+  letter-spacing: -0.02em;
+  font-variant-numeric: tabular-nums;
+}
+
+.cbt-counts .l {
+  font: 500 12px/1.25 var(--mono);
+  color: var(--mut);
+}
+
+.cbt-how ul {
+  color: var(--mut);
+  font-size: 14px;
+  max-width: 75ch;
+}
+
+.cbt-sec {
+  display: grid;
+  gap: 12px;
+  min-width: 0;
+}
+
+.cbt-h {
+  font-size: 20px;
+  margin-top: 10px;
+}
+
+.cbt-h:focus {
+  outline: none;
+}
+
+.cbt-filter {
+  justify-self: start;
+}
+
+.cbt-filter .n {
+  font: 500 12px/1 var(--mono);
+  color: var(--dim);
+}
+
+.cbt-filter [aria-pressed='true'] .n {
+  color: inherit;
+}
+
+.cbt-add {
+  border: 1px solid var(--line2);
+  border-radius: var(--r2);
+  background: var(--bg2);
+  padding: 16px 18px;
+  display: grid;
+  gap: 14px;
+}
+
+.cbt-add h3 {
+  font-size: 17px;
+}
+
+.cbt-add .err-text:empty {
+  display: none;
+}
+
+.cbt-add .row-actions.left {
+  margin-top: 0;
+}
+
+/* a person: name and NIM, then the Google account, then marks */
+.cbt-p .person-head {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: 6px 18px;
+  align-items: center;
+}
+
+/* a fixed column for the marks, so the account column lines up in every row */
+@media (min-width: 720px) {
+  .cbt-p .person-head {
+    grid-template-columns: minmax(0, 5fr) minmax(0, 6fr) 136px;
+  }
+
+  .cbt-p .person-head > .chips {
+    justify-content: flex-end;
+  }
+}
+
+@media (max-width: 719px) {
+  .cbt-p .person-head > :not(.disclose) {
+    padding-left: 20px;
+  }
+}
+
+.cbt-acct {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 4px 8px;
+  min-width: 0;
+  font-size: 13px;
+  color: var(--mut);
+}
+
+.cbt-who {
+  display: inline-flex;
+  flex-wrap: wrap;
+  gap: 0 8px;
+  min-width: 0;
+}
+
+.cbt-gname {
+  color: var(--ink);
+}
+
+.cbt-mail {
+  overflow-wrap: anywhere;
+}
+
+.cbt-none {
+  color: var(--dim);
+}
+
+.chip.m-nim,
+.chip.m-name {
+  color: var(--grx);
+  background: rgba(134, 242, 94, 0.1);
+}
+
+.chip.m-partial {
+  color: var(--amb);
+  background: rgba(244, 198, 90, 0.1);
+}
+
+.chip.m-none {
+  color: #1f1604;
+  background: var(--amb);
+  font-weight: 600;
+}
+
+.chip.is-blocked,
+.chip.is-acct-blocked {
+  color: var(--red);
+  background: rgba(255, 122, 107, 0.12);
+}
+
+.cbt-doing {
+  font: 500 12px/1 var(--mono);
+  color: var(--grx);
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+}
+
+.cbt .btn[aria-disabled='true'] {
+  opacity: 0.45;
+  cursor: progress;
+}
+
+.cbt-panel {
+  margin-top: 12px;
+  padding-left: 20px;
+  display: grid;
+  gap: 14px;
+}
+
+.cbt-facts {
+  margin: 0;
+  display: grid;
+  gap: 8px;
+}
+
+.cbt-facts > div {
+  display: grid;
+  grid-template-columns: 112px minmax(0, 1fr);
+  gap: 2px 14px;
+}
+
+.cbt-facts dt {
+  font: 500 12px/1.75 var(--mono);
+  color: var(--mut);
+}
+
+.cbt-facts dd {
+  margin: 0;
+  font-size: 14px;
+  overflow-wrap: anywhere;
+}
+
+.cbt-acts {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.cbt-acts .danger-text {
+  margin-left: auto;
+}
+
+@media (max-width: 560px) {
+  .cbt-panel {
+    padding-left: 0;
+  }
+
+  .cbt-facts > div {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .cbt-counts li {
+    padding: 12px;
+  }
+
+  .cbt-counts .n {
+    font-size: 24px;
+  }
+
+  .cbt-setup-row .btn {
+    flex: 1 1 100%;
+  }
+}
+
+.cbt-quiet {
+  color: var(--dim);
+  font-size: 14px;
+}
+
+.cbt-acct-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  border: 1px solid var(--line);
+  border-radius: var(--r2);
+  background: var(--bg2);
+}
+
+.cbt-acct-list li {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 8px 12px;
+  align-items: center;
+  padding: 12px 14px;
+}
+
+.cbt-acct-list li + li {
+  border-top: 1px solid var(--line);
+}
+
+.cbt-acct-main {
+  display: grid;
+  gap: 4px;
+  min-width: 0;
+}
+
+.cbt-acct-who {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0 8px;
+  font-size: 14px;
+}
+
+.cbt-log-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+}
+
+.cbt-log-list li {
+  position: relative;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 2px 16px;
+  padding: 10px 0 10px 18px;
+  border-top: 1px solid var(--line);
+}
+
+.cbt-log-list li:first-child {
+  border-top: 0;
+}
+
+.cbt-log-list li::before {
+  content: '';
+  position: absolute;
+  left: 2px;
+  top: 18px;
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--line2);
+}
+
+.cbt-log-list li.is-warn::before {
+  background: var(--amb);
+}
+
+.cbt-log-list p {
+  font-size: 14px;
+  overflow-wrap: anywhere;
+}
+
+.cbt-log-list time {
+  font: 400 12px/1.7 var(--mono);
+  color: var(--dim);
+  white-space: nowrap;
+}
+
+.cbt-more {
+  justify-self: start;
+  margin-top: 4px;
+}
+
+@media (max-width: 560px) {
+  .cbt-log-list li {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .cbt-wait::before,
+  .cbt-doing::before {
+    animation: none;
+  }
+}

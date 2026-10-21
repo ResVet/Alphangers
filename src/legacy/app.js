@@ -3,6 +3,7 @@
 // New features live in src/features and talk to this file only through the object it returns.
 import { HeartGL } from './heart-gl.js';
 import { RR, ecgV, ecgN, ECG3D } from './ecg.js';
+import CBT from '../data/cbt.json';
 
 export function startPortal(boot){
 var H = document.documentElement, B = document.body;
@@ -649,7 +650,7 @@ var pulse = (function(){
   return { frame: frame, measure: measure, still: still, stage: stage };
 })();
 
-// Try Out CBT. Private practice exams; everything is stored on this device only.
+// Try Out CBT. Private practice exams for the class; scores and progress stay on this device.
 var TRY = (function(){
   var NS = 'alpha.to.v1.';
   var LS = (function(){ try{ var s = window.localStorage, k = NS + 'probe'; s.setItem(k, '1'); s.removeItem(k); return s; }catch(e){ return null; } })();
@@ -668,24 +669,32 @@ var TRY = (function(){
   }
   function del(k){ delete MEM[k]; if(LS){ try{ LS.removeItem(NS + k); }catch(e){} } }
 
-  var BANK = null, bankP = null;
-  // the question bank is its own chunk; it loads when the try out first opens (or earlier, when idle)
-  function loadBank(){
-    if(!bankP) bankP = import('../../content/bank/bank.json').then(function(m){ bank(m.default); }, function(){ bankP = null; });
-    return bankP;
+  // The bank list is the public manifest (names and counts, nothing secret). The questions are
+  // sealed files that open only for a signed-in classmate: the access module, its own chunk loaded
+  // when the try out opens, keeps the keys and opens them. No question text is in the build.
+  var MAN = CBT && CBT.banks ? CBT : { v: 1, banks: [] }, ACC = null, MOD = null, accP = null, BK = {};
+  function access(){
+    if(!accP) accP = import('../features/tryout/access.js').then(function(m){ MOD = m; return m.getAccess(MAN); }).then(function(a){
+      if(!ACC){ ACC = a; if(a.banks.length) MAN = a.manifest; a.onChange(onAccess); }
+      return a;
+    }, function(e){ accP = null; throw e; });
+    return accP;
   }
-  function bank(src){
-    if(BANK) return BANK;
-    if(!src) return { v: 1, blok: {} };
-    BANK = JSON.parse(JSON.stringify(src));
-    Object.keys(BANK.blok).forEach(function(k){
-      var b = BANK.blok[k]; b.id = k; b.by = {};
-      b.q.forEach(function(q, i){ q.i = i; b.by[q.id] = q; });
-    });
-    return BANK;
+  function M(id){ var l = MAN.banks; for(var i = 0; i < l.length; i++){ if(l[i] && l[i].id === id) return l[i]; } return null; }
+  // an opened bank, indexed for the views; null until the access module opens it. The bank's
+  // own "by" is its credit line; the views use "by" for the question index, so it moves to "credit".
+  function B(id){
+    var b = BK[id];
+    if(!b && ACC && M(id)){
+      b = ACC.bank(id);
+      if(b){
+        if(!b.ix){ b.ix = 1; b.id = id; b.credit = typeof b.by === 'string' ? b.by : ''; b.by = {}; b.q.forEach(function(q, i){ q.i = i; b.by[q.id] = q; }); }
+        BK[id] = b;
+      }
+    }
+    return b || null;
   }
-  function B(id){ return bank().blok[id] || null; }
-  var BLOKS = ['b1', 'b2', 'b3'];
+  function bloks(){ var ids = ['b1', 'b2', 'b3']; MAN.banks.forEach(function(m){ if(m && ids.indexOf(m.id) < 0) ids.push(m.id); }); return ids; }
   var TFK = ['B', 'S'], MCK = 'ABCDE';
 
   // stored data
@@ -700,6 +709,8 @@ var TRY = (function(){
     s.cur = clamp(s.cur | 0, 0, s.ids.length - 1);
     return s;
   }
+  // a stored session without opening its bank (for the resume card on the home view)
+  function sessRaw(bid){ var s = get('sess.' + bid, null); return s && s.v === 1 && s.ids && s.ids.length && s.ans ? s : null; }
   function bump(st, id, ok, now){
     var r = st[id] || [0, 0, 0, 0];
     st[id] = [r[0] + 1, r[1] + (ok ? 0 : 1), ok ? 1 : 0, now];
@@ -708,8 +719,13 @@ var TRY = (function(){
   function pref(){
     var d = { mode: 'latihan', n: 50, tp: [], ty: 'all', pool: 'all', sq: 1, so: 1, tm: 1 };
     Object.keys(d).forEach(function(k){ if(PREF[k] === undefined) PREF[k] = d[k]; });
+    // topics are picked per bank; the old single list belonged to Blok 2
+    if(!PREF.tps || typeof PREF.tps !== 'object') PREF.tps = PREF.tp && PREF.tp.length ? { b2: PREF.tp.slice() } : {};
     return PREF;
   }
+  function typesOf(b){ var t = {}; b.q.forEach(function(q){ t[q.t] = 1; }); return Object.keys(t); }
+  function tpOf(bid){ var l = pref().tps[bid], b = B(bid); l = Array.isArray(l) ? l : []; return b ? l.filter(function(k){ return b.topics[k] !== undefined; }) : l; }
+  function tyOf(bid){ var b = B(bid); return !b || typesOf(b).length < 2 ? 'all' : pref().ty; }
   function savePref(){ put('pref', PREF); }
 
   function shuffle(a){ for(var i = a.length - 1; i > 0; i--){ var j = Math.floor(Math.random() * (i + 1)), t = a[i]; a[i] = a[j]; a[j] = t; } return a; }
@@ -752,40 +768,60 @@ var TRY = (function(){
     panel.innerHTML =
       '<div class="p-bar to-bar"><button class="back mag" type="button" id="toBack" data-cur="balik"><b>←</b> <span id="toBackT">Kembali</span></button>' +
       '<div class="to-bar-c" id="toBarC"></div><div class="to-prog" aria-hidden="true"><svg id="toProg" preserveAspectRatio="none"><path class="pg-b"/><path class="pg-f"/></svg></div></div>' +
-      '<div class="to-view" id="toView"></div>';
+      '<div class="to-view" id="toView"></div><div class="to-wm" id="toWm" aria-hidden="true" hidden></div><div class="sr" id="toSay" aria-live="polite"></div>';
     root = $('#toView', panel); bar = $('#toBarC', panel);
     $('#toBack', panel).addEventListener('click', onBack);
     root.addEventListener('click', onClick);
     root.addEventListener('keydown', onRadioKey);
-    var st = history.state && history.state.ch === 'tryout' ? history.state : null;
+    root.addEventListener('submit', onSubmit);
+    root.addEventListener('input', onInput);
     bindKeys(true);
-    if(BANK){ show(st && st.tv ? st.tv : 'home', st || {}); return; }
-    root.innerHTML = '<p class="to-load lbl">Nyiapin soal\u2026</p>';
-    loadBank().then(function(){
-      if(!V.open || !root) return;
-      if(!BANK){ root.innerHTML = '<p class="to-load lbl">Soalnya gagal dimuat. Cek koneksi, lalu buka lagi.</p>'; return; }
-      var s2 = history.state && history.state.ch === 'tryout' ? history.state : null;
-      show(s2 && s2.tv ? s2.tv : 'home', s2 || {});
-    });
+    var done = false;
+    var first = function(){
+      if(done || !V.open || !root) return;
+      done = true;
+      var st = history.state && history.state.ch === 'tryout' ? history.state : null;
+      show(st && st.tv ? st.tv : 'home', st || {});
+      returning();
+    };
+    if(ACC){ first(); return; }
+    // the access chunk is usually here already (it starts loading with the curtain)
+    var t = setTimeout(first, 900);
+    access().then(function(){ clearTimeout(t); if(done){ refreshHome(); returning(); } else first(); }, function(){ clearTimeout(t); first(); });
+  }
+  // back from a Google redirect: carry on to the bank the student was opening
+  function returning(){
+    var rb = ACC && ACC.returning; if(!rb || !V.open) return;
+    ACC.returning = null;
+    if(M(rb) && V.view === 'home') go('setup', 'push', { b: rb });
   }
   function leave(){
     if(!V.open) return;
-    pauseClock(); saveSess(); closeDlg(true); navOpen(false);
+    pauseClock(); saveSess(); closeDlg(true); navOpen(false); zoomClose(true);
+    gseq++; if(ACC) ACC.release();
     bindKeys(false); V.open = false; root = bar = null;
   }
   function onBack(){
     if(V.view === 'home') closeViaHistory(); else back();
   }
 
+  var BANKV = { setup: 1, run: 1, result: 1, review: 1 };
   function show(view, st){
     if(!root) return;
     st = st || {};
-    closeDlg(true); navOpen(false);
+    closeDlg(true); navOpen(false); zoomClose(true);
     if(view !== 'run') pauseClock();
-    if(view === 'setup' || view === 'run' || view === 'result' || view === 'review'){
-      if(st.b && B(st.b)) V.bid = st.b;
-      if(!B(V.bid)){ view = 'home'; }
+    if(view === 'gate' || BANKV[view]){
+      var bid = st.b && M(st.b) ? st.b : V.bid;
+      if(!M(bid)) view = 'home';
+      else {
+        V.bid = bid;
+        // a bank view needs its bank open: the gate opens it, or says why it can't
+        if(view === 'gate' || !B(bid)){ gate(bid, view === 'gate' ? (BANKV[st.w] ? st.w : 'setup') : view, st); return; }
+      }
     }
+    gseq++;
+    if(view === 'home' && ACC) ACC.release();
     if(view === 'run'){
       S = S && S.blok === V.bid ? S : sessOf(V.bid);
       if(!S){ view = 'setup'; hRepl({ ch: 'tryout', tv: 'setup', b: V.bid, d: depth() }, '#tryout'); }
@@ -805,12 +841,18 @@ var TRY = (function(){
     else if(view === 'run') vRun();
     else if(view === 'result') vResult(res);
     else if(view === 'review') vReview(res);
+    wm(view === 'run' || view === 'review');
     panel.scrollTop = 0; curReset();
-    if(!RM){ root.classList.remove('enter'); void root.offsetWidth; root.classList.add('enter'); }
+    enter();
     bindCursor(panel);
     if(view !== 'home'){ try{ root.querySelector('[data-focus]').focus({ preventScroll: true }); }catch(e){} }
   }
-  function pop(st){ show(st && st.tv ? st.tv : 'home', st || {}); }
+  function enter(){ if(!RM && root){ root.classList.remove('enter'); void root.offsetWidth; root.classList.add('enter'); } }
+  function pop(st){
+    // Back while a picture is open closes the picture and nothing else
+    if(zoomEl && !(st && st.zm)){ zoomClose(); return; }
+    show(st && st.tv ? st.tv : 'home', st || {});
+  }
 
   function setBar(html){ if(bar) bar.innerHTML = html; }
   function curReset(){ try{ if(cr) cr.classList.remove('big', 'lab'); }catch(e){} }
@@ -837,48 +879,63 @@ var TRY = (function(){
       '<p class="p-sub p-rv" style="--pd:.35s">' + esc(c.sub) + '</p></div>';
   }
   function blokStats(bid){
-    var b = B(bid); if(!b) return null;
-    var st = stats(bid), seen = 0, ok = 0;
-    b.q.forEach(function(q){ var r = st[q.id]; if(r && r[0]){ seen++; if(r[2]) ok++; } });
+    var m = M(bid), b = B(bid); if(!m && !b) return null;
+    var st = stats(bid), seen = 0, ok = 0, n = b ? b.q.length : (m.n | 0);
+    if(b) b.q.forEach(function(q){ var r = st[q.id]; if(r && r[0]){ seen++; if(r[2]) ok++; } });
+    else Object.keys(st).forEach(function(id){ var r = st[id]; if(r && r[0]){ seen++; if(r[2]) ok++; } });
     var h = hist(bid), best = 0; h.forEach(function(r){ if(r.score > best) best = r.score; });
-    return { n: b.q.length, seen: seen, ok: ok, tries: h.length, best: h.length ? best : null, last: h[0] || null };
+    return { n: n, seen: Math.min(seen, n), ok: Math.min(ok, n), tries: h.length, best: h.length ? best : null, last: h[0] || null };
   }
 
   function resumeCard(s){
-    var b = B(s.blok), done = Object.keys(s.ans).length;
+    var b = M(s.blok) || { name: '' }, done = Object.keys(s.ans).length, cur = clamp(s.cur | 0, 0, s.ids.length - 1);
     var tm = s.limit ? 'sisa ' + fmtT(s.limit - s.used) : fmtT(s.used) + ' berjalan';
     return '<div class="to-resume p-rv" style="--pd:.3s"><div><p class="lbl">Sesi belum selesai · ' + esc(b.name) + '</p>' +
-      '<p class="to-rs-t">' + (s.mode === 'ujian' ? 'Simulasi CBT' : 'Latihan') + ', soal ' + (s.cur + 1) + ' dari ' + s.ids.length + '</p>' +
+      '<p class="to-rs-t">' + (s.mode === 'ujian' ? 'Simulasi CBT' : 'Latihan') + ', soal ' + (cur + 1) + ' dari ' + s.ids.length + '</p>' +
       '<p class="to-rs-m">' + done + ' dijawab · ' + tm + '</p></div>' +
       '<div class="to-rs-b"><button class="to-btn pri" type="button" data-act="resume" data-b="' + s.blok + '" data-cur="lanjut">Lanjutkan</button>' +
       '<button class="to-btn ghost" type="button" data-act="drop" data-b="' + s.blok + '">Hapus sesi</button></div></div>';
   }
 
   // home: pick a blok
+  var LOCK = '<svg viewBox="0 0 24 24" aria-hidden="true"><rect x="5" y="10.5" width="14" height="10" rx="2.2"/><path d="M8.5 10.5V7.8a3.5 3.5 0 0 1 7 0v2.7"/></svg>';
+  function acctHtml(){
+    var a = ACC ? ACC.account() : null, nm = a ? (a.who ? a.who.short : a.email) : '';
+    if(nm) return '<div class="to-acct p-rv" id="toAcct" tabindex="-1" style="--pd:.38s"><span class="to-av" aria-hidden="true">' + esc(nm.charAt(0).toUpperCase()) + '</span>' +
+      '<p>Masuk sebagai <b>' + esc(nm) + '</b>' + (a.who ? '' : '<small>NIM belum dicocokkan</small>') + '</p><button class="to-link2" type="button" data-act="gout">Keluar</button></div>';
+    return '<div class="to-acct out p-rv" id="toAcct" tabindex="-1" style="--pd:.38s"><span class="to-av" aria-hidden="true">' + LOCK + '</span><p>Khusus anak Alpha. Masuk pakai Google, sekali cocokkan NIM, beres.</p></div>';
+  }
   function vHome(){
-    var c = BY.tryout, i = CH.indexOf(c), nx = CH[(i + 1) % CH.length];
+    var c = BY.tryout, i = CH.indexOf(c), nx = CH[(i + 1) % CH.length], ids = bloks();
     setBar('<span class="p-crumb">Channel ' + c.num + ' / ' + TOTAL + '</span>'); progSet(0);
-    var live = BLOKS.map(sessOf).filter(Boolean)[0];
-    var cards = BLOKS.map(function(bid, k){
-      var b = B(bid), n = k + 1;
-      if(!b) return '<button class="to-blk off" type="button" data-act="soon" data-n="' + n + '" aria-disabled="true">' +
+    // an unfinished session shows only while this account may still open its bank
+    var live = null;
+    ids.forEach(function(bid){ if(!live && M(bid) && ACC && ACC.has(bid)) live = sessRaw(bid); });
+    var cards = ids.map(function(bid, k){
+      var m = M(bid), n = k + 1;
+      if(!m) return '<button class="to-blk off" type="button" data-act="soon" data-n="' + n + '" aria-disabled="true">' +
         '<span class="to-bn" aria-hidden="true">0' + n + '</span><span class="to-bt">Blok ' + n + '</span>' +
         '<span class="to-bs">Soalnya belum masuk</span><span class="to-bx">Segera</span></button>';
-      var s = blokStats(bid), pct = s.n ? Math.round(s.seen / s.n * 100) : 0;
-      return '<button class="to-blk on" type="button" data-act="blok" data-b="' + bid + '" data-cur="buka">' +
-        '<span class="to-bn" aria-hidden="true">0' + n + '</span><span class="to-bt">' + esc(b.name) + '</span>' +
-        '<span class="to-bs">' + esc(b.title) + '</span>' +
-        '<span class="to-bm">' + s.n + ' soal · ' + Object.keys(b.topics).length + ' topik · ' + esc(b.sem) + '</span>' +
+      var s = blokStats(bid), pct = s.n ? Math.round(s.seen / s.n * 100) : 0, open = !!(ACC && ACC.has(bid));
+      return '<button class="to-blk on" type="button" data-act="blok" data-b="' + esc(bid) + '" data-cur="buka">' +
+        '<span class="to-bn" aria-hidden="true">0' + n + '</span><span class="to-bt">' + esc(m.name) + (m.new ? '<span class="to-nb">Baru</span>' : '') + '</span>' +
+        '<span class="to-bs">' + esc(m.title) + '</span>' +
+        '<span class="to-bm">' + s.n + ' soal · ' + (m.topics | 0) + ' topik · ' + esc(m.sem) + '</span>' +
+        (m.by ? '<span class="to-bby">Disusun ' + esc(m.by) + '</span>' : '') +
         '<span class="to-bp" aria-hidden="true"><i style="width:' + pct + '%"></i></span>' +
         '<span class="to-bq">' + (s.seen ? 'Sudah dikerjakan ' + s.seen + '/' + s.n + (s.best != null ? ' · Terbaik ' + fmtScore(s.best) : '') : 'Belum pernah dikerjakan') + '</span>' +
-        '<span class="to-bgo">Buka <b>→</b></span></button>';
+        '<span class="to-bgo">' + (open ? '' : '<span class="to-lk">' + LOCK + '<span class="sr">Perlu masuk. </span></span>') + 'Buka <b>→</b></span></button>';
     }).join('');
-    root.innerHTML = '<div class="p-wrap to-wrap">' + heroHtml(c) + (live ? resumeCard(live) : '') +
+    root.innerHTML = '<div class="p-wrap to-wrap">' + heroHtml(c) + acctHtml() + (live ? resumeCard(live) : '') +
       '<div class="to-bloks p-rv" style="--pd:.42s">' + cards + '</div>' +
       '<p class="to-priv p-rv" style="--pd:.5s">' + (LS ? 'Nilai dan progres kamu tersimpan di browser perangkat ini saja. Nggak ada leaderboard, nggak ada yang bisa lihat.' :
         'Browser ini nggak mengizinkan penyimpanan, jadi progres hilang kalau halaman ditutup.') + '</p>' +
       '<div class="p-next p-rv" style="--pd:.55s"><span class="lbl">' + c.num + ' / ' + TOTAL + '</span>' +
       '<button class="nextb" type="button" data-act="next" data-next="' + nx.id + '" data-cur="lanjut"><span class="lbl">Channel berikutnya</span><strong>' + esc(nx.name) + ' →</strong></button></div></div>';
+  }
+  function refreshHome(){
+    if(!root || V.view !== 'home') return;
+    var y = panel.scrollTop; vHome(); panel.scrollTop = y; bindCursor(panel);
   }
 
   // setup
@@ -891,10 +948,10 @@ var TRY = (function(){
     return b.q.filter(function(q){ var r = st[q.id]; if(pool === 'new') return !r || !r[0]; if(pool === 'wrong') return r && r[0] && !r[2]; if(pool === 'star') return !!sr[q.id]; return true; }).length;
   }
   function candidates(bid){
-    var P = pref(), b = B(bid), st = stats(bid), sr = {}; stars(bid).forEach(function(id){ sr[id] = 1; });
+    var P = pref(), b = B(bid), st = stats(bid), sr = {}, tp = tpOf(bid), ty = tyOf(bid); stars(bid).forEach(function(id){ sr[id] = 1; });
     return b.q.filter(function(q){
-      if(P.tp.length && P.tp.indexOf(q.tp) < 0) return false;
-      if(P.ty !== 'all' && q.t !== P.ty) return false;
+      if(tp.length && tp.indexOf(q.tp) < 0) return false;
+      if(ty !== 'all' && q.t !== ty) return false;
       var r = st[q.id];
       if(P.pool === 'new') return !r || !r[0];
       if(P.pool === 'wrong') return !!(r && r[0] && !r[2]);
@@ -904,13 +961,17 @@ var TRY = (function(){
   }
   function planN(avail){ var P = pref(); return P.n === 0 ? avail : Math.min(P.n, avail); }
   function vSetup(){
-    var b = B(V.bid), P = pref(), s = blokStats(V.bid), live = sessOf(V.bid), h = hist(V.bid);
+    var b = B(V.bid), P = pref(), s = blokStats(V.bid), live = sessOf(V.bid), h = hist(V.bid), tp = tpOf(V.bid), ty = tyOf(V.bid);
     setBar('<span class="p-crumb">Try Out · ' + esc(b.name) + '</span>'); progSet(0);
-    var tpCount = {}; b.q.forEach(function(q){ tpCount[q.tp] = (tpCount[q.tp] || 0) + 1; });
+    var tpCount = {}, tyCount = {}; b.q.forEach(function(q){ tpCount[q.tp] = (tpCount[q.tp] || 0) + 1; tyCount[q.t] = (tyCount[q.t] || 0) + 1; });
+    // a filter that would match nothing in this bank is not offered
+    var tpKeys = Object.keys(b.topics).filter(function(k){ return tpCount[k]; }), nTypes = Object.keys(tyCount).length;
     var avail = candidates(V.bid).length, n = planN(avail);
-    var tps = chip('tp', '*', !P.tp.length, 'Semua topik') + Object.keys(b.topics).map(function(k){
-      return chip('tp', k, P.tp.indexOf(k) >= 0, esc(b.topics[k]) + ' <em>' + tpCount[k] + '</em>');
+    var tps = chip('tp', '*', !tp.length, 'Semua topik') + tpKeys.map(function(k){
+      return chip('tp', k, tp.indexOf(k) >= 0, esc(b.topics[k]) + ' <em>' + tpCount[k] + '</em>');
     }).join('');
+    var tys = chip('ty', 'all', ty === 'all', 'Semua') + (tyCount.mc ? chip('ty', 'mc', ty === 'mc', 'Pilihan ganda <em>' + tyCount.mc + '</em>') : '') +
+      (tyCount.tf ? chip('ty', 'tf', ty === 'tf', 'Benar / salah <em>' + tyCount.tf + '</em>') : '');
     var pools = [['all', 'Semua soal'], ['new', 'Belum dikerjakan'], ['wrong', 'Masih salah'], ['star', 'Ditandai']].map(function(p){
       var c = poolCount(V.bid, p[0]); return chip('pool', p[0], P.pool === p[0], p[1] + ' <em>' + c + '</em>');
     }).join('');
@@ -934,6 +995,7 @@ var TRY = (function(){
     }
     root.innerHTML = '<div class="p-wrap to-wrap to-setup">' +
       '<div class="to-head"><p class="lbl">' + esc(b.name) + ' · ' + esc(b.sem) + '</p><h2 class="to-h" tabindex="-1" data-focus>' + esc(b.title) + '</h2>' +
+        (b.credit ? '<p class="to-by">Disusun <b>' + esc(b.credit) + '</b></p>' : '') +
         '<div class="to-kpis"><div><b>' + s.n + '</b><span>Total soal</span></div><div><b>' + s.seen + '</b><span>Sudah dikerjakan</span></div>' +
         '<div><b>' + s.ok + '</b><span>Terakhir benar</span></div><div><b>' + (s.best != null ? fmtScore(s.best) : '-') + '</b><span>Nilai terbaik</span></div></div></div>' +
       (live ? resumeCard(live) : '') +
@@ -941,9 +1003,8 @@ var TRY = (function(){
         '<button class="to-mode" type="button" role="radio" aria-checked="' + (P.mode === 'latihan') + '" data-act="mode" data-v="latihan"><b>Latihan</b><span>Cek jawaban tiap soal, pembahasan langsung muncul.</span></button>' +
         '<button class="to-mode" type="button" role="radio" aria-checked="' + (P.mode === 'ujian') + '" data-act="mode" data-v="ujian"><b>Simulasi CBT</b><span>Pakai timer, jawaban dan pembahasan dibuka setelah selesai.</span></button>' +
       '</div></section>' +
-      '<section class="to-sec"><div class="to-sec-h"><h3>Topik</h3></div><div class="to-chips">' + tps + '</div></section>' +
-      '<section class="to-sec"><div class="to-sec-h"><h3>Jenis soal</h3></div><div class="to-chips">' +
-        chip('ty', 'all', P.ty === 'all', 'Semua') + chip('ty', 'mc', P.ty === 'mc', 'Pilihan ganda') + chip('ty', 'tf', P.ty === 'tf', 'Benar / salah') + '</div></section>' +
+      (tpKeys.length > 1 ? '<section class="to-sec"><div class="to-sec-h"><h3>Topik</h3></div><div class="to-chips">' + tps + '</div></section>' : '') +
+      (nTypes > 1 ? '<section class="to-sec"><div class="to-sec-h"><h3>Jenis soal</h3></div><div class="to-chips">' + tys + '</div></section>' : '') +
       '<section class="to-sec"><div class="to-sec-h"><h3>Ambil dari</h3></div><div class="to-chips">' + pools + '</div></section>' +
       '<section class="to-sec"><div class="to-sec-h"><h3>Jumlah soal</h3><span class="lbl">' + avail + ' tersedia</span></div><div class="to-chips">' + ns + '</div></section>' +
       '<section class="to-sec"><div class="to-sec-h"><h3>Pengaturan</h3></div><div class="to-sws">' +
@@ -952,9 +1013,21 @@ var TRY = (function(){
       '<div class="to-go"><button class="to-start" type="button" data-act="start" data-cur="mulai"' + (n ? '' : ' disabled') + '>' +
         (n ? 'Mulai ' + (P.mode === 'ujian' ? 'simulasi' : 'latihan') + ' · ' + n + ' soal' : 'Nggak ada soal yang cocok') + ' <b aria-hidden="true">→</b></button>' +
         (n ? '' : '<p class="to-hint">Longgarkan filter topik, jenis soal, atau sumbernya.</p>') + '</div>' +
-      hl +
+      hl + refsHtml(b) +
       '<div class="to-foot-links"><button type="button" class="to-link" data-act="reset">Hapus semua data try out ' + esc(b.name) + '</button></div>' +
     '</div>';
+  }
+
+  function refsHtml(b){
+    var l = (Array.isArray(b.refs) ? b.refs : []).filter(function(x){ return x && typeof x.name === 'string' && x.name.trim(); });
+    if(!l.length) return '';
+    return '<section class="to-sec"><details class="to-refs"><summary><span>Bacaan rujukan</span><em>' + l.length + '</em></summary><ol class="to-refl">' + l.map(function(x){
+      var u = null; try{ u = new URL(x.url); }catch(e){ u = null; }
+      // only https links; anything else is shown as plain text
+      if(u && u.protocol === 'https:') return '<li><a href="' + esc(u.href) + '" target="_blank" rel="noopener noreferrer"><span>' + esc(x.name) + '</span>' +
+        '<small>' + esc(u.hostname.replace(/^www\./, '')) + ' <i aria-hidden="true">↗</i><span class="sr"> (tab baru)</span></small></a></li>';
+      return '<li><span>' + esc(x.name) + '</span></li>';
+    }).join('') + '</ol></details></section>';
   }
 
   function start(ids, mode, label){
@@ -972,14 +1045,14 @@ var TRY = (function(){
     else go('run', 'replace');
   }
   function startFromSetup(){
-    var P = pref(), b = B(V.bid), ids = candidates(V.bid);
+    var P = pref(), b = B(V.bid), ids = candidates(V.bid), tp = tpOf(V.bid), ty = tyOf(V.bid);
     if(!ids.length) return;
     shuffle(ids);
     ids = ids.slice(0, planN(ids.length));
     ids.sort(function(x, y){ return b.by[x].i - b.by[y].i; });
     var parts = [];
-    if(P.tp.length === 1) parts.push(b.topics[P.tp[0]]); else if(P.tp.length) parts.push(P.tp.length + ' topik');
-    if(P.ty !== 'all') parts.push(P.ty === 'mc' ? 'pilihan ganda' : 'benar/salah');
+    if(tp.length === 1) parts.push(b.topics[tp[0]]); else if(tp.length) parts.push(tp.length + ' topik');
+    if(ty !== 'all') parts.push(ty === 'mc' ? 'pilihan ganda' : 'benar/salah');
     if(P.pool !== 'all') parts.push({ new: 'belum dikerjakan', wrong: 'masih salah', star: 'ditandai' }[P.pool]);
     var go2 = function(){ start(ids, P.mode, parts.join(', ')); };
     if(sessOf(V.bid)) confirmBox({ title: 'Ganti sesi yang belum selesai?', body: 'Sesi lama dihapus dan belum masuk riwayat.', ok: 'Mulai baru', danger: true }, function(){ del('sess.' + V.bid); S = null; go2(); });
@@ -1067,11 +1140,11 @@ var TRY = (function(){
         '<span class="to-k" aria-hidden="true">' + keyOf(q, d) + '</span><span class="to-ot">' + esc(q.o[o]) + '</span>' + (mark ? '<span class="to-mk" aria-hidden="true">' + mark + '</span>' : '') + '</button>';
     }).join('') + '</div>';
   }
-  function fbHtml(q, order, chosen, blank){
+  function fbHtml(q, order, chosen, blank, bid){
     var ok = isOk(q, chosen), keys = q.a.map(function(o){ var d = order.indexOf(o); return (q.t === 'tf' ? '' : keyOf(q, d) + '. ') + esc(q.o[o]); });
     var v = blank ? '<b>Kosong.</b> ' : (ok ? '<b>Benar.</b> ' : '<b>Belum tepat.</b> ');
     return '<div class="to-fb ' + (ok ? 'ok' : 'no') + '"><p class="to-vd">' + v + (q.a.length > 1 ? 'Jawaban yang diterima: ' : 'Jawaban: ') + keys.join(' / ') + '</p>' +
-      '<p class="to-ex">' + esc(q.e) + '</p>' + (q.n ? '<p class="to-nt"><span>Catatan</span>' + esc(q.n) + '</p>' : '') + '</div>';
+      '<p class="to-ex">' + esc(q.e) + '</p>' + figsHtml(bid, q, 'ei') + (q.n ? '<p class="to-nt"><span>Catatan</span>' + esc(q.n) + '</p>' : '') + '</div>';
   }
   function renderQ(focus){
     var b = B(S.blok), i = S.cur, id = S.ids[i], q = b.by[id], order = qOrder(id), a = S.ans[id];
@@ -1081,13 +1154,13 @@ var TRY = (function(){
       '<span class="to-qa"><button class="to-ib sm' + (S.flag[id] ? ' on-f' : '') + '" type="button" data-act="flag" aria-pressed="' + (!!S.flag[id]) + '" title="Tandai ragu-ragu (F)"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 21V4M6 4h10l-2 4 2 4H6"/></svg><span>Ragu</span></button>' +
       '<button class="to-ib sm' + (starred ? ' on-s' : '') + '" type="button" data-act="star" aria-pressed="' + starred + '" title="Simpan ke daftar ditandai"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3.5l2.6 5.3 5.9.9-4.3 4.1 1 5.8L12 16.9l-5.2 2.7 1-5.8-4.3-4.1 5.9-.9z"/></svg><span>Simpan</span></button></span></div>' +
       '<p class="lbl to-no">Soal ' + (i + 1) + ' dari ' + S.ids.length + '</p>' +
-      '<h3 class="to-qt" id="toQt" tabindex="-1" data-focus>' + esc(q.q) + '</h3>' +
+      '<h3 class="to-qt" id="toQt" tabindex="-1" data-focus>' + esc(q.q) + '</h3>' + figsHtml(S.blok, q, 'img') +
       optsHtml(q, order, a, chk) +
-      '<div class="to-fbw" id="toFb">' + (chk ? fbHtml(q, order, a, false) : '') + '</div>' +
+      '<div class="to-fbw" id="toFb">' + (chk ? fbHtml(q, order, a, false, S.blok) : '') + '</div>' +
       '<div class="to-pause" id="toPause" hidden><p class="lbl">Dijeda</p><p class="to-pz-t">Waktu berhenti. Soal disembunyikan sampai kamu lanjut.</p><button class="to-btn pri" type="button" data-act="unpause">Lanjutkan</button></div>';
     $('#toCnt', panel).innerHTML = (i + 1) + '<small>/' + S.ids.length + '</small>';
     progSet(Object.keys(S.ans).length / S.ids.length);
-    renderFoot(); navSync();
+    renderFoot(); navSync(); hydrate(qEl);
     var kh = $('#toKeys', panel); if(kh) kh.innerHTML = (q.t === 'tf' ? '<kbd>B</kbd> / <kbd>S</kbd> pilih' : '<kbd>A</kbd>-<kbd>E</kbd> pilih') + ' · <kbd>Enter</kbd> ' + (S.mode === 'latihan' ? 'cek / lanjut' : 'lanjut') + ' · <kbd>←</kbd> <kbd>→</kbd> pindah soal · <kbd>F</kbd> ragu-ragu';
     if(focus){ try{ $('#toQt', panel).focus({ preventScroll: true }); }catch(e){} }
     curReset(); bindCursor(panel);
@@ -1168,7 +1241,7 @@ var TRY = (function(){
     var st = stats(S.blok), ok = isOk(q, a); bump(st, id, ok, Date.now()); put('stat.' + S.blok, st);
     var order = qOrder(id), focusWas = document.activeElement;
     $('.to-opts', panel).outerHTML = optsHtml(q, order, a, true);
-    $('#toFb', panel).innerHTML = fbHtml(q, order, a, false);
+    $('#toFb', panel).innerHTML = fbHtml(q, order, a, false, S.blok); hydrate($('#toFb', panel));
     $('#toLive', panel).textContent = (ok ? 'Benar.' : 'Belum tepat.') + ' Jawaban: ' + q.a.map(function(o){ return q.o[o]; }).join(' / ') + '. ' + q.e;
     renderFoot(); navSync();
     if(soundOn && AC){ try{ var t = AC.currentTime + 0.01; if(ok){ tone(t, 660, 990, 0.12, 0.05, 'sine'); tone(t + 0.1, 990, 990, 0.1, 0.035, 'sine'); } else tone(t, 220, 150, 0.22, 0.06, 'triangle'); }catch(e){} }
@@ -1276,10 +1349,319 @@ var TRY = (function(){
         var order = (res.perm && res.perm[x.id]) || x.q.o.map(function(o, k){ return k; });
         return '<li class="to-rc ' + (x.blank ? 'blank' : x.ok ? 'ok' : 'no') + '"><div class="to-qm"><span class="to-tag">' + (x.k + 1) + '</span><span class="to-tag">' + esc(b.topics[x.q.tp]) + '</span>' +
           (x.fl ? '<span class="to-tag amb">Ragu</span>' : '') + '<span class="to-qa"><button class="to-ib sm' + (sr[x.id] ? ' on-s' : '') + '" type="button" data-act="rstar" data-id="' + x.id + '" aria-pressed="' + !!sr[x.id] + '" aria-label="Simpan soal ' + (x.k + 1) + '"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3.5l2.6 5.3 5.9.9-4.3 4.1 1 5.8L12 16.9l-5.2 2.7 1-5.8-4.3-4.1 5.9-.9z"/></svg></button></span></div>' +
-          '<p class="to-qt sm">' + esc(x.q.q) + '</p>' + optsHtml(x.q, order, x.a, true, 'none') + fbHtml(x.q, order, x.a, x.blank) + '</li>';
+          '<p class="to-qt sm">' + esc(x.q.q) + '</p>' + figsHtml(res.blok, x.q, 'img') + optsHtml(x.q, order, x.a, true, 'none') + fbHtml(x.q, order, x.a, x.blank, res.blok) + '</li>';
       }).join('') + '</ol>' : '<p class="to-empty">Nggak ada soal di kategori ini.</p>') +
       '<div class="to-acts"><button class="to-btn ghost" type="button" data-act="rback">← Kembali</button></div>' +
     '</div>';
+    hydrate(root);
+  }
+
+  // pictures: sealed files, opened by the access module and shown through blob: URLs. The box
+  // has the picture's own size from the start, so nothing jumps when it arrives.
+  function figsHtml(bid, q, k){
+    var l = q[k]; if(!l || !l.length) return '';
+    var what = k === 'ei' ? 'Gambar pembahasan' : 'Gambar soal';
+    return '<div class="to-figs">' + l.map(function(p, i){
+      var w = (p.w | 0) > 0 ? p.w | 0 : 800, h = (p.h | 0) > 0 ? p.h | 0 : 600, alt = what + (l.length > 1 ? ' ' + (i + 1) : '');
+      return '<figure class="to-fig ld" style="--ar:' + w + '/' + h + ';--r:' + (w / h).toFixed(4) + ';--fw:' + w + 'px">' +
+        '<button class="to-fz" type="button" data-act="zoom" aria-label="' + alt + ', buka ukuran penuh">' +
+        '<img alt="' + alt + '" width="' + w + '" height="' + h + '" data-b="' + esc(bid) + '" data-q="' + esc(q.id) + '" data-k="' + k + '" data-i="' + i + '">' +
+        '<span class="to-pwm" aria-hidden="true"></span></button>' +
+        '<div class="to-fst"><span>Memuat gambar…</span></div></figure>';
+    }).join('') + '</div>';
+  }
+  function hydrate(scope){ if(ACC && scope) $$('.to-fig img:not([src])', scope).forEach(loadPic); }
+  function loadPic(im){
+    var fig = im.closest('.to-fig'), bid = im.getAttribute('data-b'), b = B(bid), q = b && b.by[im.getAttribute('data-q')];
+    var l = q && q[im.getAttribute('data-k')], p = l && l[+im.getAttribute('data-i')];
+    fig.classList.add('ld'); fig.classList.remove('bad');
+    $('.to-fst', fig).innerHTML = '<span>Memuat gambar…</span>';
+    if(!p){ picBad(fig); return; }
+    ACC.picture(bid, p).then(function(url){
+      if(!document.contains(im)) return;
+      im.onload = function(){ fig.classList.remove('ld'); };
+      im.onerror = function(){ picBad(fig); };
+      im.src = url;
+    }, function(){ if(document.contains(im)) picBad(fig); });
+  }
+  function picBad(fig){
+    fig.classList.remove('ld'); fig.classList.add('bad');
+    $('.to-fst', fig).innerHTML = '<span>Gambar gagal dimuat.</span><button class="to-btn ghost" type="button" data-act="picre">Coba lagi</button>';
+  }
+  // the student's name, repeated faintly over questions and pictures
+  function wm(on){
+    var el = $('#toWm', panel); if(!el) return;
+    var css = on && ACC ? ACC.watermark() : 'none';
+    el.hidden = css === 'none';
+    el.style.backgroundImage = css === 'none' ? '' : css;
+    if(root) root.style.setProperty('--pwm', on && ACC ? ACC.watermark('pic') : 'none');
+  }
+  // a picture full screen: fitted first, tap for its real size
+  var zoomEl = null, zoomRet = null;
+  function zoomOpen(btn){
+    var fig = btn.closest('.to-fig'), im = $('img', btn);
+    if(!fig || !im || !im.getAttribute('src') || fig.classList.contains('ld') || fig.classList.contains('bad')) return;
+    var w = +im.getAttribute('width'), h = +im.getAttribute('height'), alt = im.getAttribute('alt');
+    zoomClose(true); navOpen(false);
+    zoomRet = btn;
+    zoomEl = document.createElement('div'); zoomEl.className = 'to-zoom';
+    zoomEl.setAttribute('role', 'dialog'); zoomEl.setAttribute('aria-modal', 'true'); zoomEl.setAttribute('aria-label', alt);
+    zoomEl.style.setProperty('--pwm', ACC ? ACC.watermark('pic') : 'none');
+    zoomEl.innerHTML = '<div class="to-zoom-bar"><p class="lbl">' + esc(alt) + ' · ' + w + ' × ' + h + '</p>' +
+      '<button class="to-ib" type="button" data-zx="1" aria-label="Tutup gambar"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18"/></svg></button></div>' +
+      '<div class="to-zoom-s" data-zs="1"><button class="to-zoom-f" type="button" data-zf="1" aria-pressed="false" aria-label="Tampilkan ukuran asli" style="--ar:' + w + '/' + h + ';--r:' + (w / h).toFixed(4) + ';--fw:' + w + 'px">' +
+      '<img src="' + esc(im.getAttribute('src')) + '" alt="' + esc(alt) + '" width="' + w + '" height="' + h + '"><span class="to-pwm" aria-hidden="true"></span></button></div>';
+    panel.appendChild(zoomEl);
+    var hs = history.state || {}, st = {}; for(var k in hs) st[k] = hs[k];
+    st.zm = 1; st.d = depth() + 1; hPush(st, '#tryout');
+    zoomEl.addEventListener('click', function(e){
+      var f = e.target.closest('[data-zf]');
+      if(e.target.closest('[data-zx]') || e.target.getAttribute('data-zs')) zoomBack();
+      else if(f){ var on = f.getAttribute('aria-pressed') !== 'true'; f.setAttribute('aria-pressed', on ? 'true' : 'false'); zoomEl.classList.toggle('full', on); }
+    });
+    zoomEl.addEventListener('keydown', function(e){
+      if(e.key !== 'Tab') return;
+      var f = $$('button', zoomEl), i = f.indexOf(document.activeElement);
+      if(e.shiftKey && i <= 0){ e.preventDefault(); f[f.length - 1].focus(); } else if(!e.shiftKey && i === f.length - 1){ e.preventDefault(); f[0].focus(); }
+    });
+    requestAnimationFrame(function(){ if(zoomEl){ zoomEl.classList.add('on'); try{ $('[data-zx]', zoomEl).focus({ preventScroll: true }); }catch(e){} } });
+  }
+  function zoomBack(){ if(history.state && history.state.zm) history.back(); else zoomClose(); }
+  function zoomClose(silent){
+    if(!zoomEl) return;
+    var el = zoomEl; zoomEl = null; if(el.parentNode) el.parentNode.removeChild(el);
+    if(!silent && zoomRet && document.contains(zoomRet)){ try{ zoomRet.focus({ preventScroll: true }); }catch(e){} }
+    zoomRet = null;
+  }
+  function say(msg){ var el = $('#toSay', panel); if(!el) return; el.textContent = ''; setTimeout(function(){ if(document.contains(el)) el.textContent = msg; }, 80); }
+
+  // the gate: what stands between a bank card and its questions (sign in, the NIM, or why not)
+  var gseq = 0, busyG = 0;
+  var GOOGLE = '<svg class="to-gg" viewBox="0 0 48 48" aria-hidden="true"><path fill="#EA4335" d="M24 9.5c3.54 0 6.71 1.22 9.21 3.6l6.85-6.85C35.9 2.38 30.47 0 24 0 14.62 0 6.51 5.38 2.56 13.22l7.98 6.19C12.43 13.72 17.74 9.5 24 9.5z"/><path fill="#4285F4" d="M46.98 24.55c0-1.57-.15-3.09-.38-4.55H24v9.02h12.94c-.58 2.96-2.26 5.48-4.78 7.18l7.73 6c4.51-4.18 7.09-10.36 7.09-17.65z"/><path fill="#FBBC05" d="M10.53 28.59c-.48-1.45-.76-2.99-.76-4.59s.27-3.14.76-4.59l-7.98-6.19C.92 16.46 0 20.12 0 24c0 3.88.92 7.54 2.56 10.78l7.97-6.19z"/><path fill="#34A853" d="M24 48c6.48 0 11.93-2.13 15.89-5.81l-7.73-6c-2.15 1.45-4.92 2.3-8.16 2.3-6.26 0-11.57-4.22-13.47-9.91l-7.98 6.19C6.51 42.62 14.62 48 24 48z"/></svg>';
+  var INERR = {
+    offline: 'Kamu lagi offline. Sambungkan internet dulu, lalu coba lagi.',
+    network: 'Nggak bisa nyambung ke Google. Cek internet kamu, lalu coba lagi.',
+    storage: 'Browser ini menolak penyimpanan yang dibutuhin buat login Google. Coba buka di Chrome atau Safari biasa, bukan mode samaran.',
+    popup: 'Jendela Google nggak kebuka. Izinkan pop-up buat situs ini, lalu coba lagi.',
+    redirect: 'Login Google tadi nggak selesai. Coba sekali lagi. Kalau tetap gagal, buka situs ini di Chrome atau Safari.',
+    slow: 'Terlalu banyak percobaan masuk. Tunggu sebentar, lalu coba lagi.',
+    account: 'Akun Google ini nggak bisa dipakai buat masuk. Coba akun lain.',
+    expired: 'Sesi login kamu habis. Masuk lagi, ya.',
+    auth: 'Login Google gagal. Coba lagi sebentar lagi.'
+  };
+  var NIMERR = {
+    format: 'Isi NIM pakai angka aja, tanpa huruf atau spasi.',
+    'not-found': 'NIM ini nggak ada di daftar Kelas Alpha. Cek lagi angkanya.',
+    taken: 'NIM ini sudah dipakai akun Google lain. Kalau itu bukan kamu, hubungi pengurus kelas.',
+    slow: 'Kebanyakan percobaan. Tunggu beberapa menit, lalu coba lagi.',
+    network: 'Nggak bisa nyambung ke server. Cek internet kamu, lalu coba lagi.',
+    server: 'Server lagi bermasalah. Coba lagi sebentar lagi.'
+  };
+  // [heading, text, button, action]
+  var GALAT = {
+    offline: ['Kamu lagi offline', 'Buat pertama kali, kamu perlu internet buat masuk dan ngambil kunci soal. Setelah itu, soal yang pernah dibuka bisa dikerjakan tanpa internet.', 'Coba lagi', 'gretry'],
+    network: ['Server nggak bisa dihubungi', 'Cek internet kamu, lalu coba lagi.', 'Coba lagi', 'gretry'],
+    server: ['Server lagi bermasalah', 'Bukan salah kamu. Coba lagi beberapa menit lagi.', 'Coba lagi', 'gretry'],
+    files: ['Soalnya gagal dibuka', 'Mungkin baru ada pembaruan. Muat ulang halaman ini, lalu buka lagi.', 'Muat ulang', 'greload'],
+    nokey: ['Blok ini belum bisa dibuka', 'Kunci soalnya belum ada di server. Coba lagi nanti, ya.', 'Coba lagi', 'gretry'],
+    account: ['Sesi login kamu habis', 'Masuk lagi pakai akun Google kamu.', 'Masuk lagi', 'gswitch'],
+    missing: ['Blok ini nggak ketemu', 'Muat ulang halaman ini, lalu coba lagi.', 'Muat ulang', 'greload']
+  };
+  function gate(bid, want, st){
+    var my = ++gseq, m = M(bid);
+    V.view = 'gate'; V.gb = bid; V.gw = want; V.grid = st && st.rid || null;
+    panel.classList.remove('to-running'); wm(false);
+    $('#toBackT', panel).textContent = 'Kembali';
+    setBar('<span class="p-crumb">Try Out · ' + esc(m.name) + '</span>'); progSet(0);
+    // a quick open shows no waiting screen at all
+    var t = setTimeout(function(){ if(my === gseq) drawGate(bid, { s: 'wait' }); }, 140);
+    busyG++;
+    access().then(function(a){ return a.ensure(bid); }, function(){ return { s: 'error', code: navigator.onLine === false ? 'offline' : 'network' }; }).then(function(r){
+      busyG--; clearTimeout(t);
+      if(my !== gseq || !V.open) return;
+      if(r.s === 'ok' && B(bid)){
+        var hs = history.state || {};
+        if(hs.ch === 'tryout' && hs.tv === want && hs.b === bid) show(want, hs);
+        else go(want, 'replace', { b: bid, rid: V.grid });
+        return;
+      }
+      // one history entry for the whole way in: Back leaves to the bank list
+      var cur = history.state || {};
+      if(!(cur.ch === 'tryout' && cur.tv === 'gate')) hRepl({ ch: 'tryout', tv: 'gate', b: bid, w: want, rid: V.grid, d: depth() }, '#tryout');
+      drawGate(bid, r);
+    });
+  }
+  function gateKind(r){
+    if(r.s === 'wait') return 'buka';
+    if(r.s === 'out') return !V.skipApp && MOD && MOD.inApp(navigator.userAgent) ? 'inapp' : 'masuk';
+    if(r.s === 'claim') return 'nim';
+    if(r.s === 'closed') return 'tutup';
+    if(r.s === 'setup') return 'siap';
+    return 'galat';
+  }
+  function nimFmt(v){ var d = String(v || '').replace(/\D/g, '').slice(0, 20); return 'NIM ' + d + '••••••••••••••'.slice(Math.min(d.length, 14)); }
+  // the access card: what gets matched (a Google account and one NIM)
+  function passHtml(name, nim, mail){
+    return '<div class="to-pass' + (name ? ' named' : '') + '" aria-hidden="true"><div class="to-pass-t"><span>Kelas Alpha</span><span>Try Out CBT</span></div>' +
+      '<p class="to-pass-n">' + (name ? esc(name) : 'Nama kamu') + '</p><p class="to-pass-nim" id="toPassNim">' + nimFmt(nim) + '</p>' +
+      '<svg class="to-pass-ecg" viewBox="0 0 300 36" preserveAspectRatio="none"><path pathLength="1" d="' + ecgPath(300, 36, 2.2) + '"/></svg>' +
+      '<p class="to-pass-e">' + (mail ? esc(mail) : 'akun Google kamu') + '</p></div>';
+  }
+  function whoHtml(acc, sw){
+    var nm = acc ? (acc.who ? acc.who.short : acc.email) : '';
+    if(!nm) return '';
+    return '<p class="to-who"><span class="to-av" aria-hidden="true">' + esc(nm.charAt(0).toUpperCase()) + '</span><span>Masuk sebagai <b>' + esc(nm) + '</b></span>' +
+      (sw ? '<button class="to-link2" type="button" data-act="gswitch">Ganti akun</button>' : '') + '</p>';
+  }
+  function gateHtml(kind, bid, r){
+    var m = M(bid), acc = ACC ? ACC.account() : null, tag = esc(m.name) + ' · ' + esc(m.title), side = '', body = '', head;
+    var top = function(lbl, h, p){ return '<p class="lbl">' + lbl + '</p><h2 class="to-h" tabindex="-1" data-focus>' + h + '</h2>' + (p ? '<p class="to-gp">' + p + '</p>' : ''); };
+    var acts = function(main){ return '<div class="to-acts">' + main + '<button class="to-btn ghost" type="button" data-act="gback">Kembali</button></div>'; };
+    if(kind === 'buka'){
+      head = top(esc(m.name) + ' · ' + esc(m.sem), esc(m.title));
+      body = '<p class="to-wait" role="status"><i aria-hidden="true"></i>Membuka soal…</p>';
+    } else if(kind === 'masuk'){
+      head = top(tag, 'Masuk dulu, ya', 'Soal try out cuma buat anak Kelas Alpha. Masuk pakai akun Google kamu, lalu cocokkan NIM sekali aja.');
+      side = passHtml('', '', '');
+      body = '<p class="to-gerr" id="toGErr" role="alert">' + (r.err && INERR[r.err] ? INERR[r.err] : '') + '</p>' +
+        '<div class="to-acts"><button class="to-btn pri to-gbtn" type="button" data-act="gin">' + GOOGLE + '<span>' + (V.again ? 'Lanjut ke Google' : 'Masuk dengan Google') + '</span></button></div>' +
+        '<p class="to-hint" id="toGHint"' + (V.again ? '' : ' hidden') + '>Sekali lagi, ya. Browser butuh ketukan baru buat buka jendela Google.</p>' +
+        '<ul class="to-facts"><li><b>Sekali aja</b><span>NIM dicocokkan sekali. Setelah itu tinggal buka.</span></li>' +
+        '<li><b>Bisa offline</b><span>Soal yang pernah dibuka tetap bisa dikerjakan tanpa internet.</span></li>' +
+        '<li><b>Data kamu</b><span>Server cuma nyimpen email Google, nama, dan NIM kamu. Nilai dan progres tetap di perangkat ini.</span></li></ul>';
+    } else if(kind === 'inapp'){
+      head = top(tag, 'Buka di Chrome atau Safari', 'Kamu lagi buka situs ini dari dalam aplikasi lain, misalnya Instagram atau Line. Google nggak ngizinin login dari situ.');
+      body = '<ol class="to-steps"><li>Ketuk menu <b>⋯</b> atau <b>⋮</b> di pojok layar.</li><li>Pilih <b>Buka di browser</b>, atau <b>Open in Chrome</b> / <b>Safari</b>.</li></ol>' +
+        '<p class="to-fh">Atau salin link ini, lalu tempel di Chrome atau Safari:</p>' +
+        '<div class="to-nimr"><input class="to-in" id="toUrl" type="text" readonly value="' + esc(location.href) + '" aria-label="Link halaman ini"><button class="to-btn pri" type="button" data-act="gcopy">Salin link</button></div>' +
+        '<p class="to-alt"><button class="to-link2" type="button" data-act="gapp">Tetap coba masuk di sini</button></p>';
+    } else if(kind === 'nim'){
+      var pv = V.pv;
+      head = top(esc(m.name) + ' · Langkah terakhir', pv ? 'Ini kamu?' : 'Cocokkan NIM kamu', pv ? '' : 'Sekali aja. Setelah cocok, akun Google ini terhubung ke NIM kamu dan soal langsung kebuka.');
+      side = passHtml(pv ? pv.name : '', pv ? pv.nim : V.nim, acc ? acc.email : '');
+      body = (pv ? '<div class="to-pv"><p class="to-pv-q"><b>' + esc(pv.name) + '</b><span>NIM ' + esc(pv.nim) + '</span></p>' +
+          '<div class="to-acts"><button class="to-btn pri" type="button" data-act="nimok">Iya, ini aku</button><button class="to-btn ghost" type="button" data-act="nimx">Bukan, ganti NIM</button></div>' +
+          '<p class="to-gerr" id="toNimE" role="alert"></p><p class="to-fh">Setelah dicocokkan, NIM ini cuma bisa dipakai akun Google ini.</p></div>'
+        : '<form class="to-nimf" data-form="nim" novalidate><label class="to-fl" for="toNim">NIM</label><div class="to-nimr">' +
+          '<input class="to-in" id="toNim" name="nim" type="text" inputmode="numeric" autocomplete="off" autocapitalize="off" spellcheck="false" enterkeyhint="go" maxlength="24" value="' + esc(V.nim || '') + '" aria-describedby="toNimH toNimE">' +
+          '<button class="to-btn pri" type="submit">Cek NIM</button></div>' +
+          '<p class="to-fh" id="toNimH">14 digit, sama seperti di KTM.</p><p class="to-gerr" id="toNimE" role="alert"></p></form>') +
+        whoHtml(acc, true);
+    } else if(kind === 'tutup'){
+      head = top(tag, 'Akun ini nggak bisa buka try out', 'Kalau menurut kamu ini keliru, hubungi pengurus kelas.');
+      body = whoHtml(acc, false) + acts('<button class="to-btn line" type="button" data-act="gswitch">Keluar dan pakai akun lain</button>');
+    } else if(kind === 'siap'){
+      head = top(tag, 'Soalnya lagi disiapin', 'Server try out belum siap. Coba lagi sebentar lagi, ya.');
+      body = acts('<button class="to-btn pri" type="button" data-act="gretry">Coba lagi</button>');
+    } else {
+      var g = GALAT[r.code] || GALAT.server;
+      head = top(tag, g[0], g[1]);
+      body = acts('<button class="to-btn pri" type="button" data-act="' + g[3] + '">' + g[2] + '</button>');
+    }
+    return '<div class="p-wrap to-wrap to-gate' + (side ? ' has-s' : '') + '" data-gate="' + kind + '" data-b="' + esc(bid) + '">' +
+      '<div class="to-gh">' + head + '</div>' + (side ? '<div class="to-gs">' + side + '</div>' : '') + '<div class="to-gb">' + body + '</div></div>';
+  }
+  function drawGate(bid, r){
+    if(!root) return;
+    var kind = gateKind(r);
+    V.view = 'gate'; V.gb = bid;
+    if(kind !== 'nim') V.pv = null;
+    root.innerHTML = gateHtml(kind, bid, r);
+    panel.scrollTop = 0; curReset(); enter(); bindCursor(panel);
+    if(kind !== 'buka'){ try{ root.querySelector('[data-focus]').focus({ preventScroll: true }); }catch(e){} }
+  }
+  function gSignIn(btn){
+    if(busyG || !ACC) return;
+    busyG++;
+    btn.disabled = true; $('span', btn).textContent = 'Menunggu Google…';
+    var er = $('#toGErr', root); if(er) er.textContent = '';
+    var bid = V.gb, my = gseq;
+    ACC.signIn(bid).then(null, function(){ return { s: 'out', err: 'auth' }; }).then(function(r){
+      busyG--;
+      if(my !== gseq || !V.open || V.view !== 'gate') return;
+      if(r.again){ V.again = true; patchMasuk(null); return; }
+      V.again = false;
+      if(r.s === 'ok') gate(bid, V.gw, { rid: V.grid });
+      else if(r.s === 'out') patchMasuk(r.err);
+      else drawGate(bid, r);
+    });
+  }
+  function patchMasuk(err){
+    var b = $('.to-gate[data-gate="masuk"] [data-act="gin"]', root);
+    if(!b){ drawGate(V.gb, { s: 'out', err: err }); return; }
+    b.disabled = false; $('span', b).textContent = V.again ? 'Lanjut ke Google' : 'Masuk dengan Google';
+    var h = $('#toGHint', root); if(h) h.hidden = !V.again;
+    var e = $('#toGErr', root); if(e) e.textContent = err && INERR[err] ? INERR[err] : '';
+    if(V.again){ try{ b.focus({ preventScroll: true }); }catch(x){} }
+  }
+  function gClaim(confirm){
+    if(busyG || !ACC) return;
+    var inp = $('#toNim', root), nim = confirm ? (V.pv && V.pv.nim) : (inp ? inp.value : '');
+    var btn = $(confirm ? '[data-act="nimok"]' : '.to-nimf [type="submit"]', root), er = $('#toNimE', root), my = gseq;
+    if(er) er.textContent = '';
+    if(btn){ btn.disabled = true; btn.setAttribute('data-t', btn.textContent); btn.textContent = confirm ? 'Mencocokkan…' : 'Mengecek…'; }
+    busyG++;
+    ACC.claim(nim, confirm).then(null, function(){ return { error: 'server' }; }).then(function(r){
+      busyG--;
+      if(my !== gseq || !V.open || V.view !== 'gate') return;
+      if(r.preview){ V.pv = { nim: String(nim).replace(/[\s.-]/g, ''), name: r.preview }; drawGate(V.gb, { s: 'claim' }); say('Ini kamu? ' + r.preview + ', NIM ' + V.pv.nim + '.'); return; }
+      if(r.error){
+        if(r.error === 'account'){ ACC.signOut(); drawGate(V.gb, { s: 'out', err: 'expired' }); return; }
+        if(confirm){ V.pv = null; drawGate(V.gb, { s: 'claim' }); }
+        else if(btn){ btn.disabled = false; btn.textContent = btn.getAttribute('data-t'); }
+        var e2 = $('#toNimE', root), i2 = $('#toNim', root);
+        if(e2) e2.textContent = NIMERR[r.error] || NIMERR.server;
+        if(i2){ i2.setAttribute('aria-invalid', 'true'); try{ i2.focus({ preventScroll: true }); }catch(x){} }
+        return;
+      }
+      V.pv = null;
+      if(r.s === 'ok'){ V.nim = ''; toast('Beres. NIM kamu sudah cocok.'); gate(V.gb, V.gw, { rid: V.grid }); return; }
+      drawGate(V.gb, r);
+    });
+  }
+  function gSwitch(){
+    if(busyG || !ACC) return;
+    busyG++; V.pv = null; V.nim = '';
+    ACC.signOut().then(null, function(){}).then(function(){ busyG--; if(V.open && V.view === 'gate') drawGate(V.gb, { s: 'out' }); });
+  }
+  function copyLink(){
+    var url = location.href, inp = $('#toUrl', root);
+    var ok = function(){ toast('Link disalin. Tempel di Chrome atau Safari.'); };
+    var manual = function(){
+      if(inp){ try{ inp.focus(); inp.select(); if(document.execCommand('copy')){ ok(); return; } }catch(e){} }
+      toast('Tekan lama link-nya, lalu pilih Salin.');
+    };
+    if(navigator.clipboard && navigator.clipboard.writeText) navigator.clipboard.writeText(url).then(ok, manual); else manual();
+  }
+  function onSubmit(e){
+    if(!e.target || e.target.getAttribute('data-form') !== 'nim') return;
+    e.preventDefault(); gClaim(false);
+  }
+  function onInput(e){
+    if(!e.target || e.target.id !== 'toNim') return;
+    V.nim = e.target.value;
+    var c = $('#toPassNim', root); if(c) c.textContent = nimFmt(V.nim);
+    var er = $('#toNimE', root); if(er && er.textContent){ er.textContent = ''; e.target.removeAttribute('aria-invalid'); }
+  }
+  // the access module changed its mind (a late re-check, a sign-out)
+  function onAccess(st){
+    var lost = st.s === 'out' || st.s === 'claim' || st.s === 'closed';
+    if(lost) BK = {};
+    if(!V.open || !root || busyG) return;
+    if(lost && BANKV[V.view]){
+      // keep the student's own answers, show no more questions
+      pauseClock(); saveSess(); closeDlg(true); navOpen(false); zoomClose(true);
+      S = null; LAST = null; if(ACC) ACC.release();
+      var bid = V.bid;
+      hRepl({ ch: 'tryout', tv: 'gate', b: bid, w: V.view, rid: V.rid, d: depth() }, '#tryout');
+      gseq++; V.gw = V.view; V.grid = V.rid;
+      panel.classList.remove('to-running'); wm(false);
+      $('#toBackT', panel).textContent = 'Kembali';
+      setBar('<span class="p-crumb">Try Out · ' + esc(M(bid).name) + '</span>'); progSet(0);
+      drawGate(bid, st);
+      return;
+    }
+    if(V.view === 'home') refreshHome();
   }
 
   // dialogs
@@ -1334,9 +1716,10 @@ var TRY = (function(){
         break;
       case 'mode': P.mode = t.getAttribute('data-v'); savePref(); keepScroll(vSetup); break;
       case 'tp':
-        var v = t.getAttribute('data-v');
-        if(v === '*') P.tp = []; else { var k = P.tp.indexOf(v); if(k >= 0) P.tp.splice(k, 1); else P.tp.push(v); if(P.tp.length === Object.keys(B(V.bid).topics).length) P.tp = []; }
-        savePref(); keepScroll(vSetup); break;
+        var v = t.getAttribute('data-v'), cur = tpOf(V.bid).slice(), have = {};
+        B(V.bid).q.forEach(function(q){ have[q.tp] = 1; });
+        if(v === '*') cur = []; else { var k = cur.indexOf(v); if(k >= 0) cur.splice(k, 1); else cur.push(v); if(cur.length >= Object.keys(have).length) cur = []; }
+        P.tps[V.bid] = cur; savePref(); keepScroll(vSetup); break;
       case 'ty': P.ty = t.getAttribute('data-v'); savePref(); keepScroll(vSetup); break;
       case 'pool': P.pool = t.getAttribute('data-v'); savePref(); keepScroll(vSetup); break;
       case 'n': P.n = +t.getAttribute('data-v'); savePref(); keepScroll(vSetup); break;
@@ -1348,6 +1731,26 @@ var TRY = (function(){
           ['sess.', 'hist.', 'stat.', 'star.'].forEach(function(p){ del(p + V.bid); }); S = null; LAST = null; vSetup(); bindCursor(panel); toast('Data try out dihapus.');
         });
         break;
+      case 'gin': gSignIn(t); break;
+      case 'gapp': V.skipApp = true; drawGate(V.gb, { s: 'out' }); break;
+      case 'gcopy': copyLink(); break;
+      case 'gswitch': gSwitch(); break;
+      case 'gretry': gate(V.gb, V.gw, { rid: V.grid }); break;
+      case 'greload': location.reload(); break;
+      case 'gback': back(); break;
+      case 'gout':
+        if(!ACC) return;
+        ACC.signOut();
+        toast('Kamu sudah keluar. Nilai dan progres tetap tersimpan di perangkat ini.');
+        var ac = $('#toAcct', root); if(ac){ try{ ac.focus({ preventScroll: true }); }catch(x){} }
+        break;
+      case 'nimok': gClaim(true); break;
+      case 'nimx':
+        V.pv = null; drawGate(V.gb, { s: 'claim' });
+        var ni = $('#toNim', root); if(ni){ try{ ni.focus(); ni.select(); }catch(x){} }
+        break;
+      case 'zoom': zoomOpen(t); break;
+      case 'picre': var pim = $('img', t.closest('.to-fig')); if(pim){ pim.removeAttribute('src'); loadPic(pim); } break;
       case 'pick': pick(+t.getAttribute('data-o')); break;
       case 'check': check(); break;
       case 'prev': nav(-1); break;
@@ -1386,7 +1789,7 @@ var TRY = (function(){
     e.preventDefault(); n.focus(); if(!n.classList.contains('ok') && !n.classList.contains('no') && !n.classList.contains('dim')) pick(+n.getAttribute('data-o'));
   }
   function onKey(e){
-    if(!V.open || V.view !== 'run' || !S || dlgEl || e.ctrlKey || e.metaKey || e.altKey) return;
+    if(!V.open || V.view !== 'run' || !S || dlgEl || zoomEl || !B(S.blok) || e.ctrlKey || e.metaKey || e.altKey) return;
     var tg = e.target; if(tg && (tg.tagName === 'INPUT' || tg.tagName === 'TEXTAREA' || tg.isContentEditable)) return;
     if(paused){ if(e.key === 'Enter' || e.key === ' '){ e.preventDefault(); setPause(false); } return; }
     var q = B(S.blok).by[S.ids[S.cur]], order = qOrder(S.ids[S.cur]), k = e.key, d = -1;
@@ -1410,6 +1813,7 @@ var TRY = (function(){
     else if(!on && keysOn){ window.removeEventListener('keydown', onKey); keysOn = false; }
   }
   function esc2(){
+    if(zoomEl){ zoomBack(); return true; }
     if(dlgEl){ closeDlg(); return true; }
     if(navIsOpen){ navOpen(false); return true; }
     if(paused && V.view === 'run'){ setPause(false); return true; }
@@ -1419,7 +1823,8 @@ var TRY = (function(){
   var onWide = function(){ if(navIsOpen) navOpen(false); };
   if(WIDE.addEventListener) WIDE.addEventListener('change', onWide); else if(WIDE.addListener) WIDE.addListener(onWide);
 
-  return { preload: loadBank, mount: mountTo, leave: leave, pop: pop, esc: esc2, depth: depth, isOpen: function(){ return V.open; }, count: function(){ var b = B('b2'); return b ? b.q.length : 0; } };
+  return { preload: function(){ access().then(null, function(){}); }, mount: mountTo, leave: leave, pop: pop, esc: esc2, depth: depth, isOpen: function(){ return V.open; },
+    count: function(){ return MAN.banks.reduce(function(n, m){ return n + ((m && m.n) | 0); }, 0); } };
 })();
 
 
@@ -1534,6 +1939,7 @@ function unmount(){
 }
 function goChannel(id, push){
   var c = BY[id]; if(!c || busy) return;
+  if(id === 'tryout') TRY.preload();
   if(!openId) lastFocus = document.activeElement;
   if(push) hPush({ch: id}, '#' + id);
   sweep(1, function(){ mount(c); }, function(){ try{ panel.focus({preventScroll: true}); }catch(e){} });
@@ -2023,9 +2429,6 @@ if(RM){
     else { last = performance.now(); wake(); }
   });
 }
-
-// warm the try out bank once the page is idle
-if(window.requestIdleCallback) requestIdleCallback(function(){ TRY.preload(); }, { timeout: 8000 }); else setTimeout(TRY.preload, 4000);
 
 return {
   toast: toast,

@@ -9,6 +9,12 @@ import { DocState } from './doc-state.js';
 import { renderSetup, renderLoading, renderSignIn, renderNotAdmin } from './screens.js';
 import { explain } from './errors.js';
 import { h, replace } from './dom.js';
+import { takeSetupLink } from './setup-link.js';
+
+// A setup link's code leaves the address bar before anything (Firebase sign-in included) can
+// read or send the address. See setup-link.js.
+takeSetupLink();
+window.addEventListener('hashchange', takeSetupLink);
 
 const root = document.getElementById('app');
 const params = new URLSearchParams(location.search);

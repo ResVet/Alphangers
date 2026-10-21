@@ -1,0 +1,31 @@
+{
+  "v": 1,
+  "note": "Fake banks for tests and the mock build. Made by scripts/cbt/fixtures.mjs.",
+  "secret": "0FBDA8R_Sb0sG6c56YmPo8pDvaVoFtX-6LGsqK-faK8",
+  "banks": [
+    {
+      "id": "b2",
+      "kv": 1,
+      "name": "Blok 2",
+      "title": "Kimia dan Fisika Kehidupan",
+      "sem": "Semester 1",
+      "n": 6,
+      "topics": 3,
+      "file": "/cbt/b2.be9b1649b8.bin",
+      "bytes": 2020
+    },
+    {
+      "id": "b3",
+      "kv": 1,
+      "name": "Blok 3",
+      "title": "Karakter Biologi Tubuh Manusia",
+      "sem": "Semester 1",
+      "n": 4,
+      "topics": 1,
+      "file": "/cbt/b3.a7eb8fd5dd.bin",
+      "bytes": 1891,
+      "by": "Batu Alphangers",
+      "new": true
+    }
+  ]
+}
