@@ -13,6 +13,12 @@ const portal = startPortal({ links });
 // Page texts the admin changed (links document, site.t). Applied to every element with a
 // data-k key, here and in each section as it mounts.
 const texts = createTexts(portal);
+// The channel panel (a Drive folder, or every screen of the try out) is drawn by the shell each
+// time it opens or changes screen; its texts are applied as soon as it is drawn, before it paints.
+const panelEl = document.getElementById('panel');
+if (panelEl && 'MutationObserver' in window) {
+  new MutationObserver(() => texts.apply(panelEl)).observe(panelEl, { childList: true, subtree: true });
+}
 // Subscribe once load() has answered, telling it which copy is on screen, so a remote copy
 // that matches it does not rebuild the channel rows.
 const watchLinks = (shown) => subscribe('links', (data) => { portal.setChannels(data); texts.set(data?.site?.t); }, shown);

@@ -108,6 +108,10 @@ for (const [w, h] of [[390, 844], [1280, 800]]) {
     assert.deepEqual([cards[1].nb, cards[1].by], [true, 'Disusun Batu Alphangers']);
     assert.match(await s.ev(() => document.getElementById('toAcct').textContent), /Khusus anak Alpha/);
     assert.equal(await s.ev(() => document.querySelector('.to-blk.off .to-bs').textContent), 'Soalnya belum masuk');
+    // four bloks; a credit line shows only once it has a name, and an empty note not at all
+    assert.deepEqual(await s.ev(() => [...document.querySelectorAll('.to-blk')].map((b) => b.dataset.b)), ['b1', 'b2', 'b3', 'b4']);
+    assert.deepEqual(await s.ev(() => [...document.querySelectorAll('.to-bby')].filter((e) => e.offsetParent).map((e) => e.closest('.to-blk').dataset.b)), ['b3']);
+    assert.equal(await s.ev(() => !!document.querySelector('.to-note').offsetParent), false);
     await shot(s, 'home');
 
     // a bank asks for sign-in; Back goes home; the second visit still asks

@@ -529,6 +529,14 @@ html.fine .to-blk.on:hover .to-bgo{color:var(--grx)}
 html.fine .to-blk.on:hover .to-bgo b{transform:translateX(6px)}
 .to-bx{margin-top:auto;padding:5px 10px;border:1px solid var(--line2);border-radius:999px;font-family:var(--mono);font-size:10px;letter-spacing:.2em;text-transform:uppercase;color:var(--mut)}
 .to-priv{margin-top:18px;max-width:62ch;color:var(--dim);font-size:13.5px}
+/* texts the admin adds in the editor (src/lib/texts.js): a credit line without a name, or an
+   empty note, does not show */
+[data-opt][data-empty],[data-opt-line][data-empty]{display:none}
+.to-note,.p-note{white-space:pre-line;overflow-wrap:anywhere}
+.to-note{margin-top:16px;max-width:62ch;padding:14px 16px;border-radius:16px;border:1px solid var(--line);background:rgba(238,242,232,.03);font-size:14.5px;line-height:1.55;color:rgba(238,242,232,.88)}
+.to-head .to-note{margin:0 0 18px}
+.p-note{max-width:56ch;margin:calc(clamp(28px,5vh,52px) * -.45) 0 clamp(24px,4vh,40px);font-size:clamp(15px,1.6vw,17px);line-height:1.6;color:var(--mut)}
+@media (min-width:761px){.to-bloks.n4{grid-template-columns:repeat(2,minmax(0,1fr))}}
 .to-resume{display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:14px 20px;margin:0 0 18px;padding:18px 20px;border-radius:18px;
   border:1px solid rgba(244,198,90,.42);background:linear-gradient(120deg,rgba(244,198,90,.11),rgba(244,198,90,.02))}
 .to-resume .lbl{color:var(--amb)}
@@ -856,7 +864,7 @@ html.fine .to-fig:not(.ld):not(.bad) .to-fz:hover{box-shadow:0 0 0 2px var(--grx
   .to-pass{width:min(100%,320px);padding:15px 17px 13px}.to-pass-n{font-size:20px}
 }
 @media (max-width:760px){.to-bloks{grid-template-columns:1fr}.to-blk{min-height:0}.to-bn{font-size:80px}
-  .to-blk.off{flex-direction:row;flex-wrap:wrap;align-items:center;gap:4px 12px;padding:16px 20px}.to-blk.off .to-bt{flex-basis:100%}.to-blk.off .to-bx{margin:0 0 0 auto}.to-blk.off .to-bn{font-size:56px;top:2px}}
+  .to-blk.off{flex-direction:row;flex-wrap:wrap;align-items:center;gap:4px 12px;padding:16px 20px}.to-blk.off .to-bt{flex-basis:100%}.to-blk.off .to-bx{margin:0 0 0 auto}.to-blk.off .to-bn{font-size:56px;top:2px}.to-blk.off .to-bby{order:1;flex-basis:100%}}
 @media (max-width:560px){.to-kpis{grid-template-columns:repeat(2,minmax(0,1fr))}.to-modes{grid-template-columns:1fr}.to-tp li{grid-template-columns:1fr auto;gap:6px 12px}.to-tp-b{grid-column:1 / -1;grid-row:2}.to-mon{min-height:214px;padding:18px}.to-mon-ecg{top:5%;height:34%;width:100%;-webkit-mask-image:none;mask-image:none}}
 @media (max-width:420px){.to-foot .ghost span{display:none}.to-foot .to-btn{padding:0 16px}.to-ib.sm span{display:none}.to-ib.sm{width:34px;padding:0;justify-content:center}}
 @media (max-width:400px){#panel.to-running .back span{display:none}.to-tm{min-width:0;padding:6px 8px}}

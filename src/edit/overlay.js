@@ -98,9 +98,11 @@ export function createOverlay({ adapters, ctx }) {
   function textTargets() {
     return document.querySelectorAll('[data-k], .dv-ch [data-f]');
   }
+  // Text inside a button (a try out card) is changed from that thing's own form instead: typing
+  // into a button is unreliable on phones, and a space would press it.
   function refreshTexts() {
     for (const el of textTargets()) {
-      if (on && !el.closest('[inert], .ed-ui')) editable(el); else lock(el);
+      if (on && !el.closest('[inert], .ed-ui, button')) editable(el); else lock(el);
     }
   }
   let typing = null;
@@ -114,6 +116,9 @@ export function createOverlay({ adapters, ctx }) {
     if (!t || e.target !== t.el) return;
     typing = null;
     const value = t.el.textContent.replace(/ /g, ' ');
+    // a text typed away to nothing is left truly empty (a browser may leave a line break behind),
+    // so an optional one hides and shows its placeholder
+    if (!value.trim() && t.el.firstChild) t.el.textContent = '';
     if (value === t.before) return;
     const res = t.el.dataset.k ? ctx.setText(t.el.dataset.k, value, t.el) : ctx.setField(t.el, value);
     if (res && !res.ok) { t.el.textContent = t.before; ctx.toast(res.errors?.[0] || 'Teks tidak bisa disimpan.'); }
@@ -153,7 +158,8 @@ export function createOverlay({ adapters, ctx }) {
     e.stopPropagation();
     select(hit);
   }, true);
-  addEventListener('scroll', queue, { passive: true });
+  // capture: the channel panel and the lists scroll inside their own boxes, not the window
+  addEventListener('scroll', queue, { passive: true, capture: true });
   addEventListener('resize', queue);
 
   // ---------- section tools
@@ -194,7 +200,12 @@ export function createOverlay({ adapters, ctx }) {
       document.documentElement.classList.toggle('editing', v);
       refreshTexts();
       renderSectionTools();
-      if (v) mo.observe(document.getElementById('home'), { childList: true, subtree: true });
+      if (v) {
+        mo.observe(document.getElementById('home'), { childList: true, subtree: true });
+        // the channel panel (Drive folders and the try out) is outside #home and redrawn on every screen
+        const panel = document.getElementById('panel');
+        if (panel) mo.observe(panel, { childList: true, subtree: true });
+      }
       else { mo.disconnect(); hovered = null; selected = null; bar.hidden = true; hl.style.opacity = sel.style.opacity = '0'; }
       queue();
     },

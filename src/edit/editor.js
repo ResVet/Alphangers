@@ -122,14 +122,16 @@ async function run({ portal, texts, views, bundledDivisi, signIn: wantSignIn }) 
         prog.hidden = !text;
         return (t) => { prog.textContent = t || ''; prog.hidden = !t; };
       },
-      // a [data-k] text typed on the page
+      // a [data-k] text typed on the page. Emptied, it goes back to the page's own text, except
+      // a text marked data-opt (a credit, a note) that may stay empty: then it hides.
       setText(key, value, el) {
         const def = texts.original(el);
+        const optional = !!el?.hasAttribute?.('data-opt');
         return store.edit('links', (d) => {
           d.site = d.site || { t: {} };
           d.site.t = d.site.t || {};
-          if (!value.trim() || value === def) delete d.site.t[key];
-          else d.site.t[key] = value;
+          if (value === def || (!value.trim() && (!optional || !def))) delete d.site.t[key];
+          else d.site.t[key] = value.trim() ? value : '';
         }, 'Teks');
       },
       // a divisi field typed in place (name, full, tag, desc)

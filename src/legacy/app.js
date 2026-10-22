@@ -127,6 +127,8 @@ function beatStep(dt, sv){
 // hero line: one of the endings, same odds on every load. The empty one is the Polyester button.
 // The live editor can replace the list (text key "hero.ends", one ending per line).
 var ENDS = ['And yes this website is a bit vibecoded\u00a0:D', 'Semangat belajarnya!', 'Jangan tanya apa kepanjangan Resvet.', ''];
+// the page texts the admin changed (links document, site.t), for the few texts drawn as plain text
+var TXT = {};
 var ledeEnd = $('#ledeEnd'), endK = Math.floor(Math.random() * ENDS.length), polyBtn = null;
 function setEnding(list){
   if(!ledeEnd) return;
@@ -165,10 +167,21 @@ function renderRows(again){
   });
 }
 renderRows(false);
-// newer channel data from the admin editor; the open panel, if any, keeps what it showed
+// newer channel data from the admin editor. An open panel shows its channel again when what it
+// shows changed (name, label, description, link, place in the list), so an edit made from the
+// panel is seen at once; otherwise it keeps what it showed.
+function panelSig(c){
+  var i = CH.indexOf(c), n = CH[(i + 1) % CH.length];
+  return [c.num, TOTAL, c.name, c.tag, c.sub, URLS[c.id], n ? n.id + n.name : ''].join('\n');
+}
 function setChannels(data){
+  var was = openId && BY[openId] ? panelSig(BY[openId]) : null;
   setChannelData(data);
   renderRows(true);
+  var c = openId && BY[openId];
+  if(!c || was === null || panelSig(c) === was || busy) return;
+  if(c.kind === 'tryout'){ TRY.refresh(); return; }
+  var y = panel.scrollTop; buildPanel(c); panel.scrollTop = y;
 }
 
 // loader
@@ -694,7 +707,7 @@ var TRY = (function(){
     }
     return b || null;
   }
-  function bloks(){ var ids = ['b1', 'b2', 'b3']; MAN.banks.forEach(function(m){ if(m && ids.indexOf(m.id) < 0) ids.push(m.id); }); return ids; }
+  function bloks(){ var ids = ['b1', 'b2', 'b3', 'b4']; MAN.banks.forEach(function(m){ if(m && ids.indexOf(m.id) < 0) ids.push(m.id); }); return ids; }
   var TFK = ['B', 'S'], MCK = 'ABCDE';
 
   // stored data
@@ -874,7 +887,7 @@ var TRY = (function(){
 
   function heroHtml(c){
     var ttl = c.name.split(' ').map(function(w, k){ return '<span class="w"><i style="--cd:' + (0.14 + k * 0.08) + 's">' + esc(w) + '</i></span>'; }).join(' ');
-    return '<div class="p-hero"><span class="p-num" aria-hidden="true">' + c.num + '</span>' +
+    return '<div class="p-hero" data-ch="' + esc(c.id) + '"><span class="p-num" aria-hidden="true">' + c.num + '</span>' +
       '<p class="lbl p-rv" style="--pd:.05s">' + esc(c.tag) + '</p><h2 class="p-ttl">' + ttl + '</h2>' +
       '<p class="p-sub p-rv" style="--pd:.35s">' + esc(c.sub) + '</p></div>';
   }
@@ -890,11 +903,29 @@ var TRY = (function(){
   function resumeCard(s){
     var b = M(s.blok) || { name: '' }, done = Object.keys(s.ans).length, cur = clamp(s.cur | 0, 0, s.ids.length - 1);
     var tm = s.limit ? 'sisa ' + fmtT(s.limit - s.used) : fmtT(s.used) + ' berjalan';
-    return '<div class="to-resume p-rv" style="--pd:.3s"><div><p class="lbl">Sesi belum selesai · ' + esc(b.name) + '</p>' +
+    return '<div class="to-resume p-rv" style="--pd:.3s"><div><p class="lbl">Sesi belum selesai · ' + bt(s.blok, 'name', b.name) + '</p>' +
       '<p class="to-rs-t">' + (s.mode === 'ujian' ? 'Simulasi CBT' : 'Latihan') + ', soal ' + (cur + 1) + ' dari ' + s.ids.length + '</p>' +
       '<p class="to-rs-m">' + done + ' dijawab · ' + tm + '</p></div>' +
       '<div class="to-rs-b"><button class="to-btn pri" type="button" data-act="resume" data-b="' + s.blok + '" data-cur="lanjut">Lanjutkan</button>' +
       '<button class="to-btn ghost" type="button" data-act="drop" data-b="' + s.blok + '">Hapus sesi</button></div></div>';
+  }
+
+  // A blok's name, title or semester as the page shows it: a page text (to.<blok>.name, .title,
+  // .sem) the admin may change. Every place that shows one carries its key, so a change shows
+  // everywhere at once (the page texts fill these in as each screen is drawn; src/main.js).
+  function bt(bid, f, v){ return '<span data-k="to.' + esc(bid) + '.' + f + '">' + esc(v || '') + '</span>'; }
+  // the same as plain text, for a dialog
+  function btText(bid, f, v){ var k = 'to.' + bid + '.' + f; return Object.prototype.hasOwnProperty.call(TXT, k) && TXT[k] ? TXT[k] : v; }
+
+  // "Disusun <name>": the word and the name are page texts. The line shows once it has a name
+  // (data-empty, kept up to date by the page texts, hides it; src/lib/texts.js).
+  function creditHtml(key, name, tag, cls){
+    var n = tag === 'p' ? 'b' : 'span';
+    return '<' + tag + ' class="' + cls + '" data-opt-line' + (name ? '' : ' data-empty') + '><span data-k="' + key + 'byk">Disusun</span> <' + n + ' data-k="' + key + 'by" data-opt data-ph="nama penyusun">' + esc(name || '') + '</' + n + '></' + tag + '>';
+  }
+  // a note the admin can add; empty, it does not show. pd: its reveal delay, on a screen that reveals
+  function noteHtml(key, what, pd){
+    return '<p class="to-note' + (pd ? ' p-rv" style="--pd:' + pd : '') + '" data-k="' + key + '" data-opt data-empty data-ml data-ph="' + esc(what) + ' (kosong = tidak tampil)"></p>';
   }
 
   // home: pick a blok
@@ -903,7 +934,7 @@ var TRY = (function(){
     var a = ACC ? ACC.account() : null, nm = a ? (a.who ? a.who.name : a.email) : '';
     if(nm) return '<div class="to-acct p-rv" id="toAcct" tabindex="-1" style="--pd:.38s"><span class="to-av" aria-hidden="true">' + esc(nm.charAt(0).toUpperCase()) + '</span>' +
       '<p>Masuk sebagai <b>' + esc(nm) + '</b>' + (a.who ? '' : '<small>NIM belum dicocokkan</small>') + '</p><button class="to-link2" type="button" data-act="gout">Keluar</button></div>';
-    return '<div class="to-acct out p-rv" id="toAcct" tabindex="-1" style="--pd:.38s"><span class="to-av" aria-hidden="true">' + LOCK + '</span><p>Khusus anak Alpha. Masuk pakai Google, sekali cocokkan NIM, beres.</p></div>';
+    return '<div class="to-acct out p-rv" id="toAcct" tabindex="-1" style="--pd:.38s"><span class="to-av" aria-hidden="true">' + LOCK + '</span><p data-k="to.acct">Khusus anak Alpha. Masuk pakai Google, sekali cocokkan NIM, beres.</p></div>';
   }
   function vHome(){
     var c = BY.tryout, i = CH.indexOf(c), nx = CH[(i + 1) % CH.length], ids = bloks();
@@ -911,25 +942,29 @@ var TRY = (function(){
     // an unfinished session shows only while this account may still open its bank
     var live = null;
     ids.forEach(function(bid){ if(!live && M(bid) && ACC && ACC.has(bid)) live = sessRaw(bid); });
+    // Every text on a card is a page text (to.<blok>.*), changed from the card's own form in the
+    // editor; the credit line shows once it has a name.
     var cards = ids.map(function(bid, k){
-      var m = M(bid), n = k + 1;
-      if(!m) return '<button class="to-blk off" type="button" data-act="soon" data-n="' + n + '" aria-disabled="true">' +
-        '<span class="to-bn" aria-hidden="true">0' + n + '</span><span class="to-bt">Blok ' + n + '</span>' +
-        '<span class="to-bs">Soalnya belum masuk</span><span class="to-bx">Segera</span></button>';
+      var m = M(bid), n = k + 1, key = 'to.' + bid + '.';
+      if(!m) return '<button class="to-blk off" type="button" data-act="soon" data-b="' + esc(bid) + '" data-n="' + n + '" aria-disabled="true">' +
+        '<span class="to-bn" aria-hidden="true">0' + n + '</span><span class="to-bt" data-k="' + key + 'name">Blok ' + n + '</span>' +
+        '<span class="to-bs" data-k="' + key + 'soon">Soalnya belum masuk</span>' + creditHtml(key, '', 'span', 'to-bby') +
+        '<span class="to-bx" data-k="' + key + 'badge">Segera</span></button>';
       var s = blokStats(bid), pct = s.n ? Math.round(s.seen / s.n * 100) : 0, open = !!(ACC && ACC.has(bid));
       return '<button class="to-blk on" type="button" data-act="blok" data-b="' + esc(bid) + '" data-cur="buka">' +
-        '<span class="to-bn" aria-hidden="true">0' + n + '</span><span class="to-bt">' + esc(m.name) + (m.new ? '<span class="to-nb">Baru</span>' : '') + '</span>' +
-        '<span class="to-bs">' + esc(m.title) + '</span>' +
-        '<span class="to-bm">' + s.n + ' soal · ' + (m.topics | 0) + ' topik · ' + esc(m.sem) + '</span>' +
-        (m.by ? '<span class="to-bby">Disusun ' + esc(m.by) + '</span>' : '') +
+        '<span class="to-bn" aria-hidden="true">0' + n + '</span><span class="to-bt"><span data-k="' + key + 'name">' + esc(m.name) + '</span>' + (m.new ? '<span class="to-nb">Baru</span>' : '') + '</span>' +
+        '<span class="to-bs" data-k="' + key + 'title">' + esc(m.title) + '</span>' +
+        '<span class="to-bm">' + s.n + ' soal · ' + (m.topics | 0) + ' topik · <span data-k="' + key + 'sem">' + esc(m.sem) + '</span></span>' +
+        creditHtml(key, m.by, 'span', 'to-bby') +
         '<span class="to-bp" aria-hidden="true"><i style="width:' + pct + '%"></i></span>' +
         '<span class="to-bq">' + (s.seen ? 'Sudah dikerjakan ' + s.seen + '/' + s.n + (s.best != null ? ' · Terbaik ' + fmtScore(s.best) : '') : 'Belum pernah dikerjakan') + '</span>' +
         '<span class="to-bgo">' + (open ? '' : '<span class="to-lk">' + LOCK + '<span class="sr">Perlu masuk. </span></span>') + 'Buka <b>→</b></span></button>';
     }).join('');
     root.innerHTML = '<div class="p-wrap to-wrap">' + heroHtml(c) + acctHtml() + (live ? resumeCard(live) : '') +
-      '<div class="to-bloks p-rv" style="--pd:.42s">' + cards + '</div>' +
-      '<p class="to-priv p-rv" style="--pd:.5s">' + (LS ? 'Nilai dan progres kamu tersimpan di browser perangkat ini saja. Nggak ada leaderboard, nggak ada yang bisa lihat.' :
-        'Browser ini nggak mengizinkan penyimpanan, jadi progres hilang kalau halaman ditutup.') + '</p>' +
+      '<div class="to-bloks' + (ids.length === 4 ? ' n4' : '') + ' p-rv" style="--pd:.42s">' + cards + '</div>' +
+      noteHtml('to.note', 'Catatan buat halaman try out', '.46s') +
+      (LS ? '<p class="to-priv p-rv" style="--pd:.5s" data-k="to.priv">Nilai dan progres kamu tersimpan di browser perangkat ini saja. Nggak ada leaderboard, nggak ada yang bisa lihat.</p>' :
+        '<p class="to-priv p-rv" style="--pd:.5s" data-k="to.privoff">Browser ini nggak mengizinkan penyimpanan, jadi progres hilang kalau halaman ditutup.</p>') +
       '<div class="p-next p-rv" style="--pd:.55s"><span class="lbl">' + c.num + ' / ' + TOTAL + '</span>' +
       '<button class="nextb" type="button" data-act="next" data-next="' + nx.id + '" data-cur="lanjut"><span class="lbl">Channel berikutnya</span><strong>' + esc(nx.name) + ' →</strong></button></div></div>';
   }
@@ -962,7 +997,8 @@ var TRY = (function(){
   function planN(avail){ var P = pref(); return P.n === 0 ? avail : Math.min(P.n, avail); }
   function vSetup(){
     var b = B(V.bid), P = pref(), s = blokStats(V.bid), live = sessOf(V.bid), h = hist(V.bid), tp = tpOf(V.bid), ty = tyOf(V.bid);
-    setBar('<span class="p-crumb">Try Out · ' + esc(b.name) + '</span>'); progSet(0);
+    var key = 'to.' + V.bid + '.';
+    setBar('<span class="p-crumb">Try Out · <span data-k="' + key + 'name">' + esc(b.name) + '</span></span>'); progSet(0);
     var tpCount = {}, tyCount = {}; b.q.forEach(function(q){ tpCount[q.tp] = (tpCount[q.tp] || 0) + 1; tyCount[q.t] = (tyCount[q.t] || 0) + 1; });
     // a filter that would match nothing in this bank is not offered
     var tpKeys = Object.keys(b.topics).filter(function(k){ return tpCount[k]; }), nTypes = Object.keys(tyCount).length;
@@ -994,8 +1030,9 @@ var TRY = (function(){
         }).join('') + '</ol></section>';
     }
     root.innerHTML = '<div class="p-wrap to-wrap to-setup">' +
-      '<div class="to-head"><p class="lbl">' + esc(b.name) + ' · ' + esc(b.sem) + '</p><h2 class="to-h" tabindex="-1" data-focus>' + esc(b.title) + '</h2>' +
-        (b.credit ? '<p class="to-by">Disusun <b>' + esc(b.credit) + '</b></p>' : '') +
+      '<div class="to-head"><p class="lbl"><span data-k="' + key + 'name">' + esc(b.name) + '</span> · <span data-k="' + key + 'sem">' + esc(b.sem) + '</span></p>' +
+        '<h2 class="to-h" tabindex="-1" data-focus><span data-k="' + key + 'title">' + esc(b.title) + '</span></h2>' +
+        creditHtml(key, b.credit, 'p', 'to-by') + noteHtml(key + 'note', 'Catatan buat ' + b.name) +
         '<div class="to-kpis"><div><b>' + s.n + '</b><span>Total soal</span></div><div><b>' + s.seen + '</b><span>Sudah dikerjakan</span></div>' +
         '<div><b>' + s.ok + '</b><span>Terakhir benar</span></div><div><b>' + (s.best != null ? fmtScore(s.best) : '-') + '</b><span>Nilai terbaik</span></div></div></div>' +
       (live ? resumeCard(live) : '') +
@@ -1014,7 +1051,7 @@ var TRY = (function(){
         (n ? 'Mulai ' + (P.mode === 'ujian' ? 'simulasi' : 'latihan') + ' · ' + n + ' soal' : 'Nggak ada soal yang cocok') + ' <b aria-hidden="true">→</b></button>' +
         (n ? '' : '<p class="to-hint">Longgarkan filter topik, jenis soal, atau sumbernya.</p>') + '</div>' +
       hl + refsHtml(b) +
-      '<div class="to-foot-links"><button type="button" class="to-link" data-act="reset">Hapus semua data try out ' + esc(b.name) + '</button></div>' +
+      '<div class="to-foot-links"><button type="button" class="to-link" data-act="reset">Hapus semua data try out ' + bt(V.bid, 'name', b.name) + '</button></div>' +
     '</div>';
   }
 
@@ -1302,7 +1339,7 @@ var TRY = (function(){
   }
   function vResult(res){
     var b = B(res.blok);
-    setBar('<span class="p-crumb">Hasil · ' + esc(b.name) + '</span>'); progSet(1);
+    setBar('<span class="p-crumb">Hasil · ' + bt(res.blok, 'name', b.name) + '</span>'); progSet(1);
     var h = hist(res.blok), prev = h.filter(function(r){ return r.id !== res.id; })[0];
     var delta = prev ? res.score - prev.score : null;
     var tps = Object.keys(b.topics).filter(function(k){ return res.byTp[k]; }).map(function(k){
@@ -1311,7 +1348,7 @@ var TRY = (function(){
     }).join('');
     var wrong = res.salah + res.kosong;
     root.innerHTML = '<div class="p-wrap to-wrap to-result">' +
-      '<p class="lbl">' + (res.mode === 'ujian' ? 'Simulasi CBT' : 'Latihan') + ' · ' + esc(b.name) + (res.label ? ' · ' + esc(res.label) : '') + '</p>' +
+      '<p class="lbl">' + (res.mode === 'ujian' ? 'Simulasi CBT' : 'Latihan') + ' · ' + bt(res.blok, 'name', b.name) + (res.label ? ' · ' + esc(res.label) : '') + '</p>' +
       '<div class="to-mon"><svg class="to-mon-ecg" viewBox="0 0 600 90" preserveAspectRatio="none" aria-hidden="true"><path pathLength="1" d="' + ecgPath(600, 90, 3.2) + '"/></svg>' +
         '<div class="to-mon-r"><span class="lbl">Nilai</span><b class="to-score" id="toScore" tabindex="-1" data-focus data-v="' + res.score + '">' + fmtScore(res.score) + '</b>' +
         '<span class="to-mon-s">' + res.benar + ' benar dari ' + res.n + ' soal' + (delta != null ? ' · <em class="' + (delta >= 0 ? 'up' : 'down') + '">' + (delta >= 0 ? '+' : '') + fmtScore(delta) + ' dari sebelumnya</em>' : '') + '</span></div></div>' +
@@ -1332,7 +1369,7 @@ var TRY = (function(){
   // review
   function vReview(res){
     var b = B(res.blok), f = V.filter || 'all', sr = {}; stars(res.blok).forEach(function(id){ sr[id] = 1; });
-    setBar('<span class="p-crumb">Pembahasan · ' + esc(b.name) + '</span>'); progSet(1);
+    setBar('<span class="p-crumb">Pembahasan · ' + bt(res.blok, 'name', b.name) + '</span>'); progSet(1);
     var counts = { all: 0, no: 0, blank: 0, flag: 0, ok: 0 };
     var items = res.ids.map(function(id, k){
       var q = b.by[id]; if(!q) return null;
@@ -1365,7 +1402,7 @@ var TRY = (function(){
       var w = (p.w | 0) > 0 ? p.w | 0 : 800, h = (p.h | 0) > 0 ? p.h | 0 : 600, alt = what + (l.length > 1 ? ' ' + (i + 1) : '');
       return '<figure class="to-fig ld" style="--ar:' + w + '/' + h + ';--r:' + (w / h).toFixed(4) + ';--fw:' + w + 'px">' +
         '<button class="to-fz" type="button" data-act="zoom" aria-label="' + alt + ', buka ukuran penuh">' +
-        '<img alt="' + alt + '" width="' + w + '" height="' + h + '" data-b="' + esc(bid) + '" data-q="' + esc(q.id) + '" data-k="' + k + '" data-i="' + i + '">' +
+        '<img alt="' + alt + '" width="' + w + '" height="' + h + '" data-b="' + esc(bid) + '" data-q="' + esc(q.id) + '" data-pk="' + k + '" data-i="' + i + '">' +
         '<span class="to-pwm" aria-hidden="true"></span></button>' +
         '<div class="to-fst"><span>Memuat gambar…</span></div></figure>';
     }).join('') + '</div>';
@@ -1373,7 +1410,7 @@ var TRY = (function(){
   function hydrate(scope){ if(ACC && scope) $$('.to-fig img:not([src])', scope).forEach(loadPic); }
   function loadPic(im){
     var fig = im.closest('.to-fig'), bid = im.getAttribute('data-b'), b = B(bid), q = b && b.by[im.getAttribute('data-q')];
-    var l = q && q[im.getAttribute('data-k')], p = l && l[+im.getAttribute('data-i')];
+    var l = q && q[im.getAttribute('data-pk')], p = l && l[+im.getAttribute('data-i')];
     fig.classList.add('ld'); fig.classList.remove('bad');
     $('.to-fst', fig).innerHTML = '<span>Memuat gambar…</span>';
     if(!p){ picBad(fig); return; }
@@ -1472,7 +1509,7 @@ var TRY = (function(){
     V.view = 'gate'; V.gb = bid; V.gw = want; V.grid = st && st.rid || null;
     panel.classList.remove('to-running'); wm(false);
     $('#toBackT', panel).textContent = 'Kembali';
-    setBar('<span class="p-crumb">Try Out · ' + esc(m.name) + '</span>'); progSet(0);
+    setBar('<span class="p-crumb">Try Out · ' + bt(bid, 'name', m.name) + '</span>'); progSet(0);
     // a quick open shows no waiting screen at all
     var t = setTimeout(function(){ if(my === gseq) drawGate(bid, { s: 'wait' }); }, 140);
     busyG++;
@@ -1514,30 +1551,34 @@ var TRY = (function(){
       (sw ? '<button class="to-link2" type="button" data-act="gswitch">Ganti akun</button>' : '') + '</p>';
   }
   function gateHtml(kind, bid, r){
-    var m = M(bid), acc = ACC ? ACC.account() : null, tag = esc(m.name) + ' · ' + esc(m.title), side = '', body = '', head;
-    var top = function(lbl, h, p){ return '<p class="lbl">' + lbl + '</p><h2 class="to-h" tabindex="-1" data-focus>' + h + '</h2>' + (p ? '<p class="to-gp">' + p + '</p>' : ''); };
+    var m = M(bid), acc = ACC ? ACC.account() : null, tag = bt(bid, 'name', m.name) + ' · ' + bt(bid, 'title', m.title), side = '', body = '', head;
+    // k: the page-text key of the heading and the paragraph (to.gate.<k>.h and .p), for the screens a student reads
+    var top = function(lbl, h, p, k){
+      return '<p class="lbl">' + lbl + '</p><h2 class="to-h" tabindex="-1" data-focus>' + (k ? '<span data-k="to.gate.' + k + '.h">' + h + '</span>' : h) + '</h2>' +
+        (p ? '<p class="to-gp"' + (k ? ' data-k="to.gate.' + k + '.p"' : '') + '>' + p + '</p>' : '');
+    };
     var acts = function(main){ return '<div class="to-acts">' + main + '<button class="to-btn ghost" type="button" data-act="gback">Kembali</button></div>'; };
     if(kind === 'buka'){
-      head = top(esc(m.name) + ' · ' + esc(m.sem), esc(m.title));
+      head = top(bt(bid, 'name', m.name) + ' · ' + bt(bid, 'sem', m.sem), bt(bid, 'title', m.title));
       body = '<p class="to-wait" role="status"><i aria-hidden="true"></i>Membuka soal…</p>';
     } else if(kind === 'masuk'){
-      head = top(tag, 'Masuk dulu, ya', 'Soal try out cuma buat anak Kelas Alpha. Masuk pakai akun Google kamu, lalu cocokkan NIM sekali aja.');
+      head = top(tag, 'Masuk dulu, ya', 'Soal try out cuma buat anak Kelas Alpha. Masuk pakai akun Google kamu, lalu cocokkan NIM sekali aja.', 'masuk');
       side = passHtml('', '', '');
       body = '<p class="to-gerr" id="toGErr" role="alert">' + (r.err && INERR[r.err] ? INERR[r.err] : '') + '</p>' +
         '<div class="to-acts"><button class="to-btn pri to-gbtn" type="button" data-act="gin">' + GOOGLE + '<span>' + (V.again ? 'Lanjut ke Google' : 'Masuk dengan Google') + '</span></button></div>' +
         '<p class="to-hint" id="toGHint"' + (V.again ? '' : ' hidden') + '>Sekali lagi, ya. Browser butuh ketukan baru buat buka jendela Google.</p>' +
-        '<ul class="to-facts"><li><b>Sekali aja</b><span>NIM dicocokkan sekali. Setelah itu tinggal buka.</span></li>' +
-        '<li><b>Bisa offline</b><span>Soal yang pernah dibuka tetap bisa dikerjakan tanpa internet.</span></li>' +
-        '<li><b>Data kamu</b><span>Server cuma nyimpen email Google, nama, dan NIM kamu. Nilai dan progres tetap di perangkat ini.</span></li></ul>';
+        '<ul class="to-facts"><li><b data-k="to.gate.f1.h">Sekali aja</b><span data-k="to.gate.f1.p">NIM dicocokkan sekali. Setelah itu tinggal buka.</span></li>' +
+        '<li><b data-k="to.gate.f2.h">Bisa offline</b><span data-k="to.gate.f2.p">Soal yang pernah dibuka tetap bisa dikerjakan tanpa internet.</span></li>' +
+        '<li><b data-k="to.gate.f3.h">Data kamu</b><span data-k="to.gate.f3.p">Server cuma nyimpen email Google, nama, dan NIM kamu. Nilai dan progres tetap di perangkat ini.</span></li></ul>';
     } else if(kind === 'inapp'){
-      head = top(tag, 'Buka di Chrome atau Safari', 'Kamu lagi buka situs ini dari dalam aplikasi lain, misalnya Instagram atau Line. Google nggak ngizinin login dari situ.');
+      head = top(tag, 'Buka di Chrome atau Safari', 'Kamu lagi buka situs ini dari dalam aplikasi lain, misalnya Instagram atau Line. Google nggak ngizinin login dari situ.', 'inapp');
       body = '<ol class="to-steps"><li>Ketuk menu <b>⋯</b> atau <b>⋮</b> di pojok layar.</li><li>Pilih <b>Buka di browser</b>, atau <b>Open in Chrome</b> / <b>Safari</b>.</li></ol>' +
         '<p class="to-fh">Atau salin link ini, lalu tempel di Chrome atau Safari:</p>' +
         '<div class="to-nimr"><input class="to-in" id="toUrl" type="text" readonly value="' + esc(location.href) + '" aria-label="Link halaman ini"><button class="to-btn pri" type="button" data-act="gcopy">Salin link</button></div>' +
         '<p class="to-alt"><button class="to-link2" type="button" data-act="gapp">Tetap coba masuk di sini</button></p>';
     } else if(kind === 'nim'){
       var pv = V.pv;
-      head = top(esc(m.name) + ' · Langkah terakhir', pv ? 'Ini kamu?' : 'Cocokkan NIM kamu', pv ? '' : 'Sekali aja. Setelah cocok, akun Google ini terhubung ke NIM kamu dan soal langsung kebuka.');
+      head = top(bt(bid, 'name', m.name) + ' · Langkah terakhir', pv ? 'Ini kamu?' : 'Cocokkan NIM kamu', pv ? '' : 'Sekali aja. Setelah cocok, akun Google ini terhubung ke NIM kamu dan soal langsung kebuka.', pv ? 'pv' : 'nim');
       side = passHtml(pv ? pv.name : '', pv ? pv.nim : V.nim, acc ? acc.email : '');
       body = (pv ? '<div class="to-pv"><p class="to-pv-q"><b>' + esc(pv.name) + '</b><span>NIM ' + esc(pv.nim) + '</span></p>' +
           '<div class="to-acts"><button class="to-btn pri" type="button" data-act="nimok">Iya, ini aku</button><button class="to-btn ghost" type="button" data-act="nimx">Bukan, ganti NIM</button></div>' +
@@ -1548,10 +1589,10 @@ var TRY = (function(){
           '<p class="to-fh" id="toNimH">14 digit, sama seperti di KTM.</p><p class="to-gerr" id="toNimE" role="alert"></p></form>') +
         whoHtml(acc, true);
     } else if(kind === 'tutup'){
-      head = top(tag, 'Akun ini nggak bisa buka try out', 'Kalau menurut kamu ini keliru, hubungi pengurus kelas.');
+      head = top(tag, 'Akun ini nggak bisa buka try out', 'Kalau menurut kamu ini keliru, hubungi pengurus kelas.', 'tutup');
       body = whoHtml(acc, false) + acts('<button class="to-btn line" type="button" data-act="gswitch">Keluar dan pakai akun lain</button>');
     } else if(kind === 'siap'){
-      head = top(tag, 'Soalnya lagi disiapin', 'Server try out belum siap. Coba lagi sebentar lagi, ya.');
+      head = top(tag, 'Soalnya lagi disiapin', 'Server try out belum siap. Coba lagi sebentar lagi, ya.', 'siap');
       body = acts('<button class="to-btn pri" type="button" data-act="gretry">Coba lagi</button>');
     } else {
       var g = GALAT[r.code] || GALAT.server;
@@ -1657,7 +1698,7 @@ var TRY = (function(){
       gseq++; V.gw = V.view; V.grid = V.rid;
       panel.classList.remove('to-running'); wm(false);
       $('#toBackT', panel).textContent = 'Kembali';
-      setBar('<span class="p-crumb">Try Out · ' + esc(M(bid).name) + '</span>'); progSet(0);
+      setBar('<span class="p-crumb">Try Out · ' + bt(bid, 'name', M(bid).name) + '</span>'); progSet(0);
       drawGate(bid, st);
       return;
     }
@@ -1727,7 +1768,7 @@ var TRY = (function(){
       case 'start': startFromSetup(); break;
       case 'hist': V.filter = 'all'; go('review', 'push', { rid: t.getAttribute('data-rid'), b: V.bid }); break;
       case 'reset':
-        confirmBox({ title: 'Hapus semua data try out?', body: 'Riwayat, nilai, soal yang ditandai, dan sesi yang belum selesai untuk ' + B(V.bid).name + ' dihapus dari perangkat ini.', ok: 'Hapus semua', danger: true }, function(){
+        confirmBox({ title: 'Hapus semua data try out?', body: 'Riwayat, nilai, soal yang ditandai, dan sesi yang belum selesai untuk ' + btText(V.bid, 'name', B(V.bid).name) + ' dihapus dari perangkat ini.', ok: 'Hapus semua', danger: true }, function(){
           ['sess.', 'hist.', 'stat.', 'star.'].forEach(function(p){ del(p + V.bid); }); S = null; LAST = null; vSetup(); bindCursor(panel); toast('Data try out dihapus.');
         });
         break;
@@ -1823,7 +1864,7 @@ var TRY = (function(){
   var onWide = function(){ if(navIsOpen) navOpen(false); };
   if(WIDE.addEventListener) WIDE.addEventListener('change', onWide); else if(WIDE.addListener) WIDE.addListener(onWide);
 
-  return { preload: function(){ access().then(null, function(){}); }, mount: mountTo, leave: leave, pop: pop, esc: esc2, depth: depth, isOpen: function(){ return V.open; },
+  return { preload: function(){ access().then(null, function(){}); }, mount: mountTo, leave: leave, pop: pop, esc: esc2, depth: depth, isOpen: function(){ return V.open; }, refresh: refreshHome,
     count: function(){ return MAN.banks.reduce(function(n, m){ return n + ((m && m.n) | 0); }, 0); } };
 })();
 
@@ -1893,11 +1934,13 @@ function buildPanel(c){
   panel.innerHTML =
     '<div class="p-bar"><button class="back mag" type="button" id="backBtn" data-cur="balik"><b>←</b> Kembali</button><span class="p-crumb">Channel ' + c.num + ' / ' + TOTAL + '</span></div>' +
     '<div class="p-wrap">' +
-      '<div class="p-hero"><span class="p-num" aria-hidden="true">' + c.num + '</span>' +
+      '<div class="p-hero" data-ch="' + esc(c.id) + '"><span class="p-num" aria-hidden="true">' + c.num + '</span>' +
         '<p class="lbl p-rv" style="--pd:.05s">' + esc(c.tag) + '</p>' +
         '<h2 class="p-ttl">' + ttl + '</h2>' +
         '<p class="p-sub p-rv" style="--pd:.35s">' + esc(c.sub) + '</p></div>' +
-      '<a class="folder p-rv' + (url ? '' : ' empty') + '" style="--pd:.45s" data-cur="buka" ' +
+      // a note the admin can add to this channel's page; empty, it does not show
+      '<p class="p-note p-rv" style="--pd:.4s" data-k="ch.' + esc(c.id) + '.note" data-opt data-empty data-ml data-ph="Catatan buat channel ini (kosong = tidak tampil)"></p>' +
+      '<a class="folder p-rv' + (url ? '' : ' empty') + '" style="--pd:.45s" data-cur="buka" data-ch="' + esc(c.id) + '" ' +
         (url ? 'href="' + esc(url) + '" target="_blank" rel="noopener noreferrer"' : 'href="#" role="button" aria-disabled="true"') + '>' +
         '<span class="f-back"><span class="f-tab">Drive · ' + c.num + '</span></span>' +
         '<span class="f-paper f-p1" aria-hidden="true"></span>' +
@@ -2438,6 +2481,7 @@ return {
   panelOpen: function(){ return !!openId; },
   // texts from the live editor that the shell builds itself
   setTexts: function(t){
+    TXT = t && typeof t === 'object' ? t : {};
     var ends = t && typeof t['hero.ends'] === 'string' ? t['hero.ends'].split('\n').map(function(x){ return x.trim(); }) : null;
     if(ends && ends.join('|') !== ENDS.join('|')) setEnding(ends.filter(function(x, i, a){ return x || a.indexOf('') === i; }));
   },

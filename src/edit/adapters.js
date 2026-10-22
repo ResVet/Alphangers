@@ -453,6 +453,8 @@ const channel = {
     const id = el.dataset.id;
     return [
       { label: 'Ubah', primary: true, run: () => channelForm(ctx, id) },
+      // opens the channel's page, where its texts and notes can be changed too
+      { label: 'Buka', run: () => clickThrough(el) },
       { label: '↑', run: () => moveIn(ctx, 'links', (d) => d.channels, id, -1, 'Urutan channel') },
       { label: '↓', run: () => moveIn(ctx, 'links', (d) => d.channels, id, 1, 'Urutan channel') },
       { label: 'Hapus', danger: true, run: async () => {
@@ -766,20 +768,104 @@ const kelas = {
 };
 
 // ======================================================================
+// channel panels: a Drive folder or the try out, open over the page
+
+// The header and the Drive folder of an open channel are the channel itself: the same form as
+// its row in the list (name, labels, link).
+const panelHero = {
+  kind: 'panel',
+  selector: '#panel .p-hero[data-ch], #panel .folder[data-ch]',
+  label: (el) => (el.classList.contains('folder') ? 'Folder Drive' : 'Channel'),
+  actions(el, ctx) {
+    const folder = el.classList.contains('folder');
+    return [
+      { label: folder ? 'Ubah link' : 'Ubah channel', primary: true, run: () => channelForm(ctx, el.dataset.ch) },
+      folder && !el.classList.contains('empty') ? { label: 'Buka folder', run: () => clickThrough(el) } : null,
+    ];
+  },
+};
+
+// The texts of a try out card are page texts (to.<blok>.<field>). They sit inside a button, so
+// they are changed from this form instead of typed in place. A blank penyusun or catatan hides it.
+const CARD_FIELDS = [
+  { f: 'name', label: 'Nama blok' },
+  { f: 'title', label: 'Judul' },
+  { f: 'sem', label: 'Semester' },
+  { f: 'soon', label: 'Keterangan' },
+  { f: 'badge', label: 'Label kecil' },
+  { f: 'byk', label: 'Kata sebelum penyusun', hint: 'Misal: Disusun, Dibuat oleh.' },
+  { f: 'by', label: 'Penyusun', opt: true },
+  { f: 'note', label: 'Catatan di halaman blok ini', opt: true, multi: true },
+];
+
+async function tryoutCardForm(ctx, el) {
+  const bid = el.dataset.b;
+  const prefix = 'to.' + bid + '.';
+  const t = ctx.store.get('links').site?.t || {};
+  // the defaults are the texts the card was drawn with
+  const defs = {};
+  for (const x of el.querySelectorAll('[data-k]')) if (x.dataset.k.startsWith(prefix)) defs[x.dataset.k.slice(prefix.length)] = ctx.texts.original(x);
+  const open = el.classList.contains('on');
+  if (open) defs.note = '';
+  const own = (f) => Object.prototype.hasOwnProperty.call(t, prefix + f);
+  const fields = CARD_FIELDS.filter((x) => x.f in defs).map((x) => ({
+    name: x.f, label: x.label, wide: true, max: x.multi ? 2000 : 200, type: x.multi ? 'textarea' : undefined, rows: x.multi ? 3 : undefined,
+    placeholder: defs[x.f] || '', hint: x.hint || (x.opt ? 'Kosongkan supaya tidak tampil.' : 'Kosongkan untuk kembali ke teks bawaan.'),
+  }));
+  await openForm({
+    title: 'Kartu ' + (own('name') ? t[prefix + 'name'] : defs.name || bid),
+    sub: open ? 'Teks di kartu try out dan di halaman bloknya.' : 'Teks di kartu try out. Soal blok ini belum masuk.',
+    fields,
+    value: Object.fromEntries(fields.map((x) => [x.name, own(x.name) ? t[prefix + x.name] : defs[x.name]])),
+    onSubmit: (v) => safeEdit(ctx, () => ctx.store.edit('links', (d) => {
+      d.site = d.site || { t: {} };
+      d.site.t = d.site.t || {};
+      for (const x of CARD_FIELDS) {
+        if (!(x.f in v)) continue;
+        const key = prefix + x.f, val = String(v[x.f]), def = defs[x.f];
+        if (val === def || (!val.trim() && (!x.opt || !def))) delete d.site.t[key];
+        else d.site.t[key] = val.trim() ? val : '';
+      }
+    }, 'Kartu try out')),
+  });
+}
+
+// lets one click through to what the element normally does (the overlay passes [data-edit-pass])
+function clickThrough(el) {
+  el.setAttribute('data-edit-pass', '');
+  try { el.click(); } finally { el.removeAttribute('data-edit-pass'); }
+}
+
+const tryoutCard = {
+  kind: 'tryout',
+  selector: '#panel .to-blk[data-b]',
+  label: (el) => 'Kartu ' + (el.querySelector('[data-k$=".name"]')?.textContent || ''),
+  actions: (el, ctx) => [
+    { label: 'Ubah teks', primary: true, run: () => tryoutCardForm(ctx, el) },
+    el.classList.contains('on') ? { label: 'Buka', run: () => clickThrough(el) } : null,
+  ],
+};
+
+// ======================================================================
 // page texts that are not typed into directly (hero endings, marquee, everything at once)
 
 export async function textsPanel(ctx) {
   const keys = new Map();
-  document.querySelectorAll('[data-k]').forEach((el) => { if (!keys.has(el.dataset.k)) keys.set(el.dataset.k, ctx.texts.original(el)); });
+  // texts marked data-opt (a credit, a note) may be left empty on purpose: then they do not show
+  const optional = new Set();
+  document.querySelectorAll('[data-k]').forEach((el) => {
+    if (!keys.has(el.dataset.k)) keys.set(el.dataset.k, ctx.texts.original(el));
+    if (el.hasAttribute('data-opt')) optional.add(el.dataset.k);
+  });
   const t = ctx.store.get('links').site?.t || {};
   const fields = [
     { name: 'hero.ends', label: 'Akhiran kalimat pembuka, satu per baris (baris kosong = tombol 100% Polyester)', type: 'textarea', rows: 4, wide: true },
-    ...[...keys].map(([k, def]) => ({ name: k, label: k, wide: true, max: 4000, placeholder: def })),
+    ...[...keys].map(([k, def]) => ({ name: k, label: k, wide: true, max: 4000, placeholder: def, hint: optional.has(k) ? 'Kosongkan supaya tidak tampil.' : undefined })),
   ];
   const value = Object.fromEntries(fields.map((f) => [f.name, t[f.name] ?? (f.name === 'hero.ends' ? ENDS_DEFAULT : keys.get(f.name))]));
   await openForm({
     title: 'Teks halaman',
-    sub: 'Semua teks yang bisa diubah. Kosongkan untuk kembali ke teks bawaan.',
+    sub: 'Semua teks yang bisa diubah. Kosongkan untuk kembali ke teks bawaan (yang bertanda "tidak tampil" jadi tersembunyi).',
     fields,
     value,
     onSubmit: (v) => safeEdit(ctx, () => ctx.store.edit('links', (d) => {
@@ -787,8 +873,9 @@ export async function textsPanel(ctx) {
       d.site.t = d.site.t || {};
       for (const [k, val] of Object.entries(v)) {
         const def = k === 'hero.ends' ? ENDS_DEFAULT : keys.get(k);
-        if (!String(val).trim() || val === def) delete d.site.t[k];
-        else d.site.t[k] = val;
+        const s = String(val);
+        if (s === def || (!s.trim() && (!optional.has(k) || !def))) delete d.site.t[k];
+        else d.site.t[k] = s.trim() ? s : '';
       }
     }, 'Teks halaman')),
   });
@@ -797,4 +884,4 @@ export async function textsPanel(ctx) {
 // the hero endings as the page ships them (src/legacy/app.js); the empty last line is the Polyester button
 const ENDS_DEFAULT = 'And yes this website is a bit vibecoded :D\nSemangat belajarnya!\nJangan tanya apa kepanjangan Resvet.\n';
 
-export const ADAPTERS = [print, kelas, jadwal, blokPill, dosen, channel, info, heartPart, divisi];
+export const ADAPTERS = [print, kelas, jadwal, blokPill, dosen, channel, info, heartPart, divisi, panelHero, tryoutCard];

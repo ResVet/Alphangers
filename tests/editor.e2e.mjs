@@ -314,3 +314,112 @@ test('a schedule published before Blok 4 shows it, and the next publish keeps it
   assert.deepEqual(errors, []);
   await context.close();
 });
+
+test('try out page: card texts, a hidden credit, notes typed in place, published', async () => {
+  const { page, context, errors } = await open({ width: 1280, height: 860, query: '?admin&mock=admin&cbt=ok' });
+  await page.waitForSelector('.ed-dock.is-admin');
+  await page.click('.ed-seg:has-text("Edit")');
+  // a channel row opens its page from its action bar
+  await page.evaluate(() => document.querySelector('.row-b[data-id="tryout"]').scrollIntoView({ block: 'center' }));
+  await page.click('.row-b[data-id="tryout"]');
+  await page.click('.ed-bar-b:text-is("Buka")');
+  await page.waitForSelector('#panel.on .to-blk[data-b="b4"]');
+  await page.waitForFunction(() => !document.querySelector('#curtain.move') && document.querySelectorAll('#panel .ed-text').length >= 3);
+  assert.equal(await page.locator('.to-note').isVisible(), true, 'the empty note is a slot while editing');
+  // a credit on a card that has none
+  await page.click('.to-blk[data-b="b2"] .to-bs');
+  await page.click('.ed-bar-b:has-text("Ubah teks")');
+  await page.fill('.ed-sheet input[name=byk]', 'Dibuat oleh');
+  await page.fill('.ed-sheet input[name=by]', 'Tim Batu');
+  await submit(page);
+  await page.waitForFunction(() => document.querySelector('.to-blk[data-b="b2"] .to-bby').textContent === 'Dibuat oleh Tim Batu');
+  // a credit taken away
+  await page.click('.to-blk[data-b="b3"] .to-bs');
+  await page.click('.ed-bar-b:has-text("Ubah teks")');
+  assert.equal(await page.inputValue('.ed-sheet input[name=by]'), 'Batu Alphangers');
+  await page.fill('.ed-sheet input[name=by]', '');
+  await submit(page);
+  await page.waitForFunction(() => document.querySelector('.to-blk[data-b="b3"] .to-bby').hasAttribute('data-empty'));
+  // a card with no questions yet (an aria-disabled button, so Playwright needs force, and with
+  // force it does not wait for the closing sheet to get out of the way)
+  await page.waitForSelector('.ed-sheet', { state: 'detached' });
+  await page.click('.to-blk[data-b="b4"] .to-bs', { force: true });
+  assert.equal(await page.locator('.ed-bar-b:text-is("Buka")').count(), 0);
+  await page.click('.ed-bar-b:has-text("Ubah teks")');
+  await page.fill('.ed-sheet input[name=badge]', 'Desember');
+  await submit(page);
+  await page.waitForFunction(() => document.querySelector('.to-blk[data-b="b4"] .to-bx').textContent === 'Desember');
+  // a note typed in place
+  await page.click('.to-note');
+  await page.keyboard.type('Soal Blok 4 menyusul, ya.');
+  await page.evaluate(() => document.activeElement.blur());
+  await page.waitForFunction(() => !document.querySelector('.to-note').hasAttribute('data-empty'));
+  // the header is the channel
+  await page.click('#panel .p-hero .p-ttl');
+  await page.click('.ed-bar-b:has-text("Ubah channel")');
+  assert.equal(await page.inputValue('.ed-sheet input[name=name]'), 'Try Out CBT');
+  await page.click('.ed-sheet .ed-btn:has-text("Batal")');
+  // as the class sees it
+  await page.click('.ed-seg:has-text("Lihat")');
+  const seen = () => page.evaluate(() => ({
+    credits: [...document.querySelectorAll('.to-blk .to-bby')].filter((e) => e.offsetParent).map((e) => e.closest('.to-blk').dataset.b + ': ' + e.textContent),
+    note: document.querySelector('.to-note').offsetParent ? document.querySelector('.to-note').textContent : null,
+  }));
+  assert.deepEqual(await seen(), { credits: ['b2: Dibuat oleh Tim Batu'], note: 'Soal Blok 4 menyusul, ya.' });
+  // the blok page has the same texts, and its own note
+  await page.click('.ed-seg:has-text("Edit")');
+  await page.click('.to-blk[data-b="b3"] .to-bs');
+  await page.click('.ed-bar-b:text-is("Buka")');
+  await page.click('.to-gate [data-act="gin"]');
+  await page.waitForSelector('.to-setup .to-head', { timeout: 15000 });
+  assert.equal(await page.locator('.to-head .to-by').isVisible(), true, 'the empty credit is a slot while editing');
+  await page.click('.to-head .to-note');
+  await page.keyboard.type('Fokus ke topik genetika.');
+  await page.evaluate(() => document.activeElement.blur());
+  await page.waitForFunction(() => document.querySelector('.to-head .to-note').textContent === 'Fokus ke topik genetika.');
+  // saving every page text at once keeps the hidden credit hidden
+  await page.click('[aria-label="Menu editor"]');
+  await page.click('.ed-menu [role=menuitem]:has-text("Semua teks halaman")');
+  await submit(page);
+  await page.click('.ed-seg:has-text("Lihat")');
+  assert.equal(await page.locator('.to-head .to-by').isVisible(), false);
+  assert.equal(await page.locator('.to-head .to-note').isVisible(), true);
+  await page.click('.ed-pub');
+  await page.click('.ed-ask .ed-btn.is-pri');
+  await page.waitForFunction(() => /tersimpan/i.test(document.querySelector('.ed-count').textContent));
+  const t = await page.evaluate(() => JSON.parse(window.__alphaMock.docs.get('links').json).site.t);
+  assert.deepEqual(
+    [t['to.b2.byk'], t['to.b2.by'], t['to.b3.by'], t['to.b4.badge'], t['to.note'], t['to.b3.note']],
+    ['Dibuat oleh', 'Tim Batu', '', 'Desember', 'Soal Blok 4 menyusul, ya.', 'Fokus ke topik genetika.']);
+  assert.deepEqual(errors, []);
+  await context.close();
+});
+
+test('a Drive channel page: the folder link and a note', async () => {
+  const { page, context, errors } = await open({ width: 1280, height: 860 });
+  await page.waitForSelector('.ed-dock.is-admin');
+  await page.click('.ed-seg:has-text("Edit")');
+  await page.evaluate(() => document.querySelector('.row-b[data-id="praktikum"]').scrollIntoView({ block: 'center' }));
+  await page.click('.row-b[data-id="praktikum"]');
+  await page.click('.ed-bar-b:text-is("Buka")');
+  await page.waitForSelector('#panel.on .folder');
+  await page.waitForFunction(() => !document.querySelector('#curtain.move'));
+  await page.click('#panel .folder .f-k');
+  assert.deepEqual(await page.locator('.ed-bar-b').allTextContents(), ['Ubah link', 'Buka folder', '×']);
+  await page.click('.ed-bar-b:has-text("Ubah link")');
+  await page.fill('.ed-sheet input[name=url]', 'https://drive.google.com/drive/folders/praktikumBaru123');
+  await submit(page);
+  await page.waitForFunction(() => document.querySelector('#panel .folder').href.endsWith('praktikumBaru123'));
+  await page.click('#panel .p-note');
+  await page.keyboard.type('Laporan PA dikumpulkan tiap Jumat.');
+  await page.evaluate(() => document.activeElement.blur());
+  await page.waitForFunction(() => !document.querySelector('#panel .p-note').hasAttribute('data-empty'));
+  await page.click('.ed-seg:has-text("Lihat")');
+  assert.equal(await page.locator('#panel .p-note').innerText(), 'Laporan PA dikumpulkan tiap Jumat.');
+  // the next channel has no note of its own
+  await page.click('#panel .nextb');
+  await page.waitForFunction(() => document.querySelector('#panel .p-hero')?.dataset.ch === 'kating' && !document.querySelector('#curtain.move'));
+  assert.equal(await page.locator('#panel .p-note').isVisible(), false);
+  assert.deepEqual(errors, []);
+  await context.close();
+});

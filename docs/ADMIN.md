@@ -35,6 +35,8 @@ Draf disimpan di browser. Kalau tab tertutup sebelum terbit, waktu dibuka lagi m
 
 Di mode Edit, semua teks yang bisa diubah diberi garis putus-putus. Ketuk, ketik, lalu ketuk di luar atau tekan Enter. Esc membatalkan ketikan itu. Kosongkan sebuah teks untuk kembali ke tulisan aslinya. Teks yang tidak bisa diketik langsung (misalnya akhiran kalimat pembuka di atas, satu per baris) ada di **⋯ > Semua teks halaman**.
 
+Ada juga teks yang boleh kosong: catatan dan nama penyusun try out. Selama masih kosong, di mode Edit teks itu tampil sebagai kotak putus-putus dengan petunjuk (misalnya "Catatan buat halaman try out (kosong = tidak tampil)"), dan pengunjung tidak melihat apa-apa. Isi untuk menampilkannya, kosongkan lagi untuk menyembunyikannya.
+
 ### Mengubah kartu (sesi, dosen, channel, pengumuman, divisi, foto)
 
 Di mode Edit, ketuk atau klik sebuah kartu. Kartu itu diberi bingkai hijau dan muncul bar aksi: di sebelah kartu kalau di laptop, di atas dock kalau di HP. Di mode Edit, klik pada kartu tidak membuka apa-apa (dosen, channel, foto), jadi tidak ada yang berpindah halaman di tengah-tengah edit. Tombol tanggal di jadwal dan panah di divisi tetap jalan seperti biasa.
@@ -51,6 +53,26 @@ Di atas tiap bagian ada baris alat untuk menambah: **+ Sesi**, **+ Dosen**, **+ 
 - **Ubah** membuka formulir lengkap sesi itu (termasuk tag, online, dan pembatalan), juga untuk memindahnya ke tanggal lain. **Duplikat** menyalin sesi tepat sesudahnya.
 - **Jam belum diumumkan** di formulir sesi dipakai kalau jadwal resmi belum mencantumkan jamnya (contohnya CBT dan Her OSPE Blok 4). Jadwal menampilkan "Jam menyusul" sebagai ganti jam, sesi itu tidak pernah dihitung "Lagi jalan", dan di kalender jadi acara seharian. Begitu jamnya keluar, buka **Ubah**, isi jam mulai (dan selesai kalau ada), lalu hapus centangnya.
 - **Libur**, **Ubah blok**, dan **+ Blok** ada di baris alat. Ketuk tombol blok (Blok 1, Blok 2, ...) di mode Edit untuk mengubah atau menghapus blok itu.
+
+### Halaman channel dan try out
+
+Di mode Edit, ketuk sebuah channel di daftar Drive lalu **Buka** untuk masuk ke halamannya. Bisa juga buka halamannya dulu di Lihat, lalu pindah ke Edit.
+
+Di halaman channel Drive:
+
+- Ketuk judul halaman lalu **Ubah channel** untuk nama, label kecil, keterangan, dan link folder (formulir yang sama dengan di daftar).
+- Ketuk gambar foldernya: **Ubah link**, atau **Buka folder** untuk mengecek linknya.
+- Di bawah judul ada kotak **Catatan buat channel ini**. Ketik apa saja, misalnya "Laporan PA dikumpulkan tiap Jumat". Tiap channel punya catatannya sendiri.
+
+Di halaman try out:
+
+- Ketuk sebuah kartu blok lalu **Ubah teks**: nama blok, judul, semester, keterangan dan label kecil (untuk blok yang soalnya belum masuk), kata sebelum penyusun, penyusun, dan catatan di halaman blok itu. Misalnya, supaya tertulis "Dibuat oleh Tim Batu", isi **Kata sebelum penyusun** dengan `Dibuat oleh` dan **Penyusun** dengan `Tim Batu`. Kosongkan **Penyusun** untuk menyembunyikan baris itu. Kartu yang soalnya sudah ada juga punya tombol **Buka**.
+- Nama, judul, dan semester blok yang diubah ikut berubah di semua layar try out (halaman blok, layar masuk, hasil, pembahasan).
+- Di bawah kartu ada kotak **Catatan buat halaman try out**. Di halaman tiap blok ada catatan sendiri di bawah judulnya.
+- Teks lain di halaman try out (kalimat di kotak akun, kalimat soal penyimpanan di bawah kartu, judul dan penjelasan di layar masuk) bisa diketik langsung.
+- Ketuk judul halaman lalu **Ubah channel** untuk nama, label, dan keterangan channel Try Out.
+
+Untuk membuka halaman blok di mode Edit, kamu perlu masuk try out seperti teman sekelas (Google dan NIM), karena soalnya hanya terbuka untuk Kelas Alpha.
 
 ### Foto divisi dan foto kelas
 
