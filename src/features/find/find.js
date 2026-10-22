@@ -1,7 +1,7 @@
 // Site-wide search (Ctrl/Cmd K or the "Cari" button): channels, sessions, lecturers and parts
 // of the heart in one list. Loaded the first time someone opens it.
 import './find.css';
-import { createModel, queryTokens, compact, formatDate, formatTime, todayWIB } from '../../lib/schedule-model.js';
+import { createModel, queryTokens, compact, formatDate, startLabel, todayWIB } from '../../lib/schedule-model.js';
 
 const LIMIT = { channel: 5, session: 6, dosen: 6, heart: 5 };
 const GROUP = { section: 'Lompat ke', channel: 'Channel', session: 'Jadwal', dosen: 'Dosen', heart: 'Jantung 3D' };
@@ -139,7 +139,7 @@ export function createFind({ load, ensure, jump }) {
       id: s.uid,
       date: s.date,
       name: s.title,
-      sub: (s.date === today ? 'Hari ini' : formatDate(s.date, 'short')) + ', ' + formatTime(s.start) + ' · ' + s.kindLabel + ' · ' + s.blok.name,
+      sub: (s.date === today ? 'Hari ini' : formatDate(s.date, 'short')) + ', ' + startLabel(s) + ' · ' + s.kindLabel + ' · ' + s.blok.name,
       past: s.endAt < now,
       // a hit on the title counts like a name hit; a hit only on the lecturer counts less
       score: titleScore.get(s),

@@ -1,7 +1,7 @@
 // Dosen: the lecturer directory. Instant search, blok and specialty filters, A to Z groups,
 // and a detail dialog listing every session the person teaches in the class schedule.
 import './dosen.css';
-import { createModel, compact, queryTokens, formatDate, formatTime } from '../../lib/schedule-model.js';
+import { createModel, compact, queryTokens, formatDate, timeRange } from '../../lib/schedule-model.js';
 import { esc, phonesHTML, bindCopy, makeAnnouncer, prefersReducedMotion, makeClock, labelRegion } from './contact.js';
 
 const CHUNK = 60;
@@ -413,7 +413,7 @@ export function mountDosen(root, { schedule, dosen, now } = {}) {
         const tag = i === nextIdx ? '<span class="dz-se-next">berikutnya</span>' : '';
         return '<li class="' + (s.endAt <= t ? 'is-past' : '') + '">' +
           '<button type="button" class="dz-se-b" data-date="' + s.date + '" data-uid="' + esc(s.uid) + '">' +
-            '<span class="dz-se-d">' + formatDate(s.date, 'short') + '<span class="dz-se-tm">' + formatTime(s.start) + ' - ' + (s.end ? formatTime(s.end) : 'selesai') + '</span></span>' +
+            '<span class="dz-se-d">' + formatDate(s.date, 'short') + '<span class="dz-se-tm">' + timeRange(s) + '</span></span>' +
             '<span class="dz-se-t">' + esc(s.title) + '</span>' +
             '<span class="dz-se-k">' + esc(s.kindLabel) + (s.pj ? ', sebagai PJ' : '') + tag + '</span>' +
             '<span class="dz-sr">, buka di jadwal</span>' +

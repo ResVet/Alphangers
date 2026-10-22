@@ -4,7 +4,7 @@ import './jadwal.css';
 import {
   createModel, todayWIB, addDays, startOfWeek, weekdayOf, monthGrid, monthOf, addMonths, daysInMonth,
   daysBetween, parseISO, isISODate, formatDate, formatTime, relativeDay, daysUntilLabel, countdownParts,
-  DAYS, DAYS_SHORT, MONTHS, MONTHS_SHORT,
+  timeRange, startLabel, DAYS, DAYS_SHORT, MONTHS, MONTHS_SHORT,
 } from '../../lib/schedule-model.js';
 import {
   sessionCalendar, dayCalendar, blokCalendar, sessionFilename, dayFilename, blokFilename,
@@ -43,13 +43,15 @@ function storeDate(iso) {
   }
 }
 
-function timeRange(s) {
-  return formatTime(s.start) + ' - ' + (s.end ? formatTime(s.end) : 'selesai');
-}
-
 function whenLabel(s, today) {
   const rel = relativeDay(s.date, today);
-  return (rel || formatDate(s.date, 'medium')) + ', ' + formatTime(s.start);
+  return (rel || formatDate(s.date, 'medium')) + ', ' + startLabel(s);
+}
+
+/** '12 hari lagi' as a big number with its words, or 'besok' and the like as words only. */
+function daysHTML(label) {
+  const n = /^\d+/.exec(label);
+  return n ? '<p class="jw-ro-n">' + n[0] + ' <small>' + label.slice(n[0].length).trim() + '</small></p>' : '<p class="jw-ro-n is-words">' + label + '</p>';
 }
 
 export function mountJadwal(root, { schedule, dosen, now } = {}) {
@@ -230,10 +232,14 @@ export function mountJadwal(root, { schedule, dosen, now } = {}) {
     el.todayBtn.disabled = d === state.today;
 
     if (info.sessions.length) {
-      const first = info.sessions[0];
-      const last = info.sessions[info.sessions.length - 1];
+      // the day's span comes from the sessions with a time; the rest are counted as "jam menyusul"
+      const timed = info.sessions.filter((x) => !x.tba);
+      const first = timed[0];
+      const last = timed[timed.length - 1];
+      const later = info.sessions.length - timed.length;
       const off = info.sessions.filter((x) => x.cancelled).length;
-      el.sum.textContent = info.sessions.length + ' sesi, ' + formatTime(first.start) + ' - ' + (last.end ? formatTime(last.end) : 'selesai') +
+      el.sum.textContent = info.sessions.length + ' sesi, ' +
+        (first ? formatTime(first.start) + ' - ' + (last.end ? formatTime(last.end) : 'selesai') + (later ? ', ' + later + ' jam menyusul' : '') : 'jam menyusul') +
         (off ? (off === info.sessions.length ? ', semua dibatalkan' : ', ' + off + ' dibatalkan') : '');
       el.list.innerHTML = '<ol class="jw-tl">' + info.sessions.map((s, i) => sessionHTML(s, i)).join('') + '</ol>';
     } else {
@@ -256,11 +262,14 @@ export function mountJadwal(root, { schedule, dosen, now } = {}) {
   function sessionHTML(s, i) {
     const menuId = uid + '-add-' + i;
     const ref = s.ref.blokId + '|' + s.ref.date + '|' + s.ref.index;
-    return '<li class="jw-s' + (s.cancelled ? ' is-batal' : '') + '" data-uid="' + esc(s.uid) + '" data-ref="' + esc(ref) + '" data-kind="' + esc(s.kind) + '" style="--i:' + i + '">' +
-      '<div class="jw-s-time"><span class="jw-s-from">' + formatTime(s.start) + '</span>' +
-        '<span class="jw-s-to"><span class="jw-sr">sampai </span>' + (s.end ? formatTime(s.end) : 'selesai') + '</span></div>' +
+    return '<li class="jw-s' + (s.cancelled ? ' is-batal' : '') + '" data-uid="' + esc(s.uid) + '" data-ref="' + esc(ref) + '" data-kind="' + esc(s.kind) + '"' + (s.tba ? ' data-tba' : '') + ' style="--i:' + i + '">' +
+      (s.tba
+        ? '<div class="jw-s-time"><span class="jw-s-from is-tba" aria-hidden="true">--.--</span><span class="jw-sr">Jam belum diumumkan</span></div>'
+        : '<div class="jw-s-time"><span class="jw-s-from">' + formatTime(s.start) + '</span>' +
+          '<span class="jw-s-to"><span class="jw-sr">sampai </span>' + (s.end ? formatTime(s.end) : 'selesai') + '</span></div>') +
       '<div class="jw-s-body">' +
         '<p class="jw-s-meta">' + (s.cancelled ? '<span class="jw-batal">Dibatalkan</span>' : '') + '<span class="jw-kind">' + esc(s.kindLabel) + '</span>' +
+          (s.tba ? '<span class="jw-tba">Jam menyusul</span>' : '') +
           s.tags.map((t) => '<span class="jw-tag' + (/^kelas gabungan$/i.test(t) ? ' is-gab" title="Kelas Alpha dan Beta bersama' : '') + '">' + esc(t) + '</span>').join('') +
           (s.online ? '<span class="jw-online">Online</span>' : s.blok.loc ? '<span class="jw-loc">' + esc(s.blok.loc) + '</span>' : '') +
           '<span class="jw-now-tag">lagi jalan</span></p>' +
@@ -347,7 +356,8 @@ export function mountJadwal(root, { schedule, dosen, now } = {}) {
     for (const li of el.list.querySelectorAll('.jw-s')) {
       const s = sessionByUid(li.dataset.uid);
       if (!s) continue;
-      if (s.cancelled) continue;
+      // without a time it is neither running nor over while its day lasts
+      if (s.cancelled || s.tba) continue;
       li.classList.toggle('is-now', isToday && s.startAt <= t && t < s.endAt);
       li.classList.toggle('is-past', isToday && t >= s.endAt);
     }
@@ -373,22 +383,21 @@ export function mountJadwal(root, { schedule, dosen, now } = {}) {
     let a;
     if (running.length) {
       const s = running[0];
-      const after = next && next.date === s.date ? '<p class="jw-ro-x">habis ini ' + esc(next.title) + ', ' + formatTime(next.start) + '</p>' : '';
+      const after = next && next.date === s.date ? '<p class="jw-ro-x">habis ini ' + esc(next.title) + ', ' + startLabel(next) + '</p>' : '';
       a = readout('now', 'Lagi jalan', s, timeRange(s) + (running.length > 1 ? ', barengan ' + (running.length - 1) + ' sesi lain' : ''),
         s.openEnd ? '<p class="jw-ro-n is-words">sampai selesai</p>' : countdownHTML(s.endAt, 'sisa'), after);
     } else if (next) {
-      a = readout('next', 'Berikutnya', next, whenLabel(next, today), countdownHTML(next.startAt, 'lagi'), '');
+      // no time yet, so no clock to count down: the days until it instead
+      a = readout('next', 'Berikutnya', next, whenLabel(next, today), next.tba ? daysHTML(daysUntilLabel(next.date, today)) : countdownHTML(next.startAt, 'lagi'), '');
     } else {
       a = '<div class="jw-ro" data-state="none"><p class="jw-ro-k">Berikutnya</p><p class="jw-ro-e">Belum ada jadwal lagi.</p></div>';
     }
 
     let b;
     if (ujian) {
-      const going = ujian.startAt <= t;
+      const going = !ujian.tba && ujian.startAt <= t;
       const label = going ? 'lagi jalan' : daysUntilLabel(ujian.date, today);
-      const n = /^\d+/.exec(label);
-      const big = n ? '<p class="jw-ro-n">' + n[0] + ' <small>' + label.slice(n[0].length).trim() + '</small></p>' : '<p class="jw-ro-n is-words">' + label + '</p>';
-      b = readout('exam', 'Ujian berikutnya', ujian, whenLabel(ujian, today), big, '');
+      b = readout('exam', 'Ujian berikutnya', ujian, whenLabel(ujian, today), daysHTML(label), '');
     } else {
       b = '<div class="jw-ro" data-state="none"><p class="jw-ro-k">Ujian berikutnya</p><p class="jw-ro-e">Belum ada ujian di jadwal.</p></div>';
     }
@@ -403,7 +412,7 @@ export function mountJadwal(root, { schedule, dosen, now } = {}) {
     }
     if (!initial && prevKey) {
       if (running.length) announce('Sekarang lagi jalan: ' + running[0].title + '.');
-      else if (next && next.date === today) announce('Berikutnya ' + next.title + ', jam ' + formatTime(next.start) + '.');
+      else if (next && next.date === today) announce('Berikutnya ' + next.title + (next.tba ? ', jamnya menyusul.' : ', jam ' + formatTime(next.start) + '.'));
     }
     return true;
   }
@@ -730,7 +739,7 @@ export function mountJadwal(root, { schedule, dosen, now } = {}) {
     el.hits.innerHTML = shown.map((s) =>
       '<li><button type="button" class="jw-hit" data-go="' + s.date + '" data-uid="' + esc(s.uid) + '">' +
         '<span class="jw-hit-t">' + esc(s.title) + '</span>' +
-        '<span class="jw-hit-m">' + formatDate(s.date, 'short') + ', ' + formatTime(s.start) + ', ' + esc(s.kindLabel) + '</span>' +
+        '<span class="jw-hit-m">' + formatDate(s.date, 'short') + ', ' + startLabel(s) + ', ' + esc(s.kindLabel) + '</span>' +
       '</button></li>'
     ).join('');
   }

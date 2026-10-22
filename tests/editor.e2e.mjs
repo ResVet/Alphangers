@@ -4,6 +4,7 @@
 import { test, before, after } from 'node:test';
 import assert from 'node:assert/strict';
 import { chromium } from '@playwright/test';
+import { readFileSync } from 'node:fs';
 import { join, dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { serveDist } from './lib/serve-dist.mjs';
@@ -100,7 +101,7 @@ test('lecturer, session with that lecturer, channel, announcement, heart note', 
   await page.click('.ed-sheet .ed-btn:has-text("+ Nomor")');
   await page.fill('.ed-sheet .ed-li-in', '0812 3456 7890');
   await submit(page);
-  await page.waitForFunction(() => /477/.test(document.querySelector('.dz-count').textContent));
+  await page.waitForFunction(() => /478/.test(document.querySelector('.dz-count').textContent));
 
   await page.evaluate(() => document.getElementById('jadwal').scrollIntoView());
   await page.click('.ed-tools-b:has-text("+ Sesi")');
@@ -267,6 +268,49 @@ test('switching back to Lihat leaves no outline behind', async () => {
   assert.equal(await page.evaluate(() => getComputedStyle(document.querySelector('.ed-sel')).opacity), '0');
   assert.equal(await page.evaluate(() => getComputedStyle(document.querySelector('.ed-hl')).opacity), '0');
   assert.equal(await page.locator('.ed-bar').isHidden(), true);
+  assert.deepEqual(errors, []);
+  await context.close();
+});
+
+// The schedule as published before Blok 4 was added to the bundled copy (no Blok 4, no "base"),
+// with an edit the admin made in Blok 3.
+function publishedBeforeBlok4() {
+  const old = JSON.parse(readFileSync(join(ROOT, 'src/data/schedule.json'), 'utf8'));
+  old.bloks = old.bloks.filter((b) => b.id !== 'b4');
+  for (const b of old.bloks) delete b.added;
+  delete old.base;
+  const s = old.bloks.find((b) => b.id === 'b3').days.find((d) => d.d === '2026-10-27').s[0];
+  Object.assign(s, { batal: true, alasan: 'Dosen dinas luar' });
+  return old;
+}
+
+test('a schedule published before Blok 4 shows it, and the next publish keeps it', async () => {
+  const { page, context, errors } = await open({ time: '2026-11-02T08:00:00+07:00' });
+  await page.waitForFunction(() => !!window.__alphaMock);
+  // in place before the editor reads its documents (it signs in and checks admin first)
+  await page.evaluate((json) => window.__alphaMock.docs.set('schedule', { json, rev: 20, updatedAt: new Date('2026-10-22T00:45:10Z'), updatedBy: 'admin-K3hal1dUidExample0' }), JSON.stringify(publishedBeforeBlok4()));
+  await page.waitForSelector('.ed-dock.is-admin');
+  await page.waitForFunction(() => /tersimpan/i.test(document.querySelector('.ed-count')?.textContent || ''));
+  assert.equal(await page.locator('.ed-pub').isDisabled(), true, 'Blok 4 coming in is not a change of its own');
+  assert.equal((await page.locator('.jw-date').textContent()).replace(/\s+/g, ' ').trim(), 'Senin, 2 November 2026');
+  await page.click('.ed-seg:has-text("Edit")');
+  const sess = page.locator('.jw-s[data-ref]').nth(1);
+  await sess.scrollIntoViewIfNeeded();
+  await sess.click({ position: { x: 300, y: 30 } });
+  await page.click('.ed-bar-b:has-text("Batalkan")');
+  await page.fill('.ed-sheet input', 'Pindah ke minggu depan');
+  await submit(page);
+  await page.waitForSelector('.jw-s.is-batal');
+  await page.click('.ed-pub');
+  await page.click('.ed-ask .ed-btn.is-pri');
+  await page.waitForFunction(() => /tersimpan/i.test(document.querySelector('.ed-count').textContent));
+  const saved = await page.evaluate(() => JSON.parse(window.__alphaMock.docs.get('schedule').json));
+  assert.deepEqual(saved.bloks.map((b) => b.id), ['b1', 'b2', 'b3', 'b4']);
+  assert.match(saved.base, /^\d{4}-\d\d-\d\dT\d\d:\d\d:\d\dZ$/);
+  const b3 = saved.bloks[2].days.find((d) => d.d === '2026-10-27').s[0];
+  assert.deepEqual([b3.batal, b3.alasan], [true, 'Dosen dinas luar'], 'the Blok 3 edit is kept');
+  const b4 = saved.bloks[3].days.find((d) => d.d === '2026-11-02').s[1];
+  assert.deepEqual([b4.t, b4.batal, b4.alasan], ['KA2. Introduction to Bones, Muscles, and Joints', true, 'Pindah ke minggu depan']);
   assert.deepEqual(errors, []);
   await context.close();
 });

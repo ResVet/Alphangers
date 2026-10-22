@@ -9,7 +9,7 @@ import { fileURLToPath } from 'node:url';
 import {
   createModel, todayWIB, wibParts, wibToMs, addDays, weekdayOf, startOfWeek, monthGrid, addMonths,
   formatDate, formatTime, formatCountdown, daysUntilLabel, relativeDay, compact, kindLabel, isISODate,
-  KIND_LABELS, OPEN_END_MINUTES,
+  KIND_LABELS, OPEN_END_MINUTES, timeRange, startLabel,
 } from '../src/lib/schedule-model.js';
 import {
   buildCalendar, dayCalendar, blokCalendar, sessionCalendar, foldLine, escapeText, googleCalendarUrl,
@@ -137,11 +137,11 @@ describe('date helpers', () => {
 
 describe('schedule model', () => {
   test('counts match the data', () => {
-    assert.equal(model.bloks.length, 3);
-    assert.equal(model.sessions.length, 119);
-    assert.equal(model.dates.length, 52, '53 days, one of them a holiday without sessions');
+    assert.equal(model.bloks.length, 4);
+    assert.equal(model.sessions.length, 174);
+    assert.equal(model.dates.length, 77, '78 days, one of them a holiday without sessions');
     assert.equal(model.firstDate, '2026-08-18');
-    assert.equal(model.lastDate, '2026-10-30');
+    assert.equal(model.lastDate, '2026-12-04');
   });
 
   test('sessions for a date resolve lecturers to dosen objects', () => {
@@ -169,7 +169,9 @@ describe('schedule model', () => {
     assert.equal(model.blokFor('2026-09-25').id, 'b2');
     assert.equal(model.blokFor('2026-10-03').id, 'b3', 'weekend inside blok 3');
     assert.equal(model.blokFor('2026-09-05'), null, 'weekend between blok 1 and 2');
-    assert.equal(model.blokFor('2026-12-01'), null);
+    assert.equal(model.blokFor('2026-10-31'), null, 'weekend between blok 3 and 4');
+    assert.equal(model.blokFor('2026-12-01').id, 'b4');
+    assert.equal(model.blokFor('2026-12-07'), null);
   });
 
   test('weekend: no sessions, jumps go to Monday or back to Friday', () => {
@@ -191,8 +193,8 @@ describe('schedule model', () => {
   test('dates outside every blok', () => {
     assert.equal(model.dayInfo('2026-07-01').blok, null);
     assert.equal(model.nearestDate('2026-07-01'), '2026-08-18');
-    assert.equal(model.nextDate('2026-12-01'), null);
-    assert.equal(model.nearestDate('2026-12-01'), '2026-10-30');
+    assert.equal(model.nextDate('2026-12-07'), null);
+    assert.equal(model.nearestDate('2026-12-07'), '2026-12-04');
     assert.equal(model.prevDate('2026-08-18'), null);
   });
 
@@ -229,10 +231,10 @@ describe('schedule model', () => {
   });
 
   test('after the last blok there is nothing next', () => {
-    const r = model.nowAndNext(wib('2026-11-02', '08:00'));
+    const r = model.nowAndNext(wib('2026-12-07', '08:00'));
     assert.deepEqual(r.running, []);
     assert.equal(r.next, null);
-    assert.equal(model.nextUjian(wib('2026-11-02')), null);
+    assert.equal(model.nextUjian(wib('2026-12-07')), null);
   });
 
   test('open-ended exams last the assumed length', () => {
@@ -251,7 +253,7 @@ describe('schedule model', () => {
     assert.equal(u.date, '2026-10-26');
     assert.equal(model.nextUjian(now, 'b2'), null);
     const per = model.nextUjianPerBlok(now);
-    assert.deepEqual(per.map((x) => [x.blok.id, x.ujian?.date ?? null]), [['b1', null], ['b2', null], ['b3', '2026-10-26']]);
+    assert.deepEqual(per.map((x) => [x.blok.id, x.ujian?.date ?? null]), [['b1', null], ['b2', null], ['b3', '2026-10-26'], ['b4', '2026-11-30']]);
     assert.equal(model.nextUjian(wib('2026-09-01'), 'b1').title, 'Ujian CBT Blok 1');
   });
 
@@ -317,6 +319,110 @@ describe('schedule model', () => {
     assert.equal(m.bloks.length, 1);
     assert.deepEqual(createModel(undefined, undefined).sessions, []);
     assert.equal(createModel({}, {}).nearestDate('2026-10-03'), null);
+  });
+});
+
+describe('blok 4', () => {
+  const b4 = model.blokById('b4');
+  const inB4 = model.sessions.filter((s) => s.blokId === 'b4');
+
+  test('the official schedule: dates, title, coordinator, every session', () => {
+    assert.equal(b4.name, 'Blok 4');
+    assert.equal(b4.title, 'Struktur Jaringan dan Organ Tubuh Manusia I');
+    assert.equal(b4.start, '2026-11-02');
+    assert.equal(b4.end, '2026-12-04');
+    assert.equal(b4.loc, 'Kampus FK Unsri KM.6');
+    assert.equal(model.dosenById.get(b4.ketua).name, 'dr. Veny Larasati, M.Biomed');
+    assert.equal(inB4.length, 55);
+    assert.equal(new Set(inB4.map((s) => s.date)).size, 25);
+    const kinds = {};
+    for (const s of inB4) kinds[s.kind] = (kinds[s.kind] || 0) + 1;
+    assert.deepEqual(kinds, { intro: 1, kuliah: 25, praktikum: 14, mkdu: 4, tutorial: 4, pleno: 2, ujian: 5 });
+  });
+
+  test('the first day, with every lecturer code resolved', () => {
+    const day = model.sessionsOn('2026-11-02');
+    assert.deepEqual(day.map((s) => [s.start, s.end, s.title, s.lecturers.map((l) => l.code).join(',')]), [
+      ['07:30', '08:20', 'Introduction of Blok 4', 'SIM'],
+      ['08:30', '10:10', 'KA2. Introduction to Bones, Muscles, and Joints', 'SIM'],
+      ['10:20', '12:00', 'KA5. Anatomy of the Lower Limb, Part 1 (Bones)', 'TSA'],
+      ['13:00', '14:40', 'KH1. Jaringan Epitel', 'VST'],
+    ]);
+    assert.equal(day[0].kind, 'intro');
+    assert.equal(day[0].lecturers[0].dosen.name, 'Ftr. Sima Asmara Dewa Marya Mahardika Putri, S.Kes., M.KM');
+    assert.ok(inB4.every((s) => s.lecturers.every((l) => l.dosen)), 'every code has a lecturer');
+  });
+
+  test('praktikum with a PJ, a team, team teaching, the new lecturer', () => {
+    const pa1 = model.sessionsOn('2026-11-04')[0];
+    assert.equal(pa1.kind, 'praktikum');
+    assert.equal(pa1.pj, true);
+    assert.deepEqual(pa1.lecturers.map((l) => l.id), ['msy-rulan-adnindya']);
+    const ph1 = model.sessionsOn('2026-11-11')[1];
+    assert.equal(ph1.title, 'PH1. Jaringan Epitel dan Sistem Respirasi');
+    assert.equal(ph1.tim, true);
+    assert.deepEqual(model.sessionsOn('2026-11-25')[2].lecturers.map((l) => l.code), ['RLN', 'TSA', 'SIM']);
+    assert.equal(model.sessionsOn('2026-11-10')[2].lecturers[0].dosen.name, 'Rosada Dwi Iswari, M.Psi., Psikolog');
+    assert.equal(model.sessionsByDosen('wardiansah').length, 5);
+  });
+
+  test('exams: two OSPEs, a CBT and a Her OSPE without a time yet, Her Dini', () => {
+    assert.deepEqual(inB4.filter((s) => s.kind === 'ujian').map((s) => [s.date, timeRange(s)]), [
+      ['2026-11-30', '08.00 - selesai'],
+      ['2026-12-01', '08.00 - selesai'],
+      ['2026-12-02', 'jam menyusul'],
+      ['2026-12-03', '08.00 - 09.40'],
+      ['2026-12-04', 'jam menyusul'],
+    ]);
+    const cbt = model.sessionsOn('2026-12-02')[0];
+    assert.equal(cbt.title, 'Ujian CBT Blok 4');
+    assert.equal(cbt.tba, true);
+    assert.equal(cbt.openEnd, false);
+    assert.equal(cbt.startAt, wib('2026-12-02'));
+    assert.equal(cbt.endAt, wib('2026-12-03'));
+    assert.equal(startLabel(cbt), 'jam menyusul');
+    assert.match(cbt.note, /belum ada di jadwal resmi/);
+  });
+
+  test('a session without its time is next, never running, and the exam until its day is over', () => {
+    const before = model.nowAndNext(wib('2026-12-01', '16:00'));
+    assert.deepEqual(before.running, []);
+    assert.equal(before.next.title, 'Ujian CBT Blok 4');
+    const during = model.nowAndNext(wib('2026-12-02', '10:00'));
+    assert.deepEqual(during.running, [], 'not running: nobody knows when it is');
+    assert.equal(during.next.title, 'Ujian CBT Blok 4', 'still next while its day lasts');
+    const herDini = model.nowAndNext(wib('2026-12-03', '08:30'));
+    assert.deepEqual(herDini.running.map((s) => s.title), ['Her Dini Blok 4']);
+    assert.equal(herDini.next.title, 'Her OSPE Blok 4');
+    assert.equal(model.nowAndNext(wib('2026-12-05', '08:00')).next, null);
+    assert.equal(model.nextUjian(wib('2026-12-02', '23:59')).title, 'Ujian CBT Blok 4');
+    assert.equal(model.nextUjian(wib('2026-12-03', '00:01')).title, 'Her Dini Blok 4');
+  });
+
+  test('a timed session the same day comes before one without a time', () => {
+    const odd = structuredClone(schedule);
+    const day = odd.bloks[3].days.find((d) => d.d === '2026-12-02');
+    day.s.push({ s: '13:00', e: '14:00', t: 'Briefing', k: 'kuliah', dz: [] });
+    const m = createModel(odd, dosen);
+    assert.equal(m.nowAndNext(wib('2026-12-02', '09:00')).next.title, 'Briefing');
+    assert.equal(m.nowAndNext(wib('2026-12-01', '16:00')).next.title, 'Briefing', 'from the day before too');
+    assert.equal(m.nowAndNext(wib('2026-12-02', '14:30')).next.title, 'Ujian CBT Blok 4', 'after it, back to the one without a time');
+  });
+
+  test('calendar: an all-day event while the time is not out', () => {
+    const cbt = model.sessionsOn('2026-12-02')[0];
+    const t = sessionCalendar(cbt, { stamp: Date.UTC(2026, 9, 22) }).replaceAll(CRLF + ' ', '');
+    assert.match(t, /\r\nDTSTART;VALUE=DATE:20261202\r\n/);
+    assert.match(t, /\r\nDTEND;VALUE=DATE:20261203\r\n/);
+    assert.doesNotMatch(t, /DTSTART;TZID/);
+    assert.match(t, /Jamnya belum ada di jadwal resmi/);
+    assert.equal(new URL(googleCalendarUrl(cbt)).searchParams.get('dates'), '20261202/20261203');
+  });
+
+  test('search finds sessions without a time and the new topics', () => {
+    assert.deepEqual(model.search('jam menyusul').map((s) => s.date), ['2026-12-02', '2026-12-04']);
+    assert.equal(model.search('inhall').length, 2);
+    assert.equal(model.search('veny').length, 2);
   });
 });
 

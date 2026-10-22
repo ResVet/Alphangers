@@ -49,6 +49,7 @@ Di atas tiap bagian ada baris alat untuk menambah: **+ Sesi**, **+ Dosen**, **+ 
 - **Tag** ada di formulir **Ubah**: ketuk tag untuk memasang atau melepasnya, atau ketik tag baru lalu Enter. Maksimal 4 tag per sesi, masing-masing sampai 30 huruf. **Kelas gabungan** (kelas Alpha dan Beta bareng) selalu tersedia dan tampil kuning; tag lain yang pernah kamu pakai di sesi mana pun ikut muncul sebagai pilihan. Tag tampil di samping jenis sesi, bisa dicari di pencarian, dan ikut terekspor ke kalender.
 - **+ Sesi** menambah sesi di tanggal yang sedang tampil. Dosen dipilih dengan mengetik namanya; kode dosen dibuat otomatis dan dicatat di jadwal dan di data dosen sekaligus.
 - **Ubah** membuka formulir lengkap sesi itu (termasuk tag, online, dan pembatalan), juga untuk memindahnya ke tanggal lain. **Duplikat** menyalin sesi tepat sesudahnya.
+- **Jam belum diumumkan** di formulir sesi dipakai kalau jadwal resmi belum mencantumkan jamnya (contohnya CBT dan Her OSPE Blok 4). Jadwal menampilkan "Jam menyusul" sebagai ganti jam, sesi itu tidak pernah dihitung "Lagi jalan", dan di kalender jadi acara seharian. Begitu jamnya keluar, buka **Ubah**, isi jam mulai (dan selesai kalau ada), lalu hapus centangnya.
 - **Libur**, **Ubah blok**, dan **+ Blok** ada di baris alat. Ketuk tombol blok (Blok 1, Blok 2, ...) di mode Edit untuk mengubah atau menghapus blok itu.
 
 ### Foto divisi dan foto kelas
@@ -102,7 +103,7 @@ Judul, isi, label (info, deadline, ujian, penting), tanggal posting, tenggat, li
 
 ### Jadwal
 
-Pilih blok di tab atas. Di dalam blok ada info blok, daftar kode dosen, lalu hari dan sesi. Klik sesi untuk mengubah jam, judul, jenis, dosen, catatan, tag, online beserta linknya, dan pembatalan beserta alasannya. Tombol **Batalkan semua** di kepala tiap hari membatalkan semua sesi hari itu (**Aktifkan semua** kebalikannya). Untuk menambah dosen ke sesi, ketik sebagian namanya (tanpa gelar) lalu pilih; kode dosennya dibuat otomatis. **Duplikat** menyalin sesi, berguna untuk sesi yang mirip. Editor memberi peringatan kalau ada jam yang bentrok di hari yang sama.
+Pilih blok di tab atas. Di dalam blok ada info blok, daftar kode dosen, lalu hari dan sesi. Klik sesi untuk mengubah jam, judul, jenis, dosen, catatan, tag, online beserta linknya, dan pembatalan beserta alasannya. Centang **Jam belum diumumkan** untuk sesi yang jamnya belum keluar; jadwal lalu menampilkan "Jam menyusul". Tombol **Batalkan semua** di kepala tiap hari membatalkan semua sesi hari itu (**Aktifkan semua** kebalikannya). Untuk menambah dosen ke sesi, ketik sebagian namanya (tanpa gelar) lalu pilih; kode dosennya dibuat otomatis. **Duplikat** menyalin sesi, berguna untuk sesi yang mirip. Editor memberi peringatan kalau ada jam yang bentrok di hari yang sama.
 
 ### Dosen
 
@@ -190,7 +191,9 @@ Simpan pertama tidak membuat entri riwayat, karena yang digantikan adalah versi 
 
 ## Kalau JSON di repo diubah
 
-Selama sebuah konten punya versi di Firestore, portal memakai versi Firestore itu dan mengabaikan file JSON di repo. Jadi kalau JSON di repo diperbarui (misalnya jadwal blok baru dari skrip `npm run data`), perubahannya tidak terlihat di portal sampai kamu memilih salah satu:
+Blok jadwal yang baru ditambahkan ke repo (misalnya Blok 4 dari skrip `npm run data`) langsung tampil, walaupun jadwal di Firestore disimpan sebelum blok itu ada. Portal dan editor menambahkan blok baru itu ke versi Firestore tanpa mengubah apa pun yang sudah kamu terbitkan (pembatalan, link online, tag, sesi tambahan tetap ada), begitu juga dosen yang baru muncul di blok itu. Begitu kamu menerbitkan perubahan jadwal berikutnya, blok baru itu ikut tersimpan di Firestore; setelah itu, kalau blok itu kamu hapus, dia tidak muncul lagi. Blok baru tidak ditambahkan kalau di Firestore sudah ada blok berkode sama (misalnya `b4`) atau blok yang tanggalnya bertabrakan dengannya.
+
+Untuk perubahan lain di JSON repo, selama sebuah konten punya versi di Firestore, portal memakai versi Firestore itu dan mengabaikan file JSON di repo. Jadi perubahannya tidak terlihat di portal sampai kamu memilih salah satu:
 
 - Setelah Netlify selesai deploy, buka konten itu di editor dan klik **Kembalikan ke bawaan**. Editor dan portal sekarang memakai file dari repo.
 - Atau, kalau perubahan di Firestore juga mau dipertahankan, pakai **Impor JSON** dengan file baru itu, cek perubahannya, lalu simpan.

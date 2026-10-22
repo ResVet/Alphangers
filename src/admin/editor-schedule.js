@@ -395,8 +395,8 @@ export function renderSchedule(host, ctx) {
     const isOpen = ui.open.has(s);
     const summary = h('div', { class: 'sess-sum' });
     const paintSummary = () =>
-      replace(summary, 
-        h('span', { class: 'mono time' }, `${s.s || '--:--'}${s.e ? '-' + s.e : ''}`),
+      replace(summary,
+        h('span', { class: 'mono time' }, s.menyusul ? 'jam menyusul' : `${s.s || '--:--'}${s.e ? '-' + s.e : ''}`),
         h('span', { class: 'sess-t' }, s.t || '(tanpa judul)'),
         h('span', { class: `chip kind-${s.k}` }, KIND_LABELS[s.k] || s.k),
         ...dosenChips(s),
@@ -484,6 +484,7 @@ export function renderSchedule(host, ctx) {
         input({ label: 'Mulai', obj: s, prop: 's', path: sp.concat('s'), ctx, type: 'time', onInput: paintSummary }),
         endField,
         h('div', { class: 'fld check' }, endOpen, h('label', { htmlFor: endOpen.id }, 'Jam selesai belum pasti')),
+        checkbox({ label: 'Jam belum diumumkan (tampil "Jam menyusul")', obj: s, prop: 'menyusul', path: sp.concat('menyusul'), ctx, hint: 'Jam mulai dan selesai di atas tidak ditampilkan selama ini dicentang.', onCommit: paintSummary }),
         input({ label: 'Judul', obj: s, prop: 't', path: sp.concat('t'), ctx, max: 200, wide: true, onInput: paintSummary }),
         select({ label: 'Jenis', obj: s, prop: 'k', path: sp.concat('k'), ctx, options: SESSION_KINDS.map((k) => [k, KIND_LABELS[k]]), onCommit: paintSummary }),
         h('div', { class: 'fld wide', dataset: { path: sp.concat('dz').join('.') } }, h('span', { class: 'lbl' }, 'Dosen'), dz, h('p', { class: 'msg' })),

@@ -1,7 +1,7 @@
 // iCalendar (RFC 5545) export for schedule sessions, plus a Google Calendar link.
 // Builders are pure; only downloadICS touches the DOM.
 
-import { WIB_OFFSET_MS, formatDate, formatTime, OPEN_END_MINUTES } from './schedule-model.js';
+import { WIB_OFFSET_MS, formatDate, formatTime, addDays, OPEN_END_MINUTES } from './schedule-model.js';
 
 export const CRLF = '\r\n';
 export const TZID = 'Asia/Jakarta';
@@ -66,6 +66,11 @@ export function localStamp(iso, hhmm) {
   return iso.replaceAll('-', '') + 'T' + hhmm.replace(':', '') + '00';
 }
 
+/** '2026-12-02' to '20261202', a DATE value for an all-day event. */
+export function dateStamp(iso) {
+  return iso.replaceAll('-', '');
+}
+
 /** An instant as a UTC DATE-TIME, e.g. '20261003T013000Z'. */
 export function utcStamp(ms) {
   const t = new Date(ms);
@@ -104,6 +109,7 @@ export function describe(session) {
   if (session.openEnd) {
     lines.push('Di jadwal tertulis ' + formatTime(session.start) + ' sampai selesai. Di kalender dibuat ' + OPEN_END_MINUTES / 60 + ' jam.');
   }
+  if (session.tba) lines.push('Jamnya belum ada di jadwal resmi. Di kalender dibuat seharian dulu.');
   lines.push('Kelas Alpha, PSPD FK Unsri');
   return lines.join('\n');
 }
@@ -113,8 +119,9 @@ function eventLines(session, stamp) {
     'BEGIN:VEVENT',
     'UID:' + session.uid + '@alphangers',
     'DTSTAMP:' + utcStamp(stamp),
-    'DTSTART;TZID=' + TZID + ':' + localStamp(session.date, session.start),
-    'DTEND;TZID=' + TZID + ':' + localStamp(session.date, endTime(session)),
+    // no time in the schedule yet: an all-day event on its date
+    session.tba ? 'DTSTART;VALUE=DATE:' + dateStamp(session.date) : 'DTSTART;TZID=' + TZID + ':' + localStamp(session.date, session.start),
+    session.tba ? 'DTEND;VALUE=DATE:' + dateStamp(addDays(session.date, 1)) : 'DTEND;TZID=' + TZID + ':' + localStamp(session.date, endTime(session)),
     'SUMMARY:' + escapeText((session.cancelled ? 'DIBATALKAN: ' : '') + session.title),
     // calendar apps show a cancelled event struck through instead of dropping it
     session.cancelled ? 'STATUS:CANCELLED' : null,
@@ -180,7 +187,9 @@ export function googleCalendarUrl(session) {
   const params = new URLSearchParams({
     action: 'TEMPLATE',
     text: session.title,
-    dates: localStamp(session.date, session.start) + '/' + localStamp(session.date, endTime(session)),
+    dates: session.tba
+      ? dateStamp(session.date) + '/' + dateStamp(addDays(session.date, 1))
+      : localStamp(session.date, session.start) + '/' + localStamp(session.date, endTime(session)),
     ctz: TZID,
     details: describe(session),
   });

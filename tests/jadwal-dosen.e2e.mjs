@@ -74,7 +74,7 @@ async function readDownload(page, click) {
 async function dosenRendered(page) {
   await page.evaluate(() => document.querySelector('.dz').scrollIntoView());
   await page.evaluate(() => { const b = document.querySelector('.dz-more:not([hidden]) .dz-more-b'); if (b) b.click(); });
-  await page.waitForFunction(() => document.querySelectorAll('.dz-row').length === 476);
+  await page.waitForFunction(() => document.querySelectorAll('.dz-row').length === 477);
 }
 
 // rows the person can actually see: a hidden attribute that CSS overrides does not count
@@ -131,10 +131,29 @@ describe('jadwal', () => {
     await page.evaluate(() => window.jadwal.go('2026-07-01'));
     assert.equal(await text(page, '.jw-empty-s'), 'Blok 1 baru mulai Selasa, 18 Agu.');
     assert.equal(await text(page, '.jw-blokline'), 'Di luar masa blok');
-    await page.evaluate(() => window.jadwal.go('2026-12-01'));
-    assert.equal(await text(page, '.jw-empty-s'), 'Jadwal setelah Blok 3 belum masuk.');
-    assert.equal(await text(page, '.jw-empty .jw-btn'), 'Lihat Jumat, 30 Okt');
+    await page.evaluate(() => window.jadwal.go('2026-12-14'));
+    assert.equal(await text(page, '.jw-empty-s'), 'Jadwal setelah Blok 4 belum masuk.');
+    assert.equal(await text(page, '.jw-empty .jw-btn'), 'Lihat Jumat, 4 Des');
     assert.equal(await page.isDisabled('[data-act="next"]'), true);
+    assert.deepEqual(errors, []);
+    await context.close();
+  });
+
+  test('Blok 4: its first day, and a session whose time is not out yet', async () => {
+    const { page, context, errors } = await open('/dev/jadwal.html');
+    await page.evaluate(() => window.jadwal.go('2026-11-02'));
+    assert.equal(await dateText(page), 'Senin, 2 November 2026');
+    assert.match(await text(page, '.jw-blokline'), /Struktur Jaringan dan Organ Tubuh Manusia I.*ketua dr\. Veny Larasati/);
+    assert.deepEqual((await page.locator('.jw-s .jw-s-t').allTextContents()).map((t) => t.trim()),
+      ['Introduction of Blok 4', 'KA2. Introduction to Bones, Muscles, and Joints', 'KA5. Anatomy of the Lower Limb, Part 1 (Bones)', 'KH1. Jaringan Epitel']);
+    await page.evaluate(() => window.jadwal.go('2026-12-02'));
+    assert.equal(await page.locator('.jw-s[data-tba]').count(), 1);
+    assert.equal(await text(page, '.jw-s[data-tba] .jw-s-t'), 'Ujian CBT Blok 4');
+    assert.equal(await text(page, '.jw-s[data-tba] .jw-tba'), 'Jam menyusul');
+    assert.equal(await text(page, '.jw-s[data-tba] .jw-s-from'), '--.--');
+    assert.equal(await text(page, '.jw-s[data-tba] .jw-sr'), 'Jam belum diumumkan');
+    assert.equal(await text(page, '.jw-sum'), '1 sesi, jam menyusul');
+    assert.doesNotMatch(await text(page, '.jw-list'), /00\.00/);
     assert.deepEqual(errors, []);
     await context.close();
   });
@@ -374,7 +393,7 @@ describe('dosen', () => {
   test('instant search by name, title, phone and blok code', async () => {
     const { page, context, errors } = await open('/dev/dosen.html');
     await dosenRendered(page);
-    assert.equal(await text(page, '.dz-count'), '476 dosen');
+    assert.equal(await text(page, '.dz-count'), '477 dosen');
     const search = async (q) => {
       await page.fill('.dz-q', q);
       await page.waitForFunction((v) => document.querySelector('.dz-q').value === v, q);
@@ -383,7 +402,7 @@ describe('dosen', () => {
       return visibleRows(page);
     };
     assert.deepEqual(await search('abarham'), ['dr. H. Abarham Martadiansyah, SpOG, Subsp.KFM']);
-    assert.equal(await text(page, '.dz-count'), '1 dari 476 dosen');
+    assert.equal(await text(page, '.dz-count'), '1 dari 477 dosen');
     assert.deepEqual(await search('ABARHAM martadiansyah'), ['dr. H. Abarham Martadiansyah, SpOG, Subsp.KFM']);
     const spog = await search('spog');
     assert.ok(spog.length > 30 && spog.every((n) => /sp\.?\s?og/i.test(n)), 'title search ignores dots');
@@ -405,7 +424,7 @@ describe('dosen', () => {
     const chip = (sel) => page.locator(sel);
     assert.equal(await chip('[data-blok="b2"]').textContent(), 'Blok 2 12');
     const groupCounts = await page.$$eval('.dz-chips-spec .dz-chip-n', (els) => els.map((e) => +e.textContent));
-    assert.equal(groupCounts.reduce((a, b) => a + b, 0), 476, 'every person is in exactly one specialty group');
+    assert.equal(groupCounts.reduce((a, b) => a + b, 0), 477, 'every person is in exactly one specialty group');
     await chip('[data-blok="b1"]').click();
     assert.equal((await visibleRows(page)).length, 18);
     assert.equal(await chip('[data-blok="b1"]').getAttribute('aria-pressed'), 'true');
@@ -421,7 +440,7 @@ describe('dosen', () => {
     assert.equal((await visibleRows(page)).length, 3);
     assert.equal(await chip('[data-blok="b3"]').isDisabled(), true, 'nobody teaches in all three bloks, so the chip is off');
     await page.click('.dz-clear');
-    assert.equal((await visibleRows(page)).length, 476);
+    assert.equal((await visibleRows(page)).length, 477);
     assert.equal(await page.isHidden('.dz-clear'), true);
     await context.close();
   });
@@ -430,9 +449,9 @@ describe('dosen', () => {
     const { page, context } = await open('/dev/dosen.html', { reducedMotion: 'reduce' });
     await page.evaluate(() => document.querySelector('.dz').scrollIntoView());
     assert.equal(await page.isVisible('.dz-more-b'), true);
-    assert.ok((await page.locator('.dz-row').count()) < 476, 'rows past the fold are not built yet');
+    assert.ok((await page.locator('.dz-row').count()) < 477, 'rows past the fold are not built yet');
     await page.click('.dz-more-b');
-    await page.waitForFunction(() => document.querySelectorAll('.dz-row').length === 476);
+    await page.waitForFunction(() => document.querySelectorAll('.dz-row').length === 477);
     assert.equal(await page.isVisible('.dz-less-b'), true);
     await page.evaluate(() => document.querySelector('.dz-less-b').scrollIntoView());
     await page.click('.dz-less-b');

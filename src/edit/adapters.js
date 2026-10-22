@@ -53,8 +53,9 @@ function sessionFields(ctx, { withDate = true } = {}) {
     { name: 't', label: 'Materi', required: true, max: 200, wide: true, placeholder: 'Contoh: Tutorial 2 Skenario B' },
     { name: 'k', label: 'Jenis', type: 'select', options: kindOptions, half: true },
     withDate ? { name: 'date', label: 'Tanggal', type: 'date', required: true, half: true } : null,
-    { name: 's', label: 'Mulai', type: 'time', required: true, half: true },
+    { name: 's', label: 'Mulai', type: 'time', half: true },
     { name: 'e', label: 'Selesai', type: 'time', half: true, hint: 'Kosongkan kalau sampai selesai.' },
+    { name: 'menyusul', label: 'Jam belum diumumkan (tampil "Jam menyusul")', type: 'checkbox' },
     { name: 'dz', label: 'Dosen', type: 'people', people: ctx.store.get('dosen').list, wide: true, empty: 'Belum ada dosen. Cari lalu pilih.' },
     { name: 'pj', label: 'Dosen ini penanggung jawab (PJ)', type: 'checkbox' },
     { name: 'tim', label: 'Diajar tim dosen per kelompok', type: 'checkbox' },
@@ -84,6 +85,8 @@ function putSession(ctx, values, from) {
   const sch0 = ctx.store.get('schedule');
   const target = blokForDate(sch0, values.date);
   if (!target) throw new UserError('Tanggal ' + values.date + ' di luar masa blok mana pun. Ubah atau tambah blok dulu.');
+  // a session whose time is not out yet keeps whatever start was typed, or 00:00, as a placeholder
+  if (!values.s && !values.menyusul) throw new UserError('Jam mulai wajib diisi, atau centang "Jam belum diumumkan".');
   // decide every lecturer's code in the target blok first, so both documents agree on it
   const byDosen = new Map(Object.entries(target.codes).map(([c, id]) => [id, c]));
   const taken = new Set(Object.keys(target.codes));
@@ -114,7 +117,8 @@ function putSession(ctx, values, from) {
         }
       }
       for (const [id, code] of plan) blok.codes[code] = id;
-      const s = { s: values.s, e: values.e || null, t: values.t, k: values.k, dz: [...plan.values(), ...keepCodes] };
+      const s = { s: values.s || '00:00', e: values.e || null, t: values.t, k: values.k, dz: [...plan.values(), ...keepCodes] };
+      if (values.menyusul) s.menyusul = true;
       if (values.pj) s.pj = true;
       if (values.tim) s.tim = true;
       if (values.n) s.n = values.n;
@@ -159,7 +163,7 @@ function sessionValue(ctx, ref) {
     blok,
     s,
     value: {
-      t: s.t, k: s.k, date: ref.date, s: s.s, e: s.e || '', n: s.n || '', pj: !!s.pj, tim: !!s.tim, batal: !!s.batal, alasan: s.alasan || '',
+      t: s.t, k: s.k, date: ref.date, s: s.s, e: s.e || '', menyusul: !!s.menyusul, n: s.n || '', pj: !!s.pj, tim: !!s.tim, batal: !!s.batal, alasan: s.alasan || '',
       online: !!(s.online || s.tautan), tautan: s.tautan || '', label: (s.label || []).slice(),
       dz: (s.dz || []).map((c) => blok.codes[c]).filter(Boolean),
     },
@@ -271,7 +275,7 @@ async function blokForm(ctx, blok) {
 const jadwal = {
   kind: 'session',
   selector: '.jw-s[data-ref]',
-  label: (el) => 'Sesi ' + (el.querySelector('.jw-s-from')?.textContent || ''),
+  label: (el) => 'Sesi ' + (el.dataset.tba != null ? 'jam menyusul' : el.querySelector('.jw-s-from')?.textContent || ''),
   actions(el, ctx) {
     const ref = parseRef(el.dataset.ref);
     const cur = sessionValue(ctx, ref);

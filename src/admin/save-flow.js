@@ -6,6 +6,7 @@ import { merge3 } from './merge.js';
 import { ConflictError, explain } from './errors.js';
 import { openDialog, confirmDialog, alertDialog, toast, download, pickJsonFile } from './ui.js';
 import { validateJsonText, byteLength, MAX_JSON_BYTES } from '../lib/validate.js';
+import { withBundled } from '../lib/bundled.js';
 import { KEY_INFO, pathLabel, fmtBytes, fmtWhen } from './format.js';
 
 function issueList(issues, data, max = 10) {
@@ -83,7 +84,8 @@ export async function reviewAndSave(ctx) {
 async function handleConflict(ctx, remote, mine) {
   const { doc } = ctx;
   const theirsRes = remote.exists ? validateJsonText(doc.key, remote.json) : { ok: true, data: doc.bundled };
-  const theirs = theirsRes.ok ? theirsRes.data : null;
+  // seen the way the base is (doc-state.js), so a blok only the bundled copy has is not read as theirs deleting it
+  const theirs = theirsRes.ok ? (remote.exists ? withBundled(doc.key, theirsRes.data, doc.bundled) : theirsRes.data) : null;
   const serverChanges = theirs ? diff(doc.base.data, theirs) : [];
   const whenText = remote.updatedAt ? `${fmtWhen(remote.updatedAt)} oleh ${who(ctx, remote.updatedBy)}` : '';
 

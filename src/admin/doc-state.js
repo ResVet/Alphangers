@@ -1,7 +1,10 @@
 // What the admin knows about one content key: the version on the server
 // (or the bundled one when there is none), the draft being edited, and the
-// latest validation result for that draft.
+// latest validation result for that draft. A server copy of the schedule or the
+// lecturer list comes with the bloks the bundled copy gained since it was saved
+// (src/lib/bundled.js), the same way the portal shows it, so the next save keeps them.
 import { validate, validateJsonText } from '../lib/validate.js';
+import { withBundled } from '../lib/bundled.js';
 
 const DRAFT_PREFIX = 'alpha.draft.v1.';
 
@@ -30,10 +33,14 @@ export class DocState {
   setBase(remote) {
     let data = this.bundled;
     let invalid = null;
+    // the server copy as it is, before bundled bloks were added: a draft equal to it is no draft
+    this.serverJson = null;
     if (remote.exists) {
       const res = validateJsonText(this.key, remote.json);
-      if (res.ok) data = res.data;
-      else invalid = res.errors;
+      if (res.ok) {
+        this.serverJson = JSON.stringify(res.data);
+        data = withBundled(this.key, res.data, this.bundled);
+      } else invalid = res.errors;
     }
     this.base = { ...remote, data, invalid, json: remote.exists ? remote.json : null };
     this.baseJson = JSON.stringify(data);
@@ -112,7 +119,7 @@ export class DocState {
       const raw = storage()?.getItem(DRAFT_PREFIX + this.key);
       if (!raw) return null;
       const d = JSON.parse(raw);
-      if (typeof d.json !== 'string' || d.json === this.baseJson) return null;
+      if (typeof d.json !== 'string' || d.json === this.baseJson || d.json === this.serverJson) return null;
       return { baseRev: d.baseRev, at: new Date(d.at), data: JSON.parse(d.json) };
     } catch {
       return null;

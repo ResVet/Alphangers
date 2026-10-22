@@ -16,9 +16,14 @@
 // Pass subscribe the object load returned, so it knows which copy is on screen:
 // if a fresher copy landed in between, the subscriber still gets it. Treat
 // returned data as read-only: the same object is handed to every caller.
+//
+// A published schedule or lecturer list is shown together with any blok the
+// bundled copy gained after it was saved (bundled.js). The cache keeps the
+// published copy exactly as it came.
 
 import { firebaseConfig } from './firebase-config.js';
 import { CONTENT_KEYS, MAX_JSON_BYTES, validate } from './validate.js';
+import { withBundled } from './bundled.js';
 
 export const KEYS = CONTENT_KEYS;
 
@@ -129,6 +134,19 @@ export function createContentStore({
     return { data, json: st.bundledJson };
   }
 
+  // What is shown for a published copy: itself, plus the bloks the bundled copy gained since.
+  async function shown(key, copy) {
+    if (key !== 'schedule' && key !== 'dosen') return copy;
+    let shipped;
+    try {
+      shipped = (await bundledCopy(key)).data;
+    } catch {
+      return copy;
+    }
+    const data = withBundled(key, copy.data, shipped);
+    return data === copy.data ? copy : { ...copy, data, json: JSON.stringify(data) };
+  }
+
   // One GET of content/{key} with a field mask. A missing document answers { missing: true }.
   async function getDoc(key, fields) {
     const url =
@@ -205,10 +223,10 @@ export function createContentStore({
           storage.remove(CACHE_PREFIX + key);
           st.fresh = await bundledCopy(key);
         } else if (got.unchanged) {
-          st.fresh = { data: cached.data, json: cached.json };
+          st.fresh = await shown(key, { data: cached.data, json: cached.json });
         } else {
           storage.set(CACHE_PREFIX + key, JSON.stringify({ rev: got.rev, json: got.json, updateTime: got.updateTime }));
-          st.fresh = { data: got.data, json: got.json };
+          st.fresh = await shown(key, { data: got.data, json: got.json });
         }
         // while the live editor previews a draft, the draft stays on screen
         if (!st.draft) deliver(st, st.fresh);
@@ -232,7 +250,7 @@ export function createContentStore({
     if (st.fresh) return serve(st, st.fresh);
     const cached = readCache(key);
     startFetch(key, cached);
-    const copy = cached || (await bundledCopy(key));
+    const copy = cached ? await shown(key, cached) : await bundledCopy(key);
     // The fresh copy may have arrived while the bundled file was loading.
     return serve(st, st.fresh || copy);
   }
@@ -258,7 +276,8 @@ export function createContentStore({
       return;
     }
     st.draft = null;
-    const copy = st.fresh || readCache(key) || (await bundledCopy(key));
+    const cached = st.fresh ? null : readCache(key);
+    const copy = st.fresh || (cached ? await shown(key, cached) : await bundledCopy(key));
     deliver(st, copy);
   }
 

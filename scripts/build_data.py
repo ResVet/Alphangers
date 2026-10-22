@@ -4,10 +4,15 @@
 
 Schedules come from the hand-checked transcripts in content/jadwal/*.txt.
 The lecturer contact sheet is optional; without it the script keeps the
-contact list from the last build (src/data/dosen.json) and only refreshes
-the lecturers named in the block schedules.
+contact list from the last build (src/data/dosen.json): everyone in it keeps
+their id and every number, and the lecturers named in the block schedules are
+refreshed from the transcripts.
+
+A blok that was not in the last build gets an `added` time, and both files get
+`base`, the newest of those times. The portal uses them to show a new blok even
+where the admin has published an older copy of the schedule (src/lib/bundled.js).
 """
-import json, os, re, sys, unicodedata
+import datetime, json, os, re, sys, unicodedata
 
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 JADWAL = os.path.join(ROOT, 'content', 'jadwal')
@@ -106,16 +111,21 @@ def specialty(full):
 
 # ---------- schedule ----------
 TIME = re.compile(r'^(\d{2})\.(\d{2})\s*-\s*(\d{2}\.\d{2}|selesai)$', re.I)
+# The official sheet names the day but not the time yet: kept with a placeholder start of 00:00
+# and shown as "jam menyusul" until the admin fills the time in.
+NO_TIME = re.compile(r'^jam menyusul$', re.I)
 
 def kind_of(title):
     t = title.lower()
-    if t.startswith('ujian') or t.startswith('her dini'): return 'ujian'
+    # "Her Dini", "Her OSPE": the remedial sitting of an exam is an exam too
+    if t.startswith('ujian') or t.startswith('her '): return 'ujian'
     if t.startswith('tutorial'): return 'tutorial'
     if t.startswith('pleno'): return 'pleno'
     if t.startswith('skill lab'): return 'skilllab'
-    if re.match(r'^(pk|pf|pb)-?\d', t) or t.startswith('pengantar praktikum'): return 'praktikum'
+    # PK, PF, PB (Blok 2 and 3), PA and PH (praktikum anatomi and histologi, Blok 4)
+    if re.match(r'^(pk|pf|pb|pa|ph)-?\d', t) or t.startswith('pengantar praktikum'): return 'praktikum'
     if t == 'mkdu': return 'mkdu'
-    if t.startswith('pendahuluan') or t.startswith('block introduction'): return 'intro'
+    if t.startswith('pendahuluan') or t.startswith('block introduction') or t.startswith('introduction of blok'): return 'intro'
     return 'kuliah'
 
 def parse_blok(path):
@@ -138,14 +148,16 @@ def parse_blok(path):
         cols = [c.strip() for c in line.split('|')]
         if cols[0] == 'LIBUR':
             day['libur'] = cols[1]; continue
-        m = TIME.match(cols[0])
-        assert m, (path, line)
-        start = m.group(1) + ':' + m.group(2)
-        end = None if m.group(3).lower() == 'selesai' else m.group(3).replace('.', ':')
+        later = bool(NO_TIME.match(cols[0]))
+        m = None if later else TIME.match(cols[0])
+        assert later or m, (path, line)
+        start = '00:00' if later else m.group(1) + ':' + m.group(2)
+        end = None if later or m.group(3).lower() == 'selesai' else m.group(3).replace('.', ':')
         who = cols[2] if len(cols) > 2 else '-'
         pj = who.startswith('PJ:')
         codes = [] if who in ('-', 'TIM') else [c.strip() for c in who.replace('PJ:', '').split(',')]
         sess = {'s': start, 'e': end, 't': cols[1], 'k': kind_of(cols[1]), 'dz': codes}
+        if later: sess['menyusul'] = True
         if pj: sess['pj'] = True
         if who == 'TIM': sess['tim'] = True
         if len(cols) > 3 and cols[3]: sess['n'] = cols[3]
@@ -166,8 +178,63 @@ def lev(a, b):
         prev = cur
     return prev[-1]
 
+# one person can sit in two files under slightly different spellings; two people can share a name
+# but not a specialty (dr. Susilawati, M.Kes and dr. Susilawati, SpPA)
+def compatible(spec_a, spec_b):
+    return spec_a == spec_b or (spec_a in ('Dokter', 'Dosen') and spec_b in ('Dokter', 'Dosen'))
+
+def same_person(k, key):
+    kk = k.split('#')[0]
+    a, b = set(kk.split()), set(key.split())
+    return kk == key or (len(a & b) >= 2 and (a <= b or b <= a)) or (len(key) > 8 and lev(kk, key) <= 1)
+
+def merge_previous(people, previous):
+    """Without the contact sheet, the last build's list stands in for it. Everyone in it keeps their
+    id and every number. A person who now teaches is merged into their schedule entry, first by the
+    exact name the last build used, then by the same name test the contact sheet goes through; the
+    schedule's spelling of the name wins. Everyone else is carried over as they were."""
+    taught = list(people)
+    claimed = set()
+    pending = []
+
+    def take(target, d):
+        claimed.add(target)
+        p = people[target]
+        p['id'] = d['id']
+        for ph in d.get('phones', []):
+            if ph['n'] not in [x['n'] for x in p['phones']]:
+                p['phones'].append({'n': ph['n'], 'wa': ph.get('wa', '')})
+        p['src'].add('kontak')
+
+    for d in previous:
+        key = core_name(d['name'])
+        if key in people and key not in claimed: take(key, d)
+        else: pending.append(d)
+    for d in pending:
+        key, spec = core_name(d['name']), specialty(d['name'])
+        target = next((k for k in taught if k not in claimed and compatible(specialty(people[k]['name']), spec) and same_person(k, key)), None)
+        if target:
+            take(target, d)
+            continue
+        k2 = key
+        while k2 in people: k2 += '#'
+        people[k2] = {'name': d['name'], 'phones': [{'n': x['n'], 'wa': x.get('wa', '')} for x in d.get('phones', [])],
+                      'bloks': [], 'codes': {}, 'src': set(['kontak']), 'id': d['id']}
+
+def load_json(path):
+    if not os.path.exists(path): return None
+    with open(path, encoding='utf-8') as f:
+        return json.load(f)
+
+def utc_now():
+    return datetime.datetime.now(datetime.timezone.utc).replace(microsecond=0).strftime('%Y-%m-%dT%H:%M:%SZ')
+
 def main():
     contacts_xlsx = sys.argv[1] if len(sys.argv) > 1 else None
+    prev_schedule = load_json(os.path.join(OUT, 'schedule.json')) or {}
+    prev_dosen = load_json(os.path.join(OUT, 'dosen.json')) or {}
+    prev_bloks = {b['id']: b for b in prev_schedule.get('bloks', [])}
+    now = utc_now()
     bloks, people = [], {}
     order = sorted(f for f in os.listdir(JADWAL) if f.endswith('.txt'))
     for f in order:
@@ -184,9 +251,14 @@ def main():
             p['codes'][bid] = code
             p['src'].add('jadwal')
             codes[code] = key
-        bloks.append({'id': bid, 'name': meta['nama'], 'title': meta['judul'], 'loc': meta['lokasi'],
-                      'ketua': meta.get('ketua'), 'start': days[0]['d'], 'end': days[-1]['d'],
-                      'days': days, 'codes': codes})
+        blok = {'id': bid, 'name': meta['nama'], 'title': meta['judul'], 'loc': meta['lokasi'],
+                'ketua': meta.get('ketua'), 'start': days[0]['d'], 'end': days[-1]['d']}
+        # first built now, or the time it was first built; the bloks of the very first build have none
+        added = prev_bloks[bid].get('added') if bid in prev_bloks else now
+        if added: blok['added'] = added
+        blok['days'] = days
+        blok['codes'] = codes
+        bloks.append(blok)
 
     if contacts_xlsx:
         import openpyxl
@@ -198,15 +270,10 @@ def main():
             key = core_name(name)
             if not key: continue
             spec = specialty(name)
-            # one person can sit in both files under slightly different spellings; two people can share a name
-            # but not a specialty (dr. Susilawati, M.Kes and dr. Susilawati, SpPA)
             match = None
             for k, p in people.items():
-                if specialty(p['name']) != spec and not (spec in ('Dokter', 'Dosen') and specialty(p['name']) in ('Dokter', 'Dosen')):
-                    continue
-                kk = k.split('#')[0]
-                a, b = set(kk.split()), set(key.split())
-                if kk == key or (len(a & b) >= 2 and (a <= b or b <= a)) or (len(key) > 8 and lev(kk, key) <= 1):
+                if not compatible(specialty(p['name']), spec): continue
+                if same_person(k, key):
                     match = p; break
             if not match:
                 k2 = key
@@ -217,38 +284,58 @@ def main():
                     match['phones'].append(x)
             match['src'].add('kontak')
     else:
-        old = os.path.join(OUT, 'dosen.json')
-        if os.path.exists(old):
-            for d in json.load(open(old, encoding='utf-8'))['list']:
-                if d['bloks']: continue
-                k2 = core_name(d['name'])
-                while k2 in people: k2 += '#'
-                people[k2] = {'name': d['name'], 'phones': [{'n': x['n'], 'wa': x['wa']} for x in d['phones']], 'bloks': [], 'codes': {}, 'src': set(['kontak'])}
+        merge_previous(people, prev_dosen.get('list', []))
 
+    # ids already published stay; a name seen once in the last build keeps its id there too
+    prev_ids = {}
+    for d in prev_dosen.get('list', []):
+        k = core_name(d['name'])
+        prev_ids[k] = None if k in prev_ids else d['id']
     lst, key_id = [], {}
     for key, p in people.items():
-        lst.append({'key': key, 'id': re.sub(r'[^a-z0-9]+', '-', key).strip('-'), 'name': p['name'],
+        fixed = p.get('id')
+        if not fixed and '#' not in key: fixed = prev_ids.get(key)
+        assert len(p['phones']) <= 4, ('more than four numbers', p['name'])
+        lst.append({'key': key, 'fixed': fixed, 'id': fixed or re.sub(r'[^a-z0-9]+', '-', key).strip('-'), 'name': p['name'],
                     'spec': specialty(p['name']),
                     'phones': [{'n': x['n'], 'f': fmt_phone(x['n']), 'wa': x['wa']} for x in p['phones']],
                     'bloks': p['bloks'], 'codes': p['codes']})
     lst.sort(key=lambda d: core_name(d['name']))
-    ids = {}
+    taken = set()
     for d in lst:
-        if d['id'] in ids:
-            ids[d['id']] += 1; d['id'] += '-' + str(ids[d['id']])
-        else:
-            ids[d['id']] = 1
+        if d['fixed']:
+            assert d['id'] not in taken, ('id used twice', d['id'])
+            taken.add(d['id'])
+    for d in lst:
+        if not d['fixed']:
+            base, n = d['id'], 1
+            while d['id'] in taken:
+                n += 1; d['id'] = base + '-' + str(n)
+            taken.add(d['id'])
         key_id[d.pop('key')] = d['id']
+        d.pop('fixed')
     for b in bloks:
         b['codes'] = {c: key_id[k] for c, k in b['codes'].items()}
         if b['ketua']: b['ketua'] = b['codes'][b['ketua']]
 
+    stamps = {b['id']: b['added'] for b in bloks if b.get('added')}
+    base = max(stamps.values()) if stamps else None
+    schedule = {'v': 1, 'cls': 'Alpha'}
+    if base: schedule['base'] = base
+    schedule['bloks'] = bloks
+    dosen = {'v': 1}
+    if base: dosen['base'] = base
+    if stamps: dosen['added'] = stamps
+    dosen['list'] = lst
+
     os.makedirs(OUT, exist_ok=True)
-    json.dump({'v': 1, 'cls': 'Alpha', 'bloks': bloks}, open(os.path.join(OUT, 'schedule.json'), 'w', encoding='utf-8'), ensure_ascii=False, separators=(',', ':'))
-    json.dump({'v': 1, 'list': lst}, open(os.path.join(OUT, 'dosen.json'), 'w', encoding='utf-8'), ensure_ascii=False, separators=(',', ':'))
+    with open(os.path.join(OUT, 'schedule.json'), 'w', encoding='utf-8') as f:
+        json.dump(schedule, f, ensure_ascii=False, separators=(',', ':'))
+    with open(os.path.join(OUT, 'dosen.json'), 'w', encoding='utf-8') as f:
+        json.dump(dosen, f, ensure_ascii=False, separators=(',', ':'))
     n_s = sum(len(d['s']) for b in bloks for d in b['days'])
     print('schedule:', len(bloks), 'bloks,', sum(len(b['days']) for b in bloks), 'days,', n_s, 'sessions')
-    print('dosen:', len(lst), 'people,', sum(1 for d in lst if d['bloks']), 'teach in Blok 1-3,', sum(1 for d in lst if not d['phones']), 'without a phone')
+    print('dosen:', len(lst), 'people,', sum(1 for d in lst if d['bloks']), 'teach in the schedule,', sum(1 for d in lst if not d['phones']), 'without a phone')
 
 if __name__ == '__main__':
     main()

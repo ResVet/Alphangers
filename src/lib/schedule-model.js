@@ -247,10 +247,13 @@ function resolveLecturers(codes, blok, dosenById) {
 }
 
 function resolveSession(raw, blok, date, dosenById, index = 0) {
-  const start = typeof raw.s === 'string' && raw.s ? raw.s : '00:00';
-  const end = typeof raw.e === 'string' && raw.e ? raw.e : null;
+  // "jam menyusul": the official schedule has the day but no time yet. The session covers its
+  // whole day (so the exam countdown holds until the day is over) and its s and e are ignored.
+  const tba = !!raw.menyusul;
+  const start = !tba && typeof raw.s === 'string' && raw.s ? raw.s : '00:00';
+  const end = !tba && typeof raw.e === 'string' && raw.e ? raw.e : null;
   const startAt = wibToMs(date, start);
-  let endAt = end ? wibToMs(date, end) : startAt + OPEN_END_MINUTES * 60000;
+  let endAt = tba ? startAt + DAY_MS : end ? wibToMs(date, end) : startAt + OPEN_END_MINUTES * 60000;
   if (endAt <= startAt) endAt = startAt + OPEN_END_MINUTES * 60000;
   const title = String(raw.t ?? '').trim() || kindLabel(raw.k);
   return {
@@ -260,7 +263,8 @@ function resolveSession(raw, blok, date, dosenById, index = 0) {
     date,
     start,
     end,
-    openEnd: !end,
+    openEnd: !end && !tba,
+    tba,
     startAt,
     endAt,
     title,
@@ -285,7 +289,18 @@ function resolveSession(raw, blok, date, dosenById, index = 0) {
 
 function sessionHaystack(s) {
   const people = s.lecturers.map((l) => (l.dosen ? l.dosen.name : '') + ' ' + l.code).join(' ');
-  return compact([s.title, s.kindLabel, s.note, people, s.blok.name, s.tim ? 'tim' : '', s.cancelled ? 'batal dibatalkan' : '', s.online ? 'online daring zoom meet' : '', s.tags.join(' ')].join('|'));
+  return compact([s.title, s.kindLabel, s.note, people, s.blok.name, s.tim ? 'tim' : '', s.cancelled ? 'batal dibatalkan' : '', s.online ? 'online daring zoom meet' : '', s.tba ? 'jam menyusul' : '', s.tags.join(' ')].join('|'));
+}
+
+/** '08.00 - 09.40', '08.00 - selesai', or 'jam menyusul' when the schedule has no time yet. */
+export function timeRange(s) {
+  if (s.tba) return 'jam menyusul';
+  return formatTime(s.start) + ' - ' + (s.end ? formatTime(s.end) : 'selesai');
+}
+
+/** The start time for a short line ('08.00'), or 'jam menyusul'. */
+export function startLabel(s) {
+  return s.tba ? 'jam menyusul' : formatTime(s.start);
 }
 
 /**
@@ -401,19 +416,28 @@ export function createModel(schedule, dosenData) {
   /**
    * What is happening at `now`: sessions running (more than one when the official
    * schedule overlaps), the next one to start, and today's date in WIB.
+   * A session without its time yet is never running; it is next from the end of the
+   * session before it until its own day is over, unless a timed session comes first
+   * on that same day.
    */
   function nowAndNext(now) {
     const t = toMs(now);
     const running = [];
     let next = null;
+    let tba = null;
     for (const s of sessions) {
       if (s.cancelled) continue;
+      if (s.tba) {
+        if (!tba && t < s.endAt) tba = s;
+        continue;
+      }
       if (s.startAt <= t && t < s.endAt) running.push(s);
       else if (s.startAt > t) {
         next = s;
         break;
       }
     }
+    if (tba && (!next || tba.date < next.date)) next = tba;
     return { today: todayWIB(t), running, next, now: t };
   }
 

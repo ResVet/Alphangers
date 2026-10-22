@@ -1,0 +1,130 @@
+# Jadwal Kuliah Blok 4, Kelas Alpha, Angkatan 2026
+# Sumber: JADWAL KULIAH BLOK 4 TAHUN 2026 (PSPD FK Unsri), kolom Kelas Alpha. Format: jam | materi | kode dosen | catatan
+# Slot kosong dan ISHOMA tidak ditulis. "jam menyusul" = jadwal resmi belum mencantumkan jamnya.
+# Kode di jadwal resmi: ZHF (di tabel kode tertulis ZH) = Dr. dr. Zen Hafy. "TIM (PJ: X)" ditulis PJ:X.
+@blok b4
+@nama Blok 4
+@judul Struktur Jaringan dan Organ Tubuh Manusia I
+@ketua VST
+@lokasi Kampus FK Unsri KM.6
+
+= 2026-11-02
+07.30-08.20 | Introduction of Blok 4 | SIM
+08.30-10.10 | KA2. Introduction to Bones, Muscles, and Joints | SIM
+10.20-12.00 | KA5. Anatomy of the Lower Limb, Part 1 (Bones) | TSA
+13.00-14.40 | KH1. Jaringan Epitel | VST
+
+= 2026-11-03
+09.50-11.30 | KH2. Jaringan Ikat | RSP
+13.00-14.40 | KA3. Anatomy of the Upper Limb, Part 1 (Bones) | SIM
+
+= 2026-11-04
+07.30-10.00 | PA1. Pengantar Praktikum Anatomi dan Osteologi Umum | PJ:RLN
+10.00-12.30 | PA2. Skeletal of Upper Limb | PJ:SIM
+
+= 2026-11-05
+08.00-09.40 | KA7. Blood Vessels and Innervation of the Upper Limb | MRO
+09.50-11.30 | KA8. Blood Vessels and Innervation of the Lower Limb | MRO
+13.00-14.40 | KA1. Introduction to the Anatomical Organization of the Human Body | MBA
+
+= 2026-11-06
+08.00-09.40 | KA4. Anatomy of the Upper Limb, Part 2 (Muscles) | LEG
+10.10-11.50 | KH5. Kartilago dan Tulang | AIE
+13.00-16.30 | MKDU | -
+
+= 2026-11-09
+07.30-10.00 | PA3. Skeletal of Lower Limb | PJ:ISS
+10.00-12.30 | KH3. Jaringan Otot | RSP
+13.00-14.40 | KH9. Histologi Sistem Respirasi | VST
+
+= 2026-11-10
+08.00-09.40 | KA10. Lungs, Pleural Cavity, Thoracic Wall, and Thoracic Cavity | TSA
+10.00-12.30 | Tutorial 1 Skenario A | TIM
+13.00-14.40 | Mekanisme Koping Bagi Mahasiswa Kedokteran | RDI
+
+= 2026-11-11
+07.30-10.00 | PA4. Muscle of Upper Limb | PJ:TSA
+10.00-12.30 | PH1. Jaringan Epitel dan Sistem Respirasi | TIM
+
+= 2026-11-12
+08.00-09.40 | KA9. Structures of the Upper and Lower Airways | RLN
+10.00-12.30 | Tutorial 2 Skenario A | TIM
+13.00-14.40 | KA6. Anatomy of the Lower Limb, Part 2 (Muscles) | WAR
+
+= 2026-11-13
+07.30-10.00 | Pleno Skenario A | TIM
+10.00-11.40 | KA11. The Heart, Pericardium, and Coronary Vessels | WAR
+13.00-16.30 | MKDU | -
+
+= 2026-11-16
+07.30-10.00 | PA5. Muscle of Lower Limb | PJ:TSA
+10.00-12.30 | PH2. Histologi Jaringan Ikat dan Otot | TIM
+14.40-16.10 | KH4. Jaringan Syaraf | ZHF
+
+= 2026-11-17
+08.00-09.40 | KH8. Sistem Kardiovaskular | ZHF
+10.00-12.30 | Tutorial 1 Skenario B | TIM
+
+= 2026-11-18
+07.30-10.00 | PA6. Cavitas Thoracis, Upper & Lower Respiratory Organs | PJ:WAR,RLN
+10.00-12.30 | PH3. Jaringan Syaraf dan Sistem Kardiovaskuler | TIM
+
+= 2026-11-19
+08.00-09.40 | KH7. Sistem Imun dan Organ Limfoid | SOI
+10.00-12.30 | Tutorial 2 Skenario B | TIM
+
+= 2026-11-20
+07.30-10.00 | Pleno Skenario B | TIM
+10.00-11.40 | KH6. Darah dan Hemopoesis | SOI
+13.00-16.30 | MKDU | -
+
+= 2026-11-23
+07.30-10.00 | PA7. Cor & Pulmo | PJ:WAR
+10.00-12.30 | PH4. Organ Limfoid, Sistem Imun dan Kartilago & Tulang | TIM
+
+= 2026-11-24
+08.00-09.40 | KA12. Developmental Anatomy: Clinical Embryology | ISS
+10.30-12.10 | KA15. Clinical Anatomy in Cardiorespiratory Disorders (Team Teaching) | LEG,WAR
+
+= 2026-11-25
+07.30-10.00 | PA8. Innervasi dan Vaskularisasi | PJ:MRO
+10.00-12.30 | PH5. Inhall Histologi | TIM
+13.00-14.40 | KA13. Applied Anatomy in Musculoskeletal Disorders (Upper Limb) | RLN,TSA,SIM
+
+= 2026-11-26
+07.30-09.10 | KA14. Applied Anatomy in Musculoskeletal Disorders (Lower Limb) | ISS,TSA,MRO
+10.00-12.00 | PA9. Inhall Anatomi | TIM
+
+= 2026-11-27
+13.00-16.30 | MKDU | -
+
+= 2026-11-30
+08.00-selesai | Ujian OSPE Anatomi Blok 4 | TIM
+
+= 2026-12-01
+08.00-selesai | Ujian OSPE Histologi Blok 4 | TIM
+
+= 2026-12-02
+jam menyusul | Ujian CBT Blok 4 | - | Jamnya belum ada di jadwal resmi. Tunggu info dari koorta.
+
+= 2026-12-03
+08.00-09.40 | Her Dini Blok 4 | -
+
+= 2026-12-04
+jam menyusul | Her OSPE Blok 4 | TIM | Jamnya belum ada di jadwal resmi. Tunggu info dari koorta.
+
+[dosen]
+WAR | dr. Wardiansah, M.Biomed | 08197862426
+VST | dr. Veny Larasati, M.Biomed | 081278310008
+TSA | dr. Tri Suciati, M.Kes | 081373479094
+MBA | dr. Mutiara Budi Azhar, SU, M.MedSc | 08127103033
+ZHF | Dr. dr. Zen Hafy, M.Biomed | 0818118608
+ISS | dr. Indri Seta Septadina, M.Kes | 081271637785
+RSP | dr. Riana Sari Puspita, M.Biomed | 081367627916
+LEG | Dr. dr. Legiran, M.Kes | 08127811705
+RLN | dr. Msy. Rulan Adnindya, M.Biomed | 08117102488
+SOI | dr. Soilia Fertilita, M.Imun | 081374379005
+MRO | dr. M. Ramadhandie Odista, Sp.N | 082186413666
+SIM | Ftr. Sima Asmara Dewa Marya Mahardika Putri, S.Kes., M.KM | 082140354882
+AIE | dr. Ajeng Intan Estri Amanda, M.Biomed | 085273231305
+RDI | Rosada Dwi Iswari, M.Psi., Psikolog | 082281359331

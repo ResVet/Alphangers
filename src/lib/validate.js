@@ -54,6 +54,9 @@ export const MEDIA_RE = /^\/(?:img|media)(?:\/[A-Za-z0-9][A-Za-z0-9._-]{0,120}){
 // A tiny blurred preview kept inline; a few hundred bytes in practice.
 const LQIP_RE = /^data:image\/(?:webp|jpeg|png);base64,[A-Za-z0-9+/]{8,4000}={0,2}$/;
 const HEX_RE = /^#[0-9a-f]{6}$/;
+// When a blok joined the copy that ships with the site, and the newest such time a document has
+// taken in (src/lib/bundled.js). UTC, e.g. 2026-10-22T02:14:36Z.
+const STAMP_RE = /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}(?::\d{2}(?:\.\d{1,3})?)?Z$/;
 
 // C0 and C1 controls except tab and newline, plus the bidi overrides that can
 // make text read differently from how it is stored.
@@ -193,6 +196,16 @@ function dateTime(ctx, path, v) {
   const m = typeof v === 'string' && DATETIME_RE.exec(v);
   if (!m || !isRealDate(m[1]) || !isTime(m[2])) {
     err(ctx, path, 'Tanggal dan jam tidak valid (format YYYY-MM-DDTHH:MM).');
+    return '';
+  }
+  return v;
+}
+
+// Optional and only bookkeeping: a broken one is dropped with a warning, never an error.
+function stamp(ctx, path, v) {
+  if (v === undefined || v === null || v === '') return '';
+  if (typeof v !== 'string' || !STAMP_RE.test(v) || !Number.isFinite(Date.parse(v))) {
+    warn(ctx, path, 'Waktu tidak valid, dibuang.');
     return '';
   }
   return v;
@@ -492,7 +505,7 @@ function validateSession(ctx, p, x, codes) {
     err(ctx, p, 'Sesi harus berupa objek.');
     return null;
   }
-  noteUnknown(ctx, p, x, ['s', 'e', 't', 'k', 'dz', 'pj', 'tim', 'n', 'batal', 'alasan', 'online', 'tautan', 'label']);
+  noteUnknown(ctx, p, x, ['s', 'e', 't', 'k', 'dz', 'menyusul', 'pj', 'tim', 'n', 'batal', 'alasan', 'online', 'tautan', 'label']);
   const s = time(ctx, p.concat('s'), x.s, { required: true });
   let e = null;
   if (x.e !== null && x.e !== undefined && x.e !== '') {
@@ -508,6 +521,9 @@ function validateSession(ctx, p, x, codes) {
     else if (!codes.has(c)) err(ctx, p.concat('dz', j), `Kode ${c} belum ada di daftar kode blok.`);
     else if (!out.dz.includes(c)) out.dz.push(c);
   }
+  // The official schedule names the day but not the time yet: shown as "jam menyusul", and s and e
+  // are only placeholders until the admin fills the time in and clears this.
+  if (flag(ctx, p.concat('menyusul'), x.menyusul)) out.menyusul = true;
   if (flag(ctx, p.concat('pj'), x.pj)) out.pj = true;
   if (flag(ctx, p.concat('tim'), x.tim)) out.tim = true;
   const n = text(ctx, p.concat('n'), x.n, { max: 300 });
@@ -540,10 +556,10 @@ function validateSession(ctx, p, x, codes) {
 function warnOverlaps(ctx, path, sessions) {
   for (let i = 0; i < sessions.length; i++) {
     const a = sessions[i];
-    if (!a || !a.s || !a.e) continue;
+    if (!a || !a.s || !a.e || a.menyusul) continue;
     for (let j = i + 1; j < sessions.length; j++) {
       const b = sessions[j];
-      if (!b || !b.s || !b.e) continue;
+      if (!b || !b.s || !b.e || b.menyusul) continue;
       if (toMinutes(a.s) < toMinutes(b.e) && toMinutes(b.s) < toMinutes(a.e)) {
         warn(ctx, path.concat(j), `Bentrok dengan sesi ${a.s}-${a.e}.`);
       }
@@ -556,7 +572,7 @@ function validateBlok(ctx, p, b) {
     err(ctx, p, 'Blok harus berupa objek.');
     return null;
   }
-  noteUnknown(ctx, p, b, ['id', 'name', 'title', 'loc', 'ketua', 'start', 'end', 'days', 'codes']);
+  noteUnknown(ctx, p, b, ['id', 'name', 'title', 'loc', 'ketua', 'start', 'end', 'added', 'days', 'codes']);
   const out = {
     id: id(ctx, p.concat('id'), b.id),
     name: text(ctx, p.concat('name'), b.name, { max: 40, required: true }),
@@ -565,9 +581,11 @@ function validateBlok(ctx, p, b) {
     ketua: null,
     start: date(ctx, p.concat('start'), b.start, { required: true }),
     end: date(ctx, p.concat('end'), b.end, { required: true }),
-    days: [],
-    codes: {},
   };
+  const added = stamp(ctx, p.concat('added'), b.added);
+  if (added) out.added = added;
+  out.days = [];
+  out.codes = {};
   if (b.ketua !== null && b.ketua !== undefined && b.ketua !== '') out.ketua = id(ctx, p.concat('ketua'), b.ketua) || null;
   if (out.start && out.end && out.end < out.start) err(ctx, p.concat('end'), 'Tanggal selesai blok sebelum tanggal mulai.');
 
@@ -613,22 +631,40 @@ function validateBlok(ctx, p, b) {
 }
 
 function validateSchedule(ctx, value) {
-  const doc = root(ctx, value, 'bloks', ['v', 'cls', 'bloks']);
+  const doc = root(ctx, value, 'bloks', ['v', 'cls', 'base', 'bloks']);
   if (!doc) return null;
   const items = list(ctx, ['bloks'], doc.bloks, LIMITS.bloks);
   uniqueIds(ctx, ['bloks'], items);
-  return {
-    v: FORMAT_VERSION,
-    cls: text(ctx, ['cls'], doc.cls, { max: 40 }),
-    bloks: items.map((b, i) => validateBlok(ctx, ['bloks', i], b)),
-  };
+  const out = { v: FORMAT_VERSION, cls: text(ctx, ['cls'], doc.cls, { max: 40 }) };
+  const base = stamp(ctx, ['base'], doc.base);
+  if (base) out.base = base;
+  out.bloks = items.map((b, i) => validateBlok(ctx, ['bloks', i], b));
+  return out;
 }
 
 /* ---------- dosen ---------- */
 
 function validateDosen(ctx, value) {
-  const doc = root(ctx, value, 'list', ['v', 'list']);
+  const doc = root(ctx, value, 'list', ['v', 'base', 'added', 'list']);
   if (!doc) return null;
+  const head = { v: FORMAT_VERSION };
+  const base = stamp(ctx, ['base'], doc.base);
+  if (base) head.base = base;
+  // bloks of the shipped copy and when each joined it, so a published list can take in their lecturers
+  if (doc.added !== undefined && doc.added !== null) {
+    if (!isObj(doc.added)) warn(ctx, ['added'], 'Harus berupa objek, dibuang.');
+    else {
+      const added = {};
+      for (const [bid, t] of Object.entries(doc.added).slice(0, LIMITS.bloks)) {
+        if (!ID_RE.test(bid)) warn(ctx, ['added', bid], 'ID blok tidak valid, dibuang.');
+        else {
+          const s = stamp(ctx, ['added', bid], t);
+          if (s) added[bid] = s;
+        }
+      }
+      if (Object.keys(added).length) head.added = added;
+    }
+  }
   const items = list(ctx, ['list'], doc.list, LIMITS.dosen);
   uniqueIds(ctx, ['list'], items);
   const out = items.map((x, i) => {
@@ -669,7 +705,7 @@ function validateDosen(ctx, value) {
     }
     return person;
   });
-  return { v: FORMAT_VERSION, list: out };
+  return { ...head, list: out };
 }
 
 /* ---------- heart ---------- */

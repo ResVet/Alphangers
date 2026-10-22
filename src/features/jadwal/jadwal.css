@@ -201,6 +201,10 @@
 .jw-online{display:inline-flex;align-items:center;gap:7px;height:24px;padding:0 10px;border:1px solid rgba(134,242,94,.45);border-radius:999px;color:var(--grx)}
 .jw-online::before{content:"";width:6px;height:6px;border-radius:50%;background:var(--grx);box-shadow:0 0 0 3px rgba(134,242,94,.16)}
 .jw-s.is-batal .jw-online{opacity:.5}
+/* the official schedule has the day but no time yet ("jam menyusul") */
+.jw-s-from.is-tba{color:var(--dim)}
+.jw-tba{display:inline-flex;align-items:center;height:24px;padding:0 10px;border:1px dashed rgba(244,198,90,.55);border-radius:999px;color:var(--amb)}
+.jw-s.is-batal .jw-tba{opacity:.5}
 /* the admin's own tags; "Kelas gabungan" (Alpha and Beta together) in amber */
 .jw-tag{display:inline-flex;align-items:center;height:24px;padding:0 9px;border:1px dashed var(--line2);border-radius:999px;color:var(--ink)}
 .jw-tag.is-gab{border-style:solid;border-color:rgba(244,198,90,.55);color:var(--amb)}
