@@ -31,7 +31,7 @@ after(async () => {
 });
 
 /** The try out of the mock build, in one scenario, with everything that went wrong collected. */
-async function open({ cbt = 'claim', w = 390, h = 844, ua } = {}) {
+async function open({ cbt = 'claim', w = 390, h = 844, ua, ch = 'tryout', ready = '.to-blk.on[data-b="b3"]' } = {}) {
   const ctx = await browser.newContext({ viewport: { width: w, height: h }, hasTouch: w < 900, isMobile: w < 900, userAgent: ua, reducedMotion: 'reduce' });
   await ctx.addInitScript(() => {
     window.__csp = [];
@@ -52,8 +52,8 @@ async function open({ cbt = 'claim', w = 390, h = 844, ua } = {}) {
     if (u.startsWith(FIRESTORE + '/v1/projects/') && r.method() === 'GET' && /\/documents\/content\/[a-z]+\?key=/.test(u)) return;
     outside.push(u);
   });
-  await page.goto(`${srv.url}/?mock&cbt=${cbt}#tryout`, { waitUntil: 'load' });
-  await page.waitForSelector('.to-blk.on[data-b="b3"]', { timeout: 20000 });
+  await page.goto(`${srv.url}/?mock&cbt=${cbt}#${ch}`, { waitUntil: 'load' });
+  await page.waitForSelector(ready, { timeout: 20000 });
   const s = { ctx, page, errors, outside, ev: (f, a) => page.evaluate(f, a), tag: `${cbt}-${w}` };
   return s;
 }
@@ -314,3 +314,104 @@ test('signed out with an unfinished session: no resume card and no questions', a
   await s.page.waitForSelector('.to-resume');
   await done(s);
 });
+
+for (const [w, h] of [[390, 844], [1280, 800]]) {
+  test(`Try Out OSPE: its own channel and bloks, the same sign-in, practice without explanations, a timed run (${w}x${h})`, async () => {
+    const s = await open({ cbt: 'ok', w, h, ch: 'tryout-ospe', ready: '.to-blk.on[data-b="o3"]' });
+    // the channel: right after Try Out CBT on the main page, a try out row with its own icon
+    const rows = await s.ev(() => [...document.querySelectorAll('#rows .row-b')].map((b) => [b.dataset.id, b.querySelector('.row-a span').textContent, !!b.querySelector('.row-nb'), b.querySelector('.row-ic').innerHTML]));
+    const at = rows.findIndex((r) => r[0] === 'tryout-ospe');
+    assert.equal(rows[at - 1][0], 'tryout');
+    assert.deepEqual(rows[at].slice(0, 3), ['tryout-ospe', 'Mulai', true]);
+    assert.notEqual(rows[at][3], rows.find((r) => r[0] === 'kating')[3], 'not the fallback folder icon');
+    assert.equal(await s.ev(() => document.title), 'Try Out OSPE · ALPHANGERS');
+    assert.equal(await s.ev(() => document.querySelector('.p-ttl').textContent.replace(/\s+/g, ' ').trim()), 'Try Out OSPE');
+
+    // home: its four bloks, only Blok 3 has a bank, the OSPE credit, its own page note key
+    assert.deepEqual(await s.ev(() => [...document.querySelectorAll('.to-blk')].map((b) => b.dataset.b)), ['o1', 'o2', 'o3', 'o4']);
+    const card = await s.ev(() => { const b = document.querySelector('.to-blk.on'); return [b.dataset.b, b.querySelector('.to-bm').textContent, b.querySelector('.to-bby').textContent]; });
+    assert.deepEqual([card[0], card[2]], ['o3', 'Disusun Praktikum Alphangers']);
+    assert.match(card[1], /^3 soal · 2 topik/);
+    assert.equal(await s.ev(() => document.querySelector('.to-note').dataset.k), 'to.ospe.note');
+    assert.equal(await s.ev(() => document.querySelector('.p-next strong').textContent), 'Integrated Teaching →');
+    assert.ok(await fits(s), 'home fits');
+    await axe(s, 'ospe home');
+    await shot(s, 'ospe-home');
+
+    // the same sign-in as the CBT one, with this try out's name on the access card
+    await s.page.click('.to-blk.on[data-b="o3"]');
+    await gate(s, 'masuk');
+    assert.match(await s.ev(() => document.querySelector('.to-pass-t').textContent), /Try Out OSPE/);
+    assert.match(await s.ev(() => location.hash), /^#tryout-ospe$/);
+    await s.page.click('[data-act="gin"]');
+    await s.page.waitForSelector('.to-start', { timeout: 10000 });
+    assert.equal(await s.ev(() => history.state.ch), 'tryout-ospe');
+    assert.match(await s.ev(() => document.querySelector('.p-crumb').textContent), /^Try Out OSPE · Blok 3/);
+    assert.equal(await s.ev(() => document.querySelector('[data-act="mode"][data-v="ujian"] b').textContent), 'Simulasi OSPE');
+    assert.equal(await s.ev(() => document.querySelector('.to-by').textContent), 'Disusun Praktikum Alphangers');
+    const secs = await s.ev(() => [...document.querySelectorAll('.to-sec-h h3')].map((x) => x.textContent));
+    assert.ok(secs.includes('Topik'), 'two topics: a topic filter');
+    await axe(s, 'ospe setup');
+
+    // practice in bank order: a picture, then a question with the key only, then one with an explanation
+    await s.page.click('[data-act="sq"]');
+    await s.page.click('[data-act="so"]');
+    await s.page.click('.to-start');
+    await picOk(s, '#toQ .to-fig img');
+    await s.page.click('.to-o[data-o="1"]');
+    await s.page.click('[data-act="check"]');
+    await s.page.waitForSelector('.to-fb.ok');
+    assert.equal(await s.ev(() => !!document.querySelector('.to-fb .to-ex')), false, 'no empty explanation');
+    assert.doesNotMatch(await s.ev(() => document.querySelector('.to-fb').textContent + document.getElementById('toLive').textContent), /undefined/);
+    await s.page.click('#toFoot [data-act="next"]');
+    await s.page.click('.to-o[data-o="0"]');
+    await s.page.click('[data-act="check"]');
+    await s.page.waitForSelector('.to-fb.no');
+    assert.match(await s.ev(() => document.querySelector('.to-fb .to-vd').textContent), /Jawaban: B\. Interfase/);
+    assert.equal(await s.ev(() => !!document.querySelector('.to-fb .to-ex')), false);
+    await s.page.click('#toFoot [data-act="next"]');
+    await s.page.click('.to-o[data-o="2"]');
+    await s.page.click('[data-act="check"]');
+    await s.page.waitForSelector('.to-fb.ok .to-ex');
+    await axe(s, 'ospe feedback');
+    await shot(s, 'ospe-run');
+    await s.page.click('#toFoot [data-act="finish"]');
+    await s.page.click('.to-dlg [data-dok]');
+    await s.page.waitForSelector('#toScore');
+    assert.match(await s.ev(() => document.querySelector('.to-result .lbl').textContent), /^Latihan · Blok 3/);
+
+    // a timed run is "Simulasi OSPE" in the history
+    await s.page.click('[data-act="again"]');
+    await s.page.waitForSelector('.to-start');
+    await s.page.click('[data-act="mode"][data-v="ujian"]');
+    await s.page.click('.to-start');
+    await s.page.waitForSelector('#toQ .to-o');
+    await s.page.click('#toFoot [data-act="next"]');
+    await s.page.click('#toFoot [data-act="next"]');
+    await s.page.click('#toFoot [data-act="finish"]');
+    await s.page.click('.to-dlg [data-dok]');
+    await s.page.waitForSelector('#toScore');
+    assert.match(await s.ev(() => document.querySelector('.to-result .lbl').textContent), /^Simulasi OSPE · Blok 3/);
+    await s.page.click('[data-act="again"]');
+    await s.page.waitForSelector('.to-hl');
+    assert.deepEqual(await s.ev(() => [...document.querySelectorAll('.to-hr-m b')].map((b) => b.textContent.split(' · ')[0])), ['Simulasi OSPE', 'Latihan']);
+
+    // scores under the OSPE bank, preferences of their own; the CBT try out is as it was
+    assert.equal(await s.ev(() => JSON.parse(localStorage.getItem('alpha.to.v1.hist.o3')).length), 2);
+    assert.equal(await s.ev(() => JSON.parse(localStorage.getItem('alpha.to.v1.pref.ospe')).mode), 'ujian');
+    assert.equal(await s.ev(() => localStorage.getItem('alpha.to.v1.pref')), null, 'the CBT preferences are untouched');
+    await s.page.goBack(); await s.page.waitForSelector('.to-blk.on[data-b="o3"]');
+    await s.page.click('.p-bar .back');
+    await s.page.waitForFunction(() => !document.getElementById('panel').classList.contains('on'));
+    await s.page.click('#rows .row-b[data-id="tryout"]');
+    await s.page.waitForSelector('.to-blk.on[data-b="b3"]');
+    assert.deepEqual(await s.ev(() => [...document.querySelectorAll('.to-blk')].map((b) => b.dataset.b)), ['b1', 'b2', 'b3', 'b4']);
+    assert.match(await s.ev(() => document.getElementById('toAcct').textContent), /Masuk sebagai Dina Ayu Pratiwi/, 'one sign-in for both');
+    assert.equal(await s.ev(() => document.querySelector('[data-act="blok"][data-b="b3"] .to-bq').textContent), 'Belum pernah dikerjakan');
+    await s.page.click('.to-blk.on[data-b="b3"]');
+    await s.page.waitForSelector('.to-start', { timeout: 10000 });
+    assert.equal(await s.ev(() => document.querySelector('[data-act="mode"][data-v="ujian"] b').textContent), 'Simulasi CBT');
+    assert.match(await s.ev(() => document.querySelector('.p-crumb').textContent), /^Try Out · Blok 3/);
+    await done(s);
+  });
+}

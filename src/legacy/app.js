@@ -1,5 +1,5 @@
 // The portal shell from v3: loader, hero, scroll-driven heart and ECG, channel list, channel panel
-// with the curtain transition, try out CBT, footer and the Polyester easter egg.
+// with the curtain transition, the try outs (CBT and OSPE), footer and the Polyester easter egg.
 // New features live in src/features and talk to this file only through the object it returns.
 import { HeartGL } from './heart-gl.js';
 import { RR, ecgV, ecgN, ECG3D } from './ecg.js';
@@ -36,6 +36,7 @@ var ICON = {
   lobby:'<path d="M3.5 10.5 12 4l8.5 6.5"/><path d="M5.5 9v10.5h13V9"/><path d="M12 11.5v5M9.5 14h5"/>',
   batu:'<ellipse cx="12" cy="18.2" rx="7.2" ry="2.5"/><ellipse cx="11.4" cy="12.9" rx="5.2" ry="2.35"/><ellipse cx="12.3" cy="8.1" rx="3.3" ry="1.95"/>',
   tryout:'<circle cx="12" cy="13.5" r="7.5"/><path d="M9.8 3h4.4M12 3v2.8M18.2 7.2l1.3-1.3"/><path d="M6.8 13.6h2.1l1.1-2.4 1.9 4.9 1.2-2.5h2.1"/>',
+  'tryout-ospe':'<circle cx="12" cy="13.5" r="7.5"/><path d="M9.8 3h4.4M12 3v2.8M18.2 7.2l1.3-1.3"/><circle cx="12" cy="13.5" r="3.3"/><circle cx="12.7" cy="12.8" r=".9"/>',
   it:'<path d="M12 6.5C10.2 5.2 7 4.6 3.5 5v13.5c3.5-.4 6.7.2 8.5 1.5 1.8-1.3 5-1.9 8.5-1.5V5c-3.5-.4-6.7.2-8.5 1.5z"/><path d="M12 6.5V20"/>',
   quiz:'<rect x="5.5" y="4.5" width="13" height="16" rx="2"/><path d="M9.5 3h5a1 1 0 0 1 1 1v1.5h-7V4a1 1 0 0 1 1-1z"/><path d="M9 12.8l2.2 2.2 4.3-4.6"/>',
   osce:'<path d="M6.5 3.5v5a5 5 0 0 0 10 0v-5"/><path d="M5.5 3.5h2M15.5 3.5h2"/><path d="M11.5 13.5v2.2a4.3 4.3 0 0 0 8.6 0v-2.4"/><circle cx="20.1" cy="11.6" r="1.9"/>',
@@ -45,6 +46,15 @@ var ICON = {
   kating:'<path d="M3.5 7A1.5 1.5 0 0 1 5 5.5h4.4l2 2H19A1.5 1.5 0 0 1 20.5 9v9a1.5 1.5 0 0 1-1.5 1.5H5A1.5 1.5 0 0 1 3.5 18z"/><path d="M3.5 10.5h17"/>'
 };
 function svgI(id){ return '<svg viewBox="0 0 24 24" aria-hidden="true">' + (ICON[id] || ICON.kating) + '</svg>'; }
+// The kinds of try out channel (CHANNEL_KINDS in src/lib/validate.js). Each opens its own copy of
+// the try out below and shows the banks of its kind (src/data/cbt.json, "kind", Try Out CBT when
+// absent): its blok cards, the name on the access card, the name of the timed mode, where its
+// preferences are kept, and the page-text key of its page note.
+var TKIND = {
+  tryout: { bloks: ['b1', 'b2', 'b3', 'b4'], def: 'b2', name: 'Try Out CBT', crumb: 'Try Out', sim: 'Simulasi CBT', pref: 'pref', note: 'to.note', noteWhat: 'Catatan buat halaman try out' },
+  ospe: { bloks: ['o1', 'o2', 'o3', 'o4'], def: 'o3', name: 'Try Out OSPE', crumb: 'Try Out OSPE', sim: 'Simulasi OSPE', pref: 'pref.ospe', note: 'to.ospe.note', noteWhat: 'Catatan buat halaman try out OSPE' }
+};
+function isTry(c){ return !!(c && c.kind && Object.prototype.hasOwnProperty.call(TKIND, c.kind)); }
 var CH = [], BY = {}, URLS = {}, TOTAL = '00';
 function setChannelData(data){
   CH = ((data && data.channels) || []).map(function(c){ return Object.assign({}, c); });
@@ -157,12 +167,12 @@ function renderRows(again){
     var li = document.createElement('li'); li.className = 'row rv' + (again ? ' in' : ''); li.style.setProperty('--d', (i * 0.045) + 's');
     li.innerHTML = '<button class="row-b" type="button" data-id="' + esc(c.id) + '" data-cur="buka" data-i="' + i + '">' +
       '<span class="row-i">' + c.num + '</span><span class="row-ic">' + svgI(c.id) + '</span>' +
-      '<span class="row-n">' + esc(c.name) + (c.kind === 'tryout' ? '<em class="row-nb">baru</em>' : '') + '<small>' + esc(c.tag) + '</small></span>' +
-      '<span class="row-a"><span>' + (c.kind === 'tryout' ? 'Mulai' : 'Drive') + '</span><b>→</b></span></button><span class="blip" aria-hidden="true"></span>';
+      '<span class="row-n">' + esc(c.name) + (isTry(c) ? '<em class="row-nb">baru</em>' : '') + '<small>' + esc(c.tag) + '</small></span>' +
+      '<span class="row-a"><span>' + (isTry(c) ? 'Mulai' : 'Drive') + '</span><b>→</b></span></button><span class="blip" aria-hidden="true"></span>';
     rowsEl.appendChild(li);
-    if(c.kind === 'tryout') li.classList.add('row-new');
+    if(isTry(c)) li.classList.add('row-new');
     var pk = document.createElement('div'); pk.className = 'pk';
-    pk.innerHTML = '<span class="pk-n">' + c.num + '</span><span class="pk-ic">' + svgI(c.id) + '</span><span class="pk-t">' + esc(c.name) + '<small>' + (c.kind === 'tryout' ? 'Try out' : 'Folder Drive') + '</small></span>';
+    pk.innerHTML = '<span class="pk-n">' + c.num + '</span><span class="pk-ic">' + svgI(c.id) + '</span><span class="pk-t">' + esc(c.name) + '<small>' + (isTry(c) ? 'Try out' : 'Folder Drive') + '</small></span>';
     peekIn.appendChild(pk);
   });
 }
@@ -180,7 +190,7 @@ function setChannels(data){
   renderRows(true);
   var c = openId && BY[openId];
   if(!c || was === null || panelSig(c) === was || busy) return;
-  if(c.kind === 'tryout'){ TRY.refresh(); return; }
+  if(isTry(c)){ tryOf(c).refresh(); return; }
   var y = panel.scrollTop; buildPanel(c); panel.scrollTop = y;
 }
 
@@ -663,8 +673,13 @@ var pulse = (function(){
   return { frame: frame, measure: measure, still: still, stage: stage };
 })();
 
-// Try Out CBT. Private practice exams for the class; scores and progress stay on this device.
-var TRY = (function(){
+// Try Out CBT and Try Out OSPE. Private practice exams for the class; scores and progress stay on
+// this device. makeTry(kind) is one try out channel (TKIND above). The copies share the access
+// module (one sign-in, one set of keys) and the stored scores, which are kept per bank id; a bank
+// belongs to one kind only, so they never meet.
+function makeTry(KIND){
+  var K = TKIND[KIND], CHN = null;
+  function chId(){ return CHN ? CHN.id : ''; }
   var NS = 'alpha.to.v1.';
   var LS = (function(){ try{ var s = window.localStorage, k = NS + 'probe'; s.setItem(k, '1'); s.removeItem(k); return s; }catch(e){ return null; } })();
   var MEM = {}, warned = false;
@@ -685,10 +700,12 @@ var TRY = (function(){
   // The bank list is the public manifest (names and counts, nothing secret). The questions are
   // sealed files that open only for a signed-in classmate: the access module, its own chunk loaded
   // when the try out opens, keeps the keys and opens them. No question text is in the build.
-  var MAN = CBT && CBT.banks ? CBT : { v: 1, banks: [] }, ACC = null, MOD = null, accP = null, BK = {};
+  // The access module gets every bank (it is one object for the page); this copy shows its own kind.
+  function mine(man){ return { v: man.v, banks: (man.banks || []).filter(function(m){ return m && (m.kind || 'tryout') === KIND; }) }; }
+  var ALL = CBT && CBT.banks ? CBT : { v: 1, banks: [] }, MAN = mine(ALL), ACC = null, MOD = null, accP = null, BK = {};
   function access(){
-    if(!accP) accP = import('../features/tryout/access.js').then(function(m){ MOD = m; return m.getAccess(MAN); }).then(function(a){
-      if(!ACC){ ACC = a; if(a.banks.length) MAN = a.manifest; a.onChange(onAccess); }
+    if(!accP) accP = import('../features/tryout/access.js').then(function(m){ MOD = m; return m.getAccess(ALL); }).then(function(a){
+      if(!ACC){ ACC = a; if(a.banks.length) MAN = mine(a.manifest); a.onChange(onAccess); }
       return a;
     }, function(e){ accP = null; throw e; });
     return accP;
@@ -707,7 +724,7 @@ var TRY = (function(){
     }
     return b || null;
   }
-  function bloks(){ var ids = ['b1', 'b2', 'b3', 'b4']; MAN.banks.forEach(function(m){ if(m && ids.indexOf(m.id) < 0) ids.push(m.id); }); return ids; }
+  function bloks(){ var ids = K.bloks.slice(); MAN.banks.forEach(function(m){ if(m && ids.indexOf(m.id) < 0) ids.push(m.id); }); return ids; }
   var TFK = ['B', 'S'], MCK = 'ABCDE';
 
   // stored data
@@ -728,7 +745,7 @@ var TRY = (function(){
     var r = st[id] || [0, 0, 0, 0];
     st[id] = [r[0] + 1, r[1] + (ok ? 0 : 1), ok ? 1 : 0, now];
   }
-  var PREF = get('pref', null) || {};
+  var PREF = get(K.pref, null) || {};
   function pref(){
     var d = { mode: 'latihan', n: 50, tp: [], ty: 'all', pool: 'all', sq: 1, so: 1, tm: 1 };
     Object.keys(d).forEach(function(k){ if(PREF[k] === undefined) PREF[k] = d[k]; });
@@ -739,7 +756,7 @@ var TRY = (function(){
   function typesOf(b){ var t = {}; b.q.forEach(function(q){ t[q.t] = 1; }); return Object.keys(t); }
   function tpOf(bid){ var l = pref().tps[bid], b = B(bid); l = Array.isArray(l) ? l : []; return b ? l.filter(function(k){ return b.topics[k] !== undefined; }) : l; }
   function tyOf(bid){ var b = B(bid); return !b || typesOf(b).length < 2 ? 'all' : pref().ty; }
-  function savePref(){ put('pref', PREF); }
+  function savePref(){ put(K.pref, PREF); }
 
   function shuffle(a){ for(var i = a.length - 1; i > 0; i--){ var j = Math.floor(Math.random() * (i + 1)), t = a[i]; a[i] = a[j]; a[j] = t; } return a; }
   function isOk(q, a){ return a != null && q.a.indexOf(a) >= 0; }
@@ -761,23 +778,23 @@ var TRY = (function(){
   function plural(n, w){ return n + ' ' + w; }
 
   // view state
-  var V = { view: 'home', bid: 'b2', rid: null, filter: 'all', open: false };
+  var V = { view: 'home', bid: K.def, rid: null, filter: 'all', open: false };
   var S = null, LAST = null, root = null, bar = null, dlgEl = null, keysOn = false;
   var WIDE = matchMedia('(min-width: 1080px)');
 
-  function depth(){ var s = history.state; return (s && s.ch === 'tryout' && s.d) ? s.d : 0; }
+  function depth(){ var s = history.state; return (s && s.ch === chId() && s.d) ? s.d : 0; }
   function go(view, how, extra){
-    var st = { ch: 'tryout', tv: view, d: depth() };
+    var st = { ch: chId(), tv: view, d: depth() };
     if(extra) Object.keys(extra).forEach(function(k){ st[k] = extra[k]; });
-    if(how === 'push'){ st.d = depth() + 1; hPush(st, '#tryout'); }
-    else if(how === 'replace'){ hRepl(st, '#tryout'); }
+    if(how === 'push'){ st.d = depth() + 1; hPush(st, '#' + chId()); }
+    else if(how === 'replace'){ hRepl(st, '#' + chId()); }
     show(view, st);
   }
   function back(){ if(depth() > 0) history.back(); else closeViaHistory(); }
 
   // shell
   function mountTo(c){
-    V.open = true;
+    CHN = c; V.open = true;
     panel.innerHTML =
       '<div class="p-bar to-bar"><button class="back mag" type="button" id="toBack" data-cur="balik"><b>←</b> <span id="toBackT">Kembali</span></button>' +
       '<div class="to-bar-c" id="toBarC"></div><div class="to-prog" aria-hidden="true"><svg id="toProg" preserveAspectRatio="none"><path class="pg-b"/><path class="pg-f"/></svg></div></div>' +
@@ -793,7 +810,7 @@ var TRY = (function(){
     var first = function(){
       if(done || !V.open || !root) return;
       done = true;
-      var st = history.state && history.state.ch === 'tryout' ? history.state : null;
+      var st = history.state && history.state.ch === chId() ? history.state : null;
       show(st && st.tv ? st.tv : 'home', st || {});
       returning();
     };
@@ -804,9 +821,9 @@ var TRY = (function(){
   }
   // back from a Google redirect: carry on to the bank the student was opening
   function returning(){
-    var rb = ACC && ACC.returning; if(!rb || !V.open) return;
+    var rb = ACC && ACC.returning; if(!rb || !V.open || !M(rb)) return;
     ACC.returning = null;
-    if(M(rb) && V.view === 'home') go('setup', 'push', { b: rb });
+    if(V.view === 'home') go('setup', 'push', { b: rb });
   }
   function leave(){
     if(!V.open) return;
@@ -837,13 +854,13 @@ var TRY = (function(){
     if(view === 'home' && ACC) ACC.release();
     if(view === 'run'){
       S = S && S.blok === V.bid ? S : sessOf(V.bid);
-      if(!S){ view = 'setup'; hRepl({ ch: 'tryout', tv: 'setup', b: V.bid, d: depth() }, '#tryout'); }
+      if(!S){ view = 'setup'; hRepl({ ch: chId(), tv: 'setup', b: V.bid, d: depth() }, '#' + chId()); }
     }
     var res = null;
     if(view === 'result' || view === 'review'){
       var rid = st.rid || V.rid;
       res = (LAST && LAST.id === rid) ? LAST : hist(V.bid).filter(function(r){ return r.id === rid; })[0];
-      if(!res){ view = 'setup'; hRepl({ ch: 'tryout', tv: 'setup', b: V.bid, d: Math.max(0, depth() - 1) }, '#tryout'); }
+      if(!res){ view = 'setup'; hRepl({ ch: chId(), tv: 'setup', b: V.bid, d: Math.max(0, depth() - 1) }, '#' + chId()); }
       else V.rid = res.id;
     }
     V.view = view;
@@ -904,7 +921,7 @@ var TRY = (function(){
     var b = M(s.blok) || { name: '' }, done = Object.keys(s.ans).length, cur = clamp(s.cur | 0, 0, s.ids.length - 1);
     var tm = s.limit ? 'sisa ' + fmtT(s.limit - s.used) : fmtT(s.used) + ' berjalan';
     return '<div class="to-resume p-rv" style="--pd:.3s"><div><p class="lbl">Sesi belum selesai · ' + bt(s.blok, 'name', b.name) + '</p>' +
-      '<p class="to-rs-t">' + (s.mode === 'ujian' ? 'Simulasi CBT' : 'Latihan') + ', soal ' + (cur + 1) + ' dari ' + s.ids.length + '</p>' +
+      '<p class="to-rs-t">' + (s.mode === 'ujian' ? K.sim : 'Latihan') + ', soal ' + (cur + 1) + ' dari ' + s.ids.length + '</p>' +
       '<p class="to-rs-m">' + done + ' dijawab · ' + tm + '</p></div>' +
       '<div class="to-rs-b"><button class="to-btn pri" type="button" data-act="resume" data-b="' + s.blok + '" data-cur="lanjut">Lanjutkan</button>' +
       '<button class="to-btn ghost" type="button" data-act="drop" data-b="' + s.blok + '">Hapus sesi</button></div></div>';
@@ -937,7 +954,7 @@ var TRY = (function(){
     return '<div class="to-acct out p-rv" id="toAcct" tabindex="-1" style="--pd:.38s"><span class="to-av" aria-hidden="true">' + LOCK + '</span><p data-k="to.acct">Khusus anak Alpha. Masuk pakai Google, sekali cocokkan NIM, beres.</p></div>';
   }
   function vHome(){
-    var c = BY.tryout, i = CH.indexOf(c), nx = CH[(i + 1) % CH.length], ids = bloks();
+    var c = BY[chId()] || CHN, i = CH.indexOf(c), nx = CH[(i + 1) % CH.length], ids = bloks();
     setBar('<span class="p-crumb">Channel ' + c.num + ' / ' + TOTAL + '</span>'); progSet(0);
     // an unfinished session shows only while this account may still open its bank
     var live = null;
@@ -962,7 +979,7 @@ var TRY = (function(){
     }).join('');
     root.innerHTML = '<div class="p-wrap to-wrap">' + heroHtml(c) + acctHtml() + (live ? resumeCard(live) : '') +
       '<div class="to-bloks' + (ids.length === 4 ? ' n4' : '') + ' p-rv" style="--pd:.42s">' + cards + '</div>' +
-      noteHtml('to.note', 'Catatan buat halaman try out', '.46s') +
+      noteHtml(K.note, K.noteWhat, '.46s') +
       (LS ? '<p class="to-priv p-rv" style="--pd:.5s" data-k="to.priv">Nilai dan progres kamu tersimpan di browser perangkat ini saja. Nggak ada leaderboard, nggak ada yang bisa lihat.</p>' :
         '<p class="to-priv p-rv" style="--pd:.5s" data-k="to.privoff">Browser ini nggak mengizinkan penyimpanan, jadi progres hilang kalau halaman ditutup.</p>') +
       '<div class="p-next p-rv" style="--pd:.55s"><span class="lbl">' + c.num + ' / ' + TOTAL + '</span>' +
@@ -998,7 +1015,7 @@ var TRY = (function(){
   function vSetup(){
     var b = B(V.bid), P = pref(), s = blokStats(V.bid), live = sessOf(V.bid), h = hist(V.bid), tp = tpOf(V.bid), ty = tyOf(V.bid);
     var key = 'to.' + V.bid + '.';
-    setBar('<span class="p-crumb">Try Out · <span data-k="' + key + 'name">' + esc(b.name) + '</span></span>'); progSet(0);
+    setBar('<span class="p-crumb">' + K.crumb + ' · <span data-k="' + key + 'name">' + esc(b.name) + '</span></span>'); progSet(0);
     var tpCount = {}, tyCount = {}; b.q.forEach(function(q){ tpCount[q.tp] = (tpCount[q.tp] || 0) + 1; tyCount[q.t] = (tyCount[q.t] || 0) + 1; });
     // a filter that would match nothing in this bank is not offered
     var tpKeys = Object.keys(b.topics).filter(function(k){ return tpCount[k]; }), nTypes = Object.keys(tyCount).length;
@@ -1026,7 +1043,7 @@ var TRY = (function(){
       hl = '<section class="to-sec to-hist p-rv" style="--pd:.2s"><div class="to-sec-h"><h3>Riwayat</h3><span class="lbl">' + h.length + ' percobaan</span></div>' + spark +
         '<ol class="to-hl">' + h.map(function(r){
           return '<li><button type="button" class="to-hr" data-act="hist" data-rid="' + r.id + '"><span class="to-hr-s">' + fmtScore(r.score) + '</span>' +
-            '<span class="to-hr-m"><b>' + (r.mode === 'ujian' ? 'Simulasi CBT' : 'Latihan') + ' · ' + r.benar + '/' + r.n + ' benar</b><small>' + fmtDate(r.at) + ' · ' + fmtDur(r.used) + (r.label ? ' · ' + esc(r.label) : '') + '</small></span><span class="to-hr-a" aria-hidden="true">→</span></button></li>';
+            '<span class="to-hr-m"><b>' + (r.mode === 'ujian' ? K.sim : 'Latihan') + ' · ' + r.benar + '/' + r.n + ' benar</b><small>' + fmtDate(r.at) + ' · ' + fmtDur(r.used) + (r.label ? ' · ' + esc(r.label) : '') + '</small></span><span class="to-hr-a" aria-hidden="true">→</span></button></li>';
         }).join('') + '</ol></section>';
     }
     root.innerHTML = '<div class="p-wrap to-wrap to-setup">' +
@@ -1038,7 +1055,7 @@ var TRY = (function(){
       (live ? resumeCard(live) : '') +
       '<section class="to-sec"><div class="to-sec-h"><h3>Mode</h3></div><div class="to-modes" role="radiogroup" aria-label="Mode try out">' +
         '<button class="to-mode" type="button" role="radio" aria-checked="' + (P.mode === 'latihan') + '" data-act="mode" data-v="latihan"><b>Latihan</b><span>Cek jawaban tiap soal, pembahasan langsung muncul.</span></button>' +
-        '<button class="to-mode" type="button" role="radio" aria-checked="' + (P.mode === 'ujian') + '" data-act="mode" data-v="ujian"><b>Simulasi CBT</b><span>Pakai timer, jawaban dan pembahasan dibuka setelah selesai.</span></button>' +
+        '<button class="to-mode" type="button" role="radio" aria-checked="' + (P.mode === 'ujian') + '" data-act="mode" data-v="ujian"><b>' + K.sim + '</b><span>Pakai timer, jawaban dan pembahasan dibuka setelah selesai.</span></button>' +
       '</div></section>' +
       (tpKeys.length > 1 ? '<section class="to-sec"><div class="to-sec-h"><h3>Topik</h3></div><div class="to-chips">' + tps + '</div></section>' : '') +
       (nTypes > 1 ? '<section class="to-sec"><div class="to-sec-h"><h3>Jenis soal</h3></div><div class="to-chips">' + tys + '</div></section>' : '') +
@@ -1181,7 +1198,7 @@ var TRY = (function(){
     var ok = isOk(q, chosen), keys = q.a.map(function(o){ var d = order.indexOf(o); return (q.t === 'tf' ? '' : keyOf(q, d) + '. ') + esc(q.o[o]); });
     var v = blank ? '<b>Kosong.</b> ' : (ok ? '<b>Benar.</b> ' : '<b>Belum tepat.</b> ');
     return '<div class="to-fb ' + (ok ? 'ok' : 'no') + '"><p class="to-vd">' + v + (q.a.length > 1 ? 'Jawaban yang diterima: ' : 'Jawaban: ') + keys.join(' / ') + '</p>' +
-      '<p class="to-ex">' + esc(q.e) + '</p>' + figsHtml(bid, q, 'ei') + (q.n ? '<p class="to-nt"><span>Catatan</span>' + esc(q.n) + '</p>' : '') + '</div>';
+      (q.e ? '<p class="to-ex">' + esc(q.e) + '</p>' : '') + figsHtml(bid, q, 'ei') + (q.n ? '<p class="to-nt"><span>Catatan</span>' + esc(q.n) + '</p>' : '') + '</div>';
   }
   function renderQ(focus){
     var b = B(S.blok), i = S.cur, id = S.ids[i], q = b.by[id], order = qOrder(id), a = S.ans[id];
@@ -1279,7 +1296,7 @@ var TRY = (function(){
     var order = qOrder(id), focusWas = document.activeElement;
     $('.to-opts', panel).outerHTML = optsHtml(q, order, a, true);
     $('#toFb', panel).innerHTML = fbHtml(q, order, a, false, S.blok); hydrate($('#toFb', panel));
-    $('#toLive', panel).textContent = (ok ? 'Benar.' : 'Belum tepat.') + ' Jawaban: ' + q.a.map(function(o){ return q.o[o]; }).join(' / ') + '. ' + q.e;
+    $('#toLive', panel).textContent = (ok ? 'Benar.' : 'Belum tepat.') + ' Jawaban: ' + q.a.map(function(o){ return q.o[o]; }).join(' / ') + '.' + (q.e ? ' ' + q.e : '');
     renderFoot(); navSync();
     if(soundOn && AC){ try{ var t = AC.currentTime + 0.01; if(ok){ tone(t, 660, 990, 0.12, 0.05, 'sine'); tone(t + 0.1, 990, 990, 0.1, 0.035, 'sine'); } else tone(t, 220, 150, 0.22, 0.06, 'triangle'); }catch(e){} }
     var nb = $('#toFoot .pri', panel); if(nb && focusWas && focusWas.closest && focusWas.closest('#toFoot, .to-opts')) nb.focus({ preventScroll: true });
@@ -1348,7 +1365,7 @@ var TRY = (function(){
     }).join('');
     var wrong = res.salah + res.kosong;
     root.innerHTML = '<div class="p-wrap to-wrap to-result">' +
-      '<p class="lbl">' + (res.mode === 'ujian' ? 'Simulasi CBT' : 'Latihan') + ' · ' + bt(res.blok, 'name', b.name) + (res.label ? ' · ' + esc(res.label) : '') + '</p>' +
+      '<p class="lbl">' + (res.mode === 'ujian' ? K.sim : 'Latihan') + ' · ' + bt(res.blok, 'name', b.name) + (res.label ? ' · ' + esc(res.label) : '') + '</p>' +
       '<div class="to-mon"><svg class="to-mon-ecg" viewBox="0 0 600 90" preserveAspectRatio="none" aria-hidden="true"><path pathLength="1" d="' + ecgPath(600, 90, 3.2) + '"/></svg>' +
         '<div class="to-mon-r"><span class="lbl">Nilai</span><b class="to-score" id="toScore" tabindex="-1" data-focus data-v="' + res.score + '">' + fmtScore(res.score) + '</b>' +
         '<span class="to-mon-s">' + res.benar + ' benar dari ' + res.n + ' soal' + (delta != null ? ' · <em class="' + (delta >= 0 ? 'up' : 'down') + '">' + (delta >= 0 ? '+' : '') + fmtScore(delta) + ' dari sebelumnya</em>' : '') + '</span></div></div>' +
@@ -1379,7 +1396,7 @@ var TRY = (function(){
     }).filter(Boolean);
     var show2 = items.filter(function(x){ return f === 'all' || (f === 'no' && !x.ok && !x.blank) || (f === 'blank' && x.blank) || (f === 'flag' && x.fl) || (f === 'ok' && x.ok); });
     var fl = [['all', 'Semua'], ['no', 'Salah'], ['blank', 'Kosong'], ['flag', 'Ragu'], ['ok', 'Benar']].map(function(p){ return chip('rf', p[0], f === p[0], p[1] + ' <em>' + counts[p[0]] + '</em>'); }).join('');
-    root.innerHTML = '<div class="p-wrap to-wrap to-review"><div class="to-head"><p class="lbl">' + fmtDate(res.at) + ' · ' + (res.mode === 'ujian' ? 'Simulasi CBT' : 'Latihan') + '</p>' +
+    root.innerHTML = '<div class="p-wrap to-wrap to-review"><div class="to-head"><p class="lbl">' + fmtDate(res.at) + ' · ' + (res.mode === 'ujian' ? K.sim : 'Latihan') + '</p>' +
       '<h2 class="to-h" tabindex="-1" data-focus>Pembahasan</h2><p class="to-rv-s">Nilai ' + fmtScore(res.score) + ' · ' + res.benar + '/' + res.n + ' benar</p></div>' +
       '<div class="to-chips to-rf">' + fl + '</div>' +
       (show2.length ? '<ol class="to-rl">' + show2.map(function(x){
@@ -1450,7 +1467,7 @@ var TRY = (function(){
       '<img src="' + esc(im.getAttribute('src')) + '" alt="' + esc(alt) + '" width="' + w + '" height="' + h + '"><span class="to-pwm" aria-hidden="true"></span></button></div>';
     panel.appendChild(zoomEl);
     var hs = history.state || {}, st = {}; for(var k in hs) st[k] = hs[k];
-    st.zm = 1; st.d = depth() + 1; hPush(st, '#tryout');
+    st.zm = 1; st.d = depth() + 1; hPush(st, '#' + chId());
     zoomEl.addEventListener('click', function(e){
       var f = e.target.closest('[data-zf]');
       if(e.target.closest('[data-zx]') || e.target.getAttribute('data-zs')) zoomBack();
@@ -1509,7 +1526,7 @@ var TRY = (function(){
     V.view = 'gate'; V.gb = bid; V.gw = want; V.grid = st && st.rid || null;
     panel.classList.remove('to-running'); wm(false);
     $('#toBackT', panel).textContent = 'Kembali';
-    setBar('<span class="p-crumb">Try Out · ' + bt(bid, 'name', m.name) + '</span>'); progSet(0);
+    setBar('<span class="p-crumb">' + K.crumb + ' · ' + bt(bid, 'name', m.name) + '</span>'); progSet(0);
     // a quick open shows no waiting screen at all
     var t = setTimeout(function(){ if(my === gseq) drawGate(bid, { s: 'wait' }); }, 140);
     busyG++;
@@ -1518,13 +1535,13 @@ var TRY = (function(){
       if(my !== gseq || !V.open) return;
       if(r.s === 'ok' && B(bid)){
         var hs = history.state || {};
-        if(hs.ch === 'tryout' && hs.tv === want && hs.b === bid) show(want, hs);
+        if(hs.ch === chId() && hs.tv === want && hs.b === bid) show(want, hs);
         else go(want, 'replace', { b: bid, rid: V.grid });
         return;
       }
       // one history entry for the whole way in: Back leaves to the bank list
       var cur = history.state || {};
-      if(!(cur.ch === 'tryout' && cur.tv === 'gate')) hRepl({ ch: 'tryout', tv: 'gate', b: bid, w: want, rid: V.grid, d: depth() }, '#tryout');
+      if(!(cur.ch === chId() && cur.tv === 'gate')) hRepl({ ch: chId(), tv: 'gate', b: bid, w: want, rid: V.grid, d: depth() }, '#' + chId());
       drawGate(bid, r);
     });
   }
@@ -1539,7 +1556,7 @@ var TRY = (function(){
   function nimFmt(v){ var d = String(v || '').replace(/\D/g, '').slice(0, 20); return 'NIM ' + d + '••••••••••••••'.slice(Math.min(d.length, 14)); }
   // the access card: what gets matched (a Google account and one NIM)
   function passHtml(name, nim, mail){
-    return '<div class="to-pass' + (name ? ' named' : '') + '" aria-hidden="true"><div class="to-pass-t"><span>Kelas Alpha</span><span>Try Out CBT</span></div>' +
+    return '<div class="to-pass' + (name ? ' named' : '') + '" aria-hidden="true"><div class="to-pass-t"><span>Kelas Alpha</span><span>' + esc(K.name) + '</span></div>' +
       '<p class="to-pass-n">' + (name ? esc(name) : 'Nama kamu') + '</p><p class="to-pass-nim" id="toPassNim">' + nimFmt(nim) + '</p>' +
       '<svg class="to-pass-ecg" viewBox="0 0 300 36" preserveAspectRatio="none"><path pathLength="1" d="' + ecgPath(300, 36, 2.2) + '"/></svg>' +
       '<p class="to-pass-e">' + (mail ? esc(mail) : 'akun Google kamu') + '</p></div>';
@@ -1694,11 +1711,11 @@ var TRY = (function(){
       pauseClock(); saveSess(); closeDlg(true); navOpen(false); zoomClose(true);
       S = null; LAST = null; if(ACC) ACC.release();
       var bid = V.bid;
-      hRepl({ ch: 'tryout', tv: 'gate', b: bid, w: V.view, rid: V.rid, d: depth() }, '#tryout');
+      hRepl({ ch: chId(), tv: 'gate', b: bid, w: V.view, rid: V.rid, d: depth() }, '#' + chId());
       gseq++; V.gw = V.view; V.grid = V.rid;
       panel.classList.remove('to-running'); wm(false);
       $('#toBackT', panel).textContent = 'Kembali';
-      setBar('<span class="p-crumb">Try Out · ' + bt(bid, 'name', M(bid).name) + '</span>'); progSet(0);
+      setBar('<span class="p-crumb">' + K.crumb + ' · ' + bt(bid, 'name', M(bid).name) + '</span>'); progSet(0);
       drawGate(bid, st);
       return;
     }
@@ -1866,7 +1883,11 @@ var TRY = (function(){
 
   return { preload: function(){ access().then(null, function(){}); }, mount: mountTo, leave: leave, pop: pop, esc: esc2, depth: depth, isOpen: function(){ return V.open; }, refresh: refreshHome,
     count: function(){ return MAN.banks.reduce(function(n, m){ return n + ((m && m.n) | 0); }, 0); } };
-})();
+}
+var TRYS = {};
+Object.keys(TKIND).forEach(function(k){ TRYS[k] = makeTry(k); });
+function tryOf(c){ return isTry(c) ? TRYS[c.kind] : null; }
+function tryLeave(){ Object.keys(TRYS).forEach(function(k){ if(TRYS[k].isOpen()) TRYS[k].leave(); }); }
 
 
 // channel list interactions
@@ -1927,8 +1948,8 @@ function sweep(dir, mid, done){
 // channel panel
 var panel = $('#panel'), home = $('#home'), openId = null, internal = false, lastFocus = null, internalT = 0;
 function buildPanel(c){
-  if(TRY.isOpen()) TRY.leave();
-  if(c.kind === 'tryout'){ TRY.mount(c); bindCursor(panel); return; }
+  tryLeave();
+  if(isTry(c)){ tryOf(c).mount(c); bindCursor(panel); return; }
   var i = CH.indexOf(c), n = CH[(i + 1) % CH.length], url = linkOf(c.id);
   var ttl = c.name.split(' ').map(function(w, k){ return '<span class="w"><i style="--cd:' + (0.14 + k * 0.08) + 's">' + esc(w) + '</i></span>'; }).join(' ');
   panel.innerHTML =
@@ -1974,7 +1995,7 @@ function mount(c){
   requestAnimationFrame(function(){ requestAnimationFrame(function(){ panel.classList.add('show'); }); });
 }
 function unmount(){
-  if(TRY.isOpen()) TRY.leave();
+  tryLeave();
   panel.classList.remove('on', 'show', 'to-running'); panel.innerHTML = '';
   H.classList.remove('lock'); home.removeAttribute('aria-hidden');
   openId = null; document.title = 'ALPHANGERS · Class Alpha';
@@ -1982,7 +2003,7 @@ function unmount(){
 }
 function goChannel(id, push){
   var c = BY[id]; if(!c || busy) return;
-  if(id === 'tryout') TRY.preload();
+  if(isTry(c)) tryOf(c).preload();
   if(!openId) lastFocus = document.activeElement;
   if(push) hPush({ch: id}, '#' + id);
   sweep(1, function(){ mount(c); }, function(){ try{ panel.focus({preventScroll: true}); }catch(e){} });
@@ -1991,7 +2012,7 @@ function goHome(){ if(busy || !openId) return; sweep(-1, unmount); }
 function closeViaHistory(){
   if(busy) return;
   if(history.state && history.state.ch){
-    var n = 1 + ((history.state.ch === 'tryout' && history.state.d) ? history.state.d : 0);
+    var n = 1 + ((isTry(BY[history.state.ch]) && history.state.d) ? history.state.d : 0);
     internal = true; clearTimeout(internalT); internalT = setTimeout(function(){ internal = false; }, 1200);
     if(n > 1) history.go(-n); else history.back();
   }
@@ -1999,7 +2020,7 @@ function closeViaHistory(){
 }
 function sync(){
   var s = history.state, want = s && s.ch && BY[s.ch] ? s.ch : null;
-  if(want === openId){ if(want === 'tryout' && TRY.isOpen()) TRY.pop(s); return; }
+  if(want === openId){ var t = tryOf(BY[want]); if(t && t.isOpen()) t.pop(s); return; }
   if(want && !openId) goChannel(want, false);
   else if(!want && openId) sweep(-1, unmount);
   else if(want && openId) sweep(1, function(){ mount(BY[want]); });
@@ -2011,7 +2032,7 @@ window.addEventListener('popstate', function(){
 window.addEventListener('keydown', function(e){
   if(e.key !== 'Escape') return;
   if(!openId) return;
-  if(openId === 'tryout' && TRY.esc()) return;
+  var t = tryOf(BY[openId]); if(t && t.esc()) return;
   closeViaHistory();
 });
 // a channel hash typed or pasted into an already open tab

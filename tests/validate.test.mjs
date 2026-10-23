@@ -42,12 +42,14 @@ test('non-objects and unknown keys fail cleanly', () => {
 test('links: https only, warns on non-Drive hosts, drops unknown fields', () => {
   const base = read(FILES.links);
   const bad = structuredClone(base);
-  bad.channels[1].url = 'http://drive.google.com/x';
-  bad.channels[3].url = 'javascript:alert(1)';
-  bad.channels[4].url = 'https://user:pw@drive.google.com/x';
+  // three Drive channels (the try out channels have no link to break)
+  const [i, j, k] = base.channels.map((c, n) => (c.kind ? -1 : n)).filter((n) => n > 0);
+  bad.channels[i].url = 'http://drive.google.com/x';
+  bad.channels[j].url = 'javascript:alert(1)';
+  bad.channels[k].url = 'https://user:pw@drive.google.com/x';
   let r = validate('links', bad);
   assert.equal(r.ok, false);
-  assert.deepEqual(paths(r), ['channels.1.url', 'channels.3.url', 'channels.4.url']);
+  assert.deepEqual(paths(r), [`channels.${i}.url`, `channels.${j}.url`, `channels.${k}.url`]);
 
   const odd = structuredClone(base);
   odd.channels[1].url = 'https://example.com/folder';
@@ -58,6 +60,31 @@ test('links: https only, warns on non-Drive hosts, drops unknown fields', () => 
   assert.ok(r.warnings.some((w) => w.path.join('.') === 'channels.1.url'));
   assert.equal('onclick' in r.data.channels[1], false);
   assert.equal('extra' in r.data, false);
+});
+
+test('links: the OSPE try out is a channel kind with no url; base and added stamps are kept, broken ones dropped', () => {
+  const d = read(FILES.links);
+  const i = d.channels.findIndex((c) => c.kind === 'ospe');
+  d.channels[i].url = 'https://evil.example';
+  let r = validate('links', d);
+  assert.equal(r.ok, true);
+  assert.equal(r.data.channels[i].kind, 'ospe');
+  assert.equal('url' in r.data.channels[i], false);
+  assert.equal(r.data.base, d.base);
+  assert.equal(r.data.channels[i].added, d.channels[i].added);
+
+  const odd = read(FILES.links);
+  odd.base = 'kemarin';
+  odd.channels[i].added = 12;
+  r = validate('links', odd);
+  assert.equal(r.ok, true, 'a broken stamp is only bookkeeping');
+  assert.equal('base' in r.data, false);
+  assert.equal('added' in r.data.channels[i], false);
+  assert.deepEqual(r.warnings.map((w) => w.path.join('.')).sort(), ['base', `channels.${i}.added`]);
+
+  const unknown = read(FILES.links);
+  unknown.channels[i].kind = 'osce';
+  assert.deepEqual(paths(validate('links', unknown)), [`channels.${i}.kind`]);
 });
 
 test('links: tryout channel never carries a url; ids are unique and well formed', () => {

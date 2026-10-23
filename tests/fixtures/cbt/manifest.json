@@ -26,6 +26,19 @@
       "bytes": 1891,
       "by": "Batu Alphangers",
       "new": true
+    },
+    {
+      "id": "o3",
+      "kv": 1,
+      "name": "Blok 3",
+      "title": "Karakter Biologi Tubuh Manusia",
+      "sem": "Semester 1",
+      "n": 3,
+      "topics": 2,
+      "file": "/cbt/o3.bd4488372d.bin",
+      "bytes": 838,
+      "by": "Praktikum Alphangers",
+      "kind": "ospe"
     }
   ]
 }

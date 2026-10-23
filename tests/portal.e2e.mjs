@@ -113,8 +113,8 @@ for (const vp of VIEWPORTS) {
     // the announcement board stays out of the way while there is nothing to announce
     assert.equal(await s.ev(() => document.getElementById('info').hidden), true);
 
-    // ten channels, drawn once; a Drive channel opens its panel with the right folder, Escape closes it
-    assert.equal(await s.ev(() => document.querySelectorAll('#rows .row-b').length), 10);
+    // eleven channels, drawn once; a Drive channel opens its panel with the right folder, Escape closes it
+    assert.equal(await s.ev(() => document.querySelectorAll('#rows .row-b').length), 11);
     assert.equal(await s.ev(() => window.__rowsRemoved), 0, 'channel rows were not redrawn');
     await s.ev(() => document.querySelector('.row-b[data-id="praktikum"]').scrollIntoView({ block: 'center' }));
     await s.page.waitForTimeout(400);
@@ -180,7 +180,7 @@ test('storage blocked: everything still renders', async (t) => {
   await s.page.waitForSelector('#jadwalRoot .jw-date', { timeout: 10000 });
   await s.ev(() => document.getElementById('dosen').scrollIntoView());
   await s.page.waitForSelector('#dosenRoot .dz-row', { timeout: 15000 });
-  assert.equal(await s.ev(() => document.querySelectorAll('#rows .row-b').length), 10);
+  assert.equal(await s.ev(() => document.querySelectorAll('#rows .row-b').length), 11);
   await finish(t, s, 'storage-blocked');
 });
 

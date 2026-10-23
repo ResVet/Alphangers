@@ -1,5 +1,6 @@
 {
  "v": 1,
+ "base": "2026-10-23T10:41:40Z",
  "channels": [
   {
    "id": "lobby",
@@ -21,6 +22,14 @@
    "name": "Try Out CBT",
    "tag": "Latihan CBT",
    "sub": "Latihan soal CBT per blok, lengkap sama pembahasannya. Nilai kamu cuma kesimpan di perangkat sendiri."
+  },
+  {
+   "id": "tryout-ospe",
+   "kind": "ospe",
+   "name": "Try Out OSPE",
+   "tag": "Latihan OSPE",
+   "sub": "Latihan soal OSPE per blok, lengkap sama gambar preparatnya. Nilai kamu cuma kesimpan di perangkat sendiri.",
+   "added": "2026-10-23T10:41:40Z"
   },
   {
    "id": "it",

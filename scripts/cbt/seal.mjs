@@ -1,8 +1,10 @@
 // Seals the try out for the site, from a private folder that is never committed:
 //   roster.json        { v, cls, source, people: [{ nim, name, blocked? }] }
 //   banks/<id>.json    a question bank in the site format; pictures as paths in the folder, or
-//                      an empty path for img/<bank id>/<picture id>.<ext>. Other files there
-//                      (working files, notes) are skipped.
+//                      an empty path for img/<bank id>/<picture id>.<ext>. "kind" says which try
+//                      out channel shows it (CHANNEL_KINDS: tryout, the default, or ospe); an
+//                      explanation ("e") is optional. Other files there (working files, notes)
+//                      are skipped.
 //   img/...            those pictures
 //   secret.txt         the master secret, unless CBT_SECRET is set
 // It checks everything first and writes nothing if anything is wrong. Then it writes:
@@ -25,6 +27,7 @@ import { isDeepStrictEqual } from 'node:util';
 import { LABEL, BANK_ID, IMG_ID, derive, seal, openJson, hashHex, parseSecret, toB64u } from '../../src/lib/seal.js';
 import { NIM_RE, cleanName } from '../../netlify/lib/cbt.mjs';
 import { sniff, TYPES, MAX_BYTES } from '../../netlify/lib/media.mjs';
+import { CHANNEL_KINDS } from '../../src/lib/validate.js';
 
 function fail(message) {
   console.error(message);
@@ -144,11 +147,12 @@ function checkBank(file) {
   const b = readJson(join(dir, 'banks', file), where);
   if (b === undefined) return;
   if (!isObj(b)) return bad(where, 'not a JSON object');
-  onlyKeys(b, ['id', 'kv', 'new', 'name', 'title', 'sem', 'by', 'refs', 'topics', 'q'], where);
+  onlyKeys(b, ['id', 'kv', 'kind', 'new', 'name', 'title', 'sem', 'by', 'refs', 'topics', 'q'], where);
   if (b.id !== id) bad(where, `id must be "${id}", like the file name`);
   const kv = b.kv ?? 1;
   if (!Number.isInteger(kv) || kv < 1 || kv > 9999) bad(where, 'kv must be a whole number from 1');
   if (b.new !== undefined && typeof b.new !== 'boolean') bad(where, 'new must be true or false');
+  if (b.kind !== undefined && !CHANNEL_KINDS.includes(b.kind)) bad(where, `kind must be one of ${CHANNEL_KINDS.join(', ')}`);
   text(b.name, where, 'name', { max: 120 });
   text(b.title, where, 'title', { max: 120 });
   text(b.sem, where, 'sem', { max: 120 });
@@ -198,7 +202,7 @@ function checkBank(file) {
     if (!Array.isArray(q.a) || !q.a.length || q.a.some((x) => !Number.isInteger(x) || x < 0 || x >= n) || new Set(q.a).size !== q.a.length) {
       bad(w, 'a must list the right options by index, each once');
     }
-    text(q.e, w, 'e', { max: 10000 });
+    text(q.e, w, 'e', { max: 10000, optional: true });
     text(q.n, w, 'n', { max: 5000, optional: true });
     if (q.ns !== undefined && q.ns !== 1 && q.ns !== true) bad(w, 'ns must be 1');
     text(q.src, w, 'src', { max: 500, optional: true });
@@ -249,8 +253,8 @@ for (const { id, kv, bank, pics } of banks.sort(byId)) {
     files.set(name, sealed);
     paths.set(img, '/cbt/' + name);
   }
-  // kv and new are how to build it, not part of the bank
-  const { kv: _kv, new: isNew, ...content } = bank;
+  // kv, kind and new are how to build and list it, not part of the bank
+  const { kv: _kv, kind, new: isNew, ...content } = bank;
   for (const q of content.q) for (const f of ['img', 'ei']) if (q[f]) q[f] = q[f].map((p) => ({ ...p, f: paths.get(p.id) }));
   const sealed = await seal(key, ivKey, JSON.stringify(content), LABEL.bankAad(id, kv));
   if (!isDeepStrictEqual(await openJson(key, sealed, LABEL.bankAad(id, kv)), content)) fail(`${id}: the sealed bank does not open to the same content`);
@@ -259,6 +263,7 @@ for (const { id, kv, bank, pics } of banks.sort(byId)) {
   manifest.push({
     id, kv, name: content.name, title: content.title, sem: content.sem, n: content.q.length, topics: Object.keys(content.topics).length,
     file: '/cbt/' + name, bytes: sealed.length, ...(content.by ? { by: content.by } : {}), ...(isNew ? { new: true } : {}),
+    ...(kind && kind !== 'tryout' ? { kind } : {}),
   });
   versions.push({ id, kv, pictures: pics.size });
 }

@@ -1,4 +1,4 @@
-// Bloks that ship with the site after the admin has published a copy.
+// Bloks (and channels) that ship with the site after the admin has published a copy.
 //
 // The schedule and the lecturer list ship in src/data. Once the admin publishes one of them, the
 // published copy replaces the shipped one completely (content.js), so a blok added to the shipped
@@ -11,6 +11,9 @@
 //             dates that overlap it; then the admin's own blok stands.
 //   dosen     people teaching in such a blok are added when the list lacks them, and people it
 //             has get that blok and their code in it. Names, phones and everyone else stay.
+//   links     the same for channels (the Try Out OSPE channel): a channel with a newer `added`
+//             goes in right after the channel it follows in the shipped list, or at the end,
+//             unless the copy already has a channel with that id.
 // The merged copy carries the shipped `base`, and the editors start from the merged copy, so the
 // next publish saves the blok together with that `base`. A blok the admin deletes after that
 // stays deleted.
@@ -71,7 +74,25 @@ export function mergeDosen(remote, bundled) {
   return { ...remote, base: bundled.base, list };
 }
 
-const MERGERS = { schedule: mergeSchedule, dosen: mergeDosen };
+export function mergeLinks(remote, bundled) {
+  if (!remote || !bundled || !Array.isArray(remote.channels) || !Array.isArray(bundled.channels)) return remote;
+  if (!isNewer(bundled.base, remote.base)) return remote;
+  const channels = remote.channels.slice();
+  bundled.channels.forEach((c, i) => {
+    if (!c || !isNewer(c.added, remote.base) || channels.some((r) => r && r.id === c.id)) return;
+    let at = channels.length;
+    for (let j = i - 1; j >= 0; j--) {
+      const k = channels.findIndex((r) => r && r.id === bundled.channels[j]?.id);
+      if (k >= 0) { at = k + 1; break; }
+    }
+    channels.splice(at, 0, clone(c));
+  });
+  return { ...remote, base: bundled.base, channels };
+}
+
+const MERGERS = { schedule: mergeSchedule, dosen: mergeDosen, links: mergeLinks };
+/** The content keys a published copy can gain shipped bloks or channels in. */
+export const MERGED = Object.freeze(Object.keys(MERGERS));
 
 /**
  * The copy to show or edit for a validated published document: itself, plus the bloks the shipped

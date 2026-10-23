@@ -118,6 +118,21 @@ const b3 = {
   ],
 };
 
+// OSPE Blok 3 (Try Out OSPE): a bank of the other kind, with a picture under the stem and
+// questions that come with the key only, no explanation.
+const o3 = {
+  id: 'o3', kind: 'ospe', name: 'Blok 3', title: 'Karakter Biologi Tubuh Manusia', sem: 'Semester 1',
+  by: 'Praktikum Alphangers',
+  topics: { sel: 'Morfologi sel', mitosis: 'Mitosis akar bawang' },
+  q: [
+    { id: 'p01', t: 'mc', tp: 'sel', q: 'Pada preparat di atas, organel yang ditunjuk huruf B adalah…', o: ['Nukleus', 'Mitokondria', 'Lisosom', 'Ribosom'], a: [1],
+      img: [{ id: 'i01', svg: CELL, enc: png, type: 'image/png' }] },
+    { id: 'p02', t: 'mc', tp: 'mitosis', q: 'Fase terlama dalam siklus sel adalah…', o: ['Profase', 'Interfase', 'Metafase', 'Telofase'], a: [1] },
+    { id: 'p03', t: 'mc', tp: 'mitosis', q: 'Pembagian sitoplasma yang menghasilkan dua sel anak disebut…', o: ['Replikasi', 'Kondensasi', 'Sitokinesis', 'Transkripsi'], a: [2],
+      e: 'Sitokinesis membagi sitoplasma setelah inti membelah.' },
+  ],
+};
+
 const meta = { b3: { new: true } };
 const master = parseSecret(SECRET);
 
@@ -129,7 +144,9 @@ async function put(name, bytes) {
 async function sealBank(src, kv = 1) {
   const key = await derive(master, LABEL.bankKey(src.id, kv));
   const ivKey = await derive(master, LABEL.bankIv(src.id, kv));
-  const bank = structuredClone({ ...src, q: [] });
+  // the kind says which try out lists the bank; like seal.mjs, it stays out of the bank itself
+  const { kind, ...rest } = src;
+  const bank = structuredClone({ ...rest, q: [] });
   for (const q0 of src.q) {
     const q = { ...q0 };
     for (const field of ['img', 'ei']) {
@@ -150,13 +167,13 @@ async function sealBank(src, kv = 1) {
   return {
     id: src.id, kv, name: src.name, title: src.title, sem: src.sem, n: bank.q.length,
     topics: Object.keys(bank.topics).length, file, bytes: sealed.length,
-    ...(src.by ? { by: src.by } : {}), ...(meta[src.id] || {}),
+    ...(src.by ? { by: src.by } : {}), ...(meta[src.id] || {}), ...(kind ? { kind } : {}),
   };
 }
 
 await mkdir(OUT, { recursive: true });
 for (const f of await readdir(OUT)) if (f.endsWith('.bin')) await rm(join(OUT, f));
-const banks = [await sealBank(b2), await sealBank(b3)];
+const banks = [await sealBank(b2), await sealBank(b3), await sealBank(o3)];
 const manifest = { v: 1, note: 'Fake banks for tests and the mock build. Made by scripts/cbt/fixtures.mjs.', secret: SECRET, banks };
 await writeFile(join(OUT, 'manifest.json'), JSON.stringify(manifest, null, 2) + '\n');
 console.log(banks.map((b) => `${b.file} ${b.bytes} B, ${b.n} soal`).join('\n'));

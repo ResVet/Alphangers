@@ -895,7 +895,7 @@ function privateDir(change = (x) => x) {
   mkdirSync(join(dir, 'banks'));
   mkdirSync(join(dir, 'img/b3'), { recursive: true });
   writeFileSync(join(dir, 'roster.json'), JSON.stringify(files.roster));
-  for (const id of ['b2', 'b3']) if (files[id]) writeFileSync(join(dir, `banks/${id}.json`), JSON.stringify(files[id], null, 2));
+  for (const [id, bank] of Object.entries(files)) if (id !== 'roster' && bank) writeFileSync(join(dir, `banks/${id}.json`), JSON.stringify(bank, null, 2));
   writeFileSync(join(dir, 'img/b3/i01.webp'), WEBP);
   writeFileSync(join(dir, 'img/b3/i02.webp'), WEBP);
   writeFileSync(join(dir, 'secret.txt'), SECRET + '\n');
@@ -1022,6 +1022,31 @@ test('the seal script is deterministic and removes the sealed files it no longer
   rmSync(o10, { recursive: true });
 });
 
+test('the seal script lists a bank under its kind of try out, and an explanation is optional', async () => {
+  const dir = privateDir((f) => {
+    f.b3.kind = 'tryout';
+    f.o3 = {
+      id: 'o3', kind: 'ospe', name: 'Blok 3', title: 'Karakter Biologi Tubuh Manusia', sem: 'Semester 1', by: 'Praktikum Alphangers',
+      topics: { sel: 'Morfologi sel' },
+      q: [{ id: 'd1-03', t: 'mc', tp: 'sel', q: 'Epitel pada alveolus paru-paru adalah', o: ['Kubus selapis', 'Silindris selapis', 'Pipih selapis', 'Transisional'], a: [2] }],
+    };
+  });
+  const out = mkdtempSync(join(tmpdir(), 'cbt-out-'));
+  const r = sealRun(dir, out);
+  assert.equal(r.code, 0, r.text);
+  const manifest = JSON.parse(readFileSync(join(out, 'src/data/cbt.json'), 'utf8'));
+  assert.deepEqual(manifest.banks.map((b) => [b.id, b.kind]), [['b2', undefined], ['b3', undefined], ['o3', 'ospe']], 'the default kind is not written');
+  const data = await import(pathToFileURL(join(out, 'netlify/data/cbt.mjs')).href);
+  assert.deepEqual(data.BANKS, [{ id: 'b2', kv: 1 }, { id: 'b3', kv: 2 }, { id: 'o3', kv: 1 }], 'the server hands out its key like any other');
+  const o3 = manifest.banks[2];
+  const bank = await openJson(await derive(fromB64u(SECRET), LABEL.bankKey('o3', 1)), new Uint8Array(readFileSync(join(out, 'public', o3.file))), LABEL.bankAad('o3', 1));
+  assert.equal('kind' in bank, false, 'the kind stays out of the bank');
+  assert.equal('e' in bank.q[0], false);
+  assert.equal(bank.q[0].a[0], 2);
+  rmSync(dir, { recursive: true });
+  rmSync(out, { recursive: true });
+});
+
 test('the seal script refuses bad input and then writes nothing', () => {
   const q = (f, i = 0) => f.b3.q[i];
   const cases = {
@@ -1034,7 +1059,7 @@ test('the seal script refuses bad input and then writes nothing', () => {
     'true/false with three': (f) => (f.b2.q[1].o = ['Benar', 'Salah', 'Mungkin']),
     'empty option': (f) => (q(f).o[2] = ' '),
     'unknown type': (f) => (q(f).t = 'essay'),
-    'no explanation': (f) => delete q(f).e,
+    'unknown kind of try out': (f) => (f.b3.kind = 'osce'),
     'unknown field': (f) => (q(f).jawaban = 'A'),
     'missing picture': (f) => (q(f).img[0].f = 'img/b3/none.webp'),
     'picture outside the folder': (f) => (q(f).img[0].f = '../secret.txt'),

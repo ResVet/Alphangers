@@ -70,7 +70,8 @@ Di halaman try out:
 - Nama, judul, dan semester blok yang diubah ikut berubah di semua layar try out (halaman blok, layar masuk, hasil, pembahasan).
 - Di bawah kartu ada kotak **Catatan buat halaman try out**. Di halaman tiap blok ada catatan sendiri di bawah judulnya.
 - Teks lain di halaman try out (kalimat di kotak akun, kalimat soal penyimpanan di bawah kartu, judul dan penjelasan di layar masuk) bisa diketik langsung.
-- Ketuk judul halaman lalu **Ubah channel** untuk nama, label, dan keterangan channel Try Out.
+- Ketuk judul halaman lalu **Ubah channel** untuk nama, label, dan keterangan channel Try Out CBT atau Try Out OSPE.
+- Try Out CBT dan Try Out OSPE masing-masing punya kartu Blok 1 sampai Blok 4 dan catatan halamannya sendiri. Akun Google dan NIM yang sama membuka keduanya.
 
 Untuk membuka halaman blok di mode Edit, kamu perlu masuk try out seperti teman sekelas (Google dan NIM), karena soalnya hanya terbuka untuk Kelas Alpha.
 
@@ -111,7 +112,7 @@ Tiap konten punya tiga mode: **Form** untuk edit biasa, **JSON** untuk edit teks
 
 ### Link dan halaman
 
-Kartu-kartu link di portal. Urutan di editor sama dengan urutan di portal; pakai tombol panah untuk memindah. Link harus `https://`, dan editor memberi peringatan kalau bukan folder `drive.google.com`. Channel Try Out tidak punya link karena membuka CBT di portal.
+Kartu-kartu link di portal. Urutan di editor sama dengan urutan di portal; pakai tombol panah untuk memindah. Link harus `https://`, dan editor memberi peringatan kalau bukan folder `drive.google.com`. Channel Try Out CBT dan Try Out OSPE tidak punya link karena membuka try out di portal.
 
 Dokumen yang sama juga menyimpan daftar divisi beserta fotonya (`divisi`), foto kelas (`site.photo`), dan teks halaman yang sudah diubah (`site.t`). Ketiganya ada di bawah daftar channel, dengan kemampuan yang sama seperti mode Edit:
 
@@ -137,7 +138,7 @@ Teks untuk tiap bagian model jantung. Pilih bagian dari daftar atau pakai tombol
 
 ## Peserta try out
 
-Tab **Peserta try out** di Panel mengatur siapa yang boleh membuka soal try out kelas: Blok 2, Blok 3, dan blok berikutnya. Di sini tidak ada tombol Simpan: setiap tindakan langsung dikirim ke server dan berlaku saat itu juga.
+Tab **Peserta try out** di Panel mengatur siapa yang boleh membuka soal try out kelas: Try Out CBT (Blok 2, Blok 3) dan Try Out OSPE (Blok 3), serta blok berikutnya. Di sini tidak ada tombol Simpan: setiap tindakan langsung dikirim ke server dan berlaku saat itu juga.
 
 Teman sekelas membuka try out dengan masuk pakai akun Google, lalu mencocokkan NIM sekali. Yang bisa masuk hanya orang yang ada di daftar kelas (dari absen tutor Kelas Alfa).
 
@@ -214,6 +215,8 @@ Simpan pertama tidak membuat entri riwayat, karena yang digantikan adalah versi 
 ## Kalau JSON di repo diubah
 
 Blok jadwal yang baru ditambahkan ke repo (misalnya Blok 4 dari skrip `npm run data`) langsung tampil, walaupun jadwal di Firestore disimpan sebelum blok itu ada. Portal dan editor menambahkan blok baru itu ke versi Firestore tanpa mengubah apa pun yang sudah kamu terbitkan (pembatalan, link online, tag, sesi tambahan tetap ada), begitu juga dosen yang baru muncul di blok itu. Begitu kamu menerbitkan perubahan jadwal berikutnya, blok baru itu ikut tersimpan di Firestore; setelah itu, kalau blok itu kamu hapus, dia tidak muncul lagi. Blok baru tidak ditambahkan kalau di Firestore sudah ada blok berkode sama (misalnya `b4`) atau blok yang tanggalnya bertabrakan dengannya.
+
+Begitu juga channel baru dari repo, misalnya **Try Out OSPE**: channel itu langsung muncul tepat setelah Try Out CBT, walaupun daftar channel di Firestore disimpan sebelum channel itu ada, dan channel lain serta teks halaman yang sudah kamu ubah tetap seperti semula. Setelah daftar channel diterbitkan lagi, channel itu ikut tersimpan; kalau kemudian kamu hapus, dia tidak muncul lagi.
 
 Untuk perubahan lain di JSON repo, selama sebuah konten punya versi di Firestore, portal memakai versi Firestore itu dan mengabaikan file JSON di repo. Jadi perubahannya tidak terlihat di portal sampai kamu memilih salah satu:
 

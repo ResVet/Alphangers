@@ -23,7 +23,7 @@
 
 import { firebaseConfig } from './firebase-config.js';
 import { CONTENT_KEYS, MAX_JSON_BYTES, validate } from './validate.js';
-import { withBundled } from './bundled.js';
+import { withBundled, MERGED } from './bundled.js';
 
 export const KEYS = CONTENT_KEYS;
 
@@ -134,9 +134,9 @@ export function createContentStore({
     return { data, json: st.bundledJson };
   }
 
-  // What is shown for a published copy: itself, plus the bloks the bundled copy gained since.
+  // What is shown for a published copy: itself, plus the bloks (or channels) the bundled copy gained since.
   async function shown(key, copy) {
-    if (key !== 'schedule' && key !== 'dosen') return copy;
+    if (!MERGED.includes(key)) return copy;
     let shipped;
     try {
       shipped = (await bundledCopy(key)).data;

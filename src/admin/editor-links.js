@@ -4,6 +4,7 @@ import { input, issueBadge } from './fields.js';
 import { confirmDialog } from './ui.js';
 import { slugify } from './format.js';
 import { renderSite } from './editor-site.js';
+import { CHANNEL_KIND_NAMES } from '../lib/validate.js';
 
 function uniqueId(base, taken) {
   let id = base || 'channel';
@@ -41,8 +42,8 @@ export function renderLinks(host, ctx) {
     );
 
     const urlField =
-      c.kind === 'tryout'
-        ? h('p', { class: 'note wide' }, 'Channel ini membuka Try Out CBT di portal, jadi tidak pakai link.')
+      c.kind
+        ? h('p', { class: 'note wide' }, `Channel ini membuka ${CHANNEL_KIND_NAMES[c.kind] || 'try out'} di portal, jadi tidak pakai link.`)
         : input({
             label: 'Link folder Drive',
             obj: c,
@@ -85,7 +86,7 @@ export function renderLinks(host, ctx) {
         input({ label: 'Label kecil', obj: c, prop: 'tag', path: p.concat('tag'), ctx, max: 60, hint: 'Contoh: Arsip soal' }),
         input({ label: 'Deskripsi', obj: c, prop: 'sub', path: p.concat('sub'), ctx, type: 'textarea', rows: 2, max: 240, wide: true }),
         urlField,
-        c.url && c.kind !== 'tryout'
+        c.url && !c.kind
           ? h('a', { class: 'link-test', href: c.url, target: '_blank', rel: 'noopener noreferrer' }, 'Buka link ini di tab baru')
           : null,
       ),

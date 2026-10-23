@@ -20,7 +20,10 @@ export const MAX_JSON_BYTES = 900_000;
 
 export const ANNOUNCEMENT_TAGS = ['info', 'deadline', 'ujian', 'penting'];
 export const SESSION_KINDS = ['kuliah', 'praktikum', 'skilllab', 'tutorial', 'ujian', 'pleno', 'mkdu', 'intro'];
-export const CHANNEL_KINDS = ['tryout'];
+// A channel with a kind opens a try out on the portal instead of a Drive folder: tryout is the
+// CBT one, ospe the OSPE one. Each shows the banks of its own kind (src/data/cbt.json).
+export const CHANNEL_KINDS = ['tryout', 'ospe'];
+export const CHANNEL_KIND_NAMES = { tryout: 'Try Out CBT', ospe: 'Try Out OSPE' };
 export const HEART_GROUPS = ['umum', 'ruang', 'pembuluh_besar', 'koroner', 'vena_jantung', 'katup', 'konduksi'];
 
 // The 3D model names its parts with these ids, so the list is fixed here and a
@@ -422,7 +425,7 @@ function validateDivisi(ctx, p, v) {
 }
 
 function validateLinks(ctx, value) {
-  const doc = root(ctx, value, 'channels', ['v', 'channels', 'site', 'divisi']);
+  const doc = root(ctx, value, 'channels', ['v', 'base', 'channels', 'site', 'divisi']);
   if (!doc) return null;
   const items = list(ctx, ['channels'], doc.channels, LIMITS.channels);
   uniqueIds(ctx, ['channels'], items);
@@ -432,7 +435,7 @@ function validateLinks(ctx, value) {
       err(ctx, p, 'Channel harus berupa objek.');
       return null;
     }
-    noteUnknown(ctx, p, c, ['id', 'kind', 'name', 'tag', 'sub', 'url']);
+    noteUnknown(ctx, p, c, ['id', 'kind', 'name', 'tag', 'sub', 'url', 'added']);
     const out = { id: id(ctx, p.concat('id'), c.id) };
     if (c.kind !== undefined && c.kind !== null && c.kind !== '') {
       if (CHANNEL_KINDS.includes(c.kind)) out.kind = c.kind;
@@ -441,15 +444,21 @@ function validateLinks(ctx, value) {
     out.name = text(ctx, p.concat('name'), c.name, { max: 60, required: true });
     out.tag = text(ctx, p.concat('tag'), c.tag, { max: 60 });
     out.sub = text(ctx, p.concat('sub'), c.sub, { max: 240 });
-    if (out.kind !== 'tryout') {
+    if (!out.kind) {
       out.url = httpsUrl(ctx, p.concat('url'), c.url);
       if (out.url && new URL(out.url).hostname !== 'drive.google.com') {
         warn(ctx, p.concat('url'), 'Bukan link drive.google.com. Pastikan memang benar.');
       }
     }
+    const added = stamp(ctx, p.concat('added'), c.added);
+    if (added) out.added = added;
     return out;
   });
-  const result = { v: FORMAT_VERSION, channels };
+  const result = { v: FORMAT_VERSION };
+  // when the newest channel that ships with the site joined it (src/lib/bundled.js)
+  const base = stamp(ctx, ['base'], doc.base);
+  if (base) result.base = base;
+  result.channels = channels;
   // Both optional: a document without them keeps the page's own texts and the bundled divisi.
   if (doc.site !== undefined && doc.site !== null) {
     const site = validateSite(ctx, ['site'], doc.site);

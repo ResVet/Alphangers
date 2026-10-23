@@ -110,7 +110,7 @@ try {
   {
     const p = await open(1280, 800, '?mock=admin&seed=1');
     await p.locator('.editor .card').first().waitFor();
-    check('links editor lists 10 channels', (await p.locator('.cards > li').count()) === 10);
+    check('links editor lists 11 channels', (await p.locator('.cards > li').count()) === 11);
     { const st = await inlineStyles(p); check('no inline style attributes', st.length === 0, st.join('; ')); }
     await shot(p, 'links-1280');
 

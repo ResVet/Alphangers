@@ -5,7 +5,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 import { validate } from '../src/lib/validate.js';
-import { mergeSchedule, mergeDosen, withBundled, isNewer } from '../src/lib/bundled.js';
+import { mergeSchedule, mergeDosen, mergeLinks, withBundled, isNewer } from '../src/lib/bundled.js';
 import { createContentStore } from '../src/lib/content.js';
 import { createModel } from '../src/lib/schedule-model.js';
 import { DocState } from '../src/admin/doc-state.js';
@@ -13,6 +13,7 @@ import { DocState } from '../src/admin/doc-state.js';
 const read = (f) => JSON.parse(readFileSync(new URL(`../src/data/${f}.json`, import.meta.url), 'utf8'));
 const schedule = read('schedule');
 const dosen = read('dosen');
+const links = read('links');
 const NEW = schedule.bloks.filter((b) => b.added).map((b) => b.id);
 
 // What Firestore holds when the admin published before a blok shipped: the bloks without the new
@@ -153,7 +154,7 @@ function memoryStorage() {
 }
 const respond = (status, body) => ({ status, ok: status >= 200 && status < 300, json: async () => body });
 const firestoreDoc = (data, rev = 20, updateTime = '2026-10-22T00:45:10.945353Z') => ({ fields: { json: { stringValue: JSON.stringify(data) }, rev: { integerValue: String(rev) } }, updateTime });
-const BUNDLED = { schedule: async () => ({ default: schedule }), dosen: async () => ({ default: dosen }) };
+const BUNDLED = { schedule: async () => ({ default: schedule }), dosen: async () => ({ default: dosen }), links: async () => ({ default: links }) };
 const CONFIG = { apiKey: 'AIzaTestKeyTestKeyTestKey123', projectId: 'alphangers-test' };
 const tick = () => new Promise((r) => setTimeout(r, 0));
 const quiet = { warn() {}, error() {} };
@@ -228,6 +229,99 @@ test('editors: the base is the published copy plus Blok 4, not a draft, and savi
     doc.setBase({ exists: true, rev: 21, json: JSON.stringify(saved), updatedAt: new Date(), updatedBy: 'admin' });
     assert.equal(doc.dirty, false);
     assert.equal(doc.base.data.bloks.length, 4);
+  } finally {
+    delete globalThis.localStorage;
+  }
+});
+
+// ---------- channels: the Try Out OSPE channel, shipped after the admin published the links
+
+// What Firestore holds when the admin published the links before the channel shipped: no base, no
+// OSPE channel, a renamed Drive channel and a page text of the admin's own.
+function linksBefore() {
+  const l = structuredClone(links);
+  delete l.base;
+  l.channels = l.channels.filter((c) => !c.added);
+  l.channels.find((c) => c.id === 'quiz').name = 'Quiz Mingguan';
+  l.site = { t: { 'to.note': 'Semangat!' } };
+  return validate('links', l).data;
+}
+
+test('links: the shipped copy marks the OSPE channel as added and carries its base', () => {
+  const ospe = links.channels.find((c) => c.kind === 'ospe');
+  assert.equal(ospe.id, 'tryout-ospe');
+  assert.equal(ospe.added, links.base);
+  assert.equal(links.channels[links.channels.indexOf(ospe) - 1].id, 'tryout', 'shipped right after Try Out CBT');
+  const r = validate('links', links);
+  assert.equal(r.ok, true);
+  assert.equal(r.data.base, links.base);
+  assert.equal(r.data.channels.find((c) => c.id === 'tryout-ospe').added, ospe.added);
+});
+
+test('links: an older published copy gets the OSPE channel after Try Out CBT, and keeps its own edits', () => {
+  const before = linksBefore();
+  const merged = mergeLinks(before, links);
+  assert.notEqual(merged, before);
+  assert.deepEqual(merged.channels.map((c) => c.id), links.channels.map((c) => c.id));
+  assert.equal(merged.base, links.base);
+  assert.equal(merged.channels.find((c) => c.id === 'quiz').name, 'Quiz Mingguan');
+  assert.deepEqual(merged.site, { t: { 'to.note': 'Semangat!' } });
+  assert.equal(before.channels.some((c) => c.id === 'tryout-ospe'), false, 'inputs are never changed');
+  assert.equal(validate('links', merged).ok, true);
+
+  // the admin moved Try Out CBT to the top: the new channel follows it there
+  const moved = structuredClone(before);
+  moved.channels.unshift(...moved.channels.splice(moved.channels.findIndex((c) => c.id === 'tryout'), 1));
+  assert.deepEqual(mergeLinks(moved, links).channels.slice(0, 2).map((c) => c.id), ['tryout', 'tryout-ospe']);
+  // without Try Out CBT it follows the channel before that in the shipped list
+  const gone = structuredClone(before);
+  gone.channels = gone.channels.filter((c) => c.id !== 'tryout');
+  const g = mergeLinks(gone, links).channels.map((c) => c.id);
+  assert.equal(g[g.indexOf('tryout-ospe') - 1], 'batu');
+});
+
+test('links: nothing changes once the copy has the channel, has its id, or is newer', () => {
+  const taken = mergeLinks(linksBefore(), links);
+  assert.equal(mergeLinks(taken, links), taken, 'the merged copy carries the base');
+  const own = linksBefore();
+  own.channels.push({ id: 'tryout-ospe', name: 'Punya admin', tag: '', sub: '', url: '' });
+  const r = mergeLinks(own, links);
+  assert.equal(r.channels.filter((c) => c.id === 'tryout-ospe').length, 1);
+  assert.equal(r.channels.find((c) => c.id === 'tryout-ospe').name, 'Punya admin');
+  // the admin deleted the channel after a publish that took it in: it stays deleted
+  const deleted = structuredClone(taken);
+  deleted.channels = deleted.channels.filter((c) => c.id !== 'tryout-ospe');
+  assert.equal(mergeLinks(deleted, links), deleted);
+  assert.equal(withBundled('links', deleted, links), deleted);
+});
+
+test('links: the portal shows the published links with the OSPE channel', async () => {
+  const published = linksBefore();
+  const store = createContentStore({ config: CONFIG, fetchImpl: async () => respond(200, firestoreDoc(published)), storage: memoryStorage(), bundled: BUNDLED, log: quiet });
+  await store.load('links');
+  const got = [];
+  store.subscribe('links', (d) => got.push(d));
+  await tick(); await tick(); await tick();
+  const last = got.at(-1);
+  assert.deepEqual(last.channels.map((c) => c.id), links.channels.map((c) => c.id));
+  assert.equal(last.channels.find((c) => c.id === 'quiz').name, 'Quiz Mingguan');
+  assert.equal(last.site.t['to.note'], 'Semangat!');
+});
+
+test('links: the editors start from the published links plus the channel, and saving keeps it', () => {
+  const mem = new Map();
+  globalThis.localStorage = { getItem: (k) => (mem.has(k) ? mem.get(k) : null), setItem: (k, v) => mem.set(k, String(v)), removeItem: (k) => mem.delete(k) };
+  try {
+    const doc = new DocState('links', links);
+    doc.setBase({ exists: true, rev: 7, json: JSON.stringify(linksBefore()), updatedAt: new Date(), updatedBy: 'admin' });
+    assert.equal(doc.dirty, false, 'the merge alone is not a draft change');
+    assert.ok(doc.base.data.channels.some((c) => c.id === 'tryout-ospe'));
+    doc.draft.channels.find((c) => c.id === 'quiz').tag = 'Kuis';
+    doc.refresh();
+    const saved = doc.clean();
+    assert.equal(saved.base, links.base);
+    assert.equal(saved.channels.find((c) => c.id === 'tryout-ospe').kind, 'ospe');
+    assert.equal(saved.channels.find((c) => c.id === 'quiz').name, 'Quiz Mingguan');
   } finally {
     delete globalThis.localStorage;
   }

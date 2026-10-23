@@ -4,7 +4,7 @@
 // which validates the whole document before keeping anything.
 import { openForm, confirmDialog, alertDialog, h } from './sheet.js';
 import { uploadPhoto, pickFiles } from './media.js';
-import { SESSION_KINDS, ANNOUNCEMENT_TAGS, HEART_IDS } from '../lib/validate.js';
+import { SESSION_KINDS, ANNOUNCEMENT_TAGS, HEART_IDS, CHANNEL_KIND_NAMES } from '../lib/validate.js';
 import { KIND_LABELS, TAG_LABELS, slugify, todayWib } from '../admin/format.js';
 import { pictureHTML } from '../lib/photo.js';
 
@@ -422,7 +422,7 @@ async function channelForm(ctx, id) {
       { name: 'name', label: 'Nama', required: true, max: 60, half: true },
       { name: 'tag', label: 'Label kecil', max: 60, half: true },
       { name: 'sub', label: 'Keterangan', type: 'textarea', rows: 2, max: 240, wide: true },
-      c?.kind === 'tryout' ? { type: 'note', text: 'Channel ini membuka Try Out CBT, jadi tidak pakai link.' } : { name: 'url', label: 'Link folder Drive', type: 'url', wide: true, placeholder: 'https://drive.google.com/drive/folders/...' },
+      c?.kind ? { type: 'note', text: `Channel ini membuka ${CHANNEL_KIND_NAMES[c.kind] || 'try out'}, jadi tidak pakai link.` } : { name: 'url', label: 'Link folder Drive', type: 'url', wide: true, placeholder: 'https://drive.google.com/drive/folders/...' },
     ],
     value: c ? { ...c, url: c.url || '' } : { url: '' },
     submit: c ? 'Simpan' : 'Tambah',
@@ -430,7 +430,7 @@ async function channelForm(ctx, id) {
       let x = c && d.channels.find((y) => y.id === c.id);
       if (!x) { x = { id: uniqueId(slugify(v.name), new Set(d.channels.map((y) => y.id))) }; d.channels.push(x); }
       x.name = v.name; x.tag = v.tag; x.sub = v.sub;
-      if (x.kind !== 'tryout') x.url = v.url.trim();
+      if (!x.kind) x.url = v.url.trim();
     }, c ? 'Ubah channel' : 'Tambah channel')),
   });
 }
