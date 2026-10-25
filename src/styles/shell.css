@@ -6,7 +6,14 @@
   font-family:var(--mono);font-size:10px;letter-spacing:.2em;text-transform:uppercase;color:var(--mut);transition:color .25s,background .25s}
 .bar-nav a:hover,.bar-nav a.on{color:var(--ink);background:rgba(238,242,232,.07)}
 .bar-nav a.on{color:var(--grx)}
-@media (min-width:1080px){.bar-nav{display:flex}.bar-meta{display:none}}
+/* The links sit in the middle of the bar. Below 1440px, centred they would run into the search
+   button or crowd it, so they sit midway between the brand and the buttons instead (.nav-flow
+   does the same for links the admin made longer, and .nav-tight hides links that do not fit even
+   there: fitNav in app.js). */
+@media (min-width:1080px){.bar-nav{display:flex}.bar:not(.nav-tight) .bar-meta{display:none}}
+@media (max-width:1439.98px){.bar-nav{position:static;transform:none}}
+.bar.nav-flow .bar-nav{position:static;transform:none}
+.bar.nav-tight .bar-nav{display:none}
 
 .find{display:inline-flex;align-items:center;gap:8px;height:34px;padding:0 6px 0 12px;border:1px solid var(--line);border-radius:999px;
   font-family:var(--mono);font-size:10px;letter-spacing:.2em;text-transform:uppercase;color:var(--mut);transition:border-color .3s,color .3s}
@@ -75,3 +82,17 @@
 .adm{height:28px;padding:0 10px;border-radius:999px;border:1px solid var(--line);font-family:var(--mono);font-size:9.5px;letter-spacing:.2em;text-transform:uppercase;
   color:var(--dim);transition:color .2s,border-color .2s}
 @media (hover:hover) and (pointer:fine){.adm:hover{color:var(--grx);border-color:rgba(134,242,94,.4)}}
+
+/* Page texts (src/lib/texts.js). A multi-line text keeps the line breaks the admin typed.
+   .k-note is a note the admin can add under a heading: body text, a step quieter than the copy
+   around it, hidden while empty ([data-opt][data-empty] in v3.css). */
+[data-ml]{white-space:pre-line}
+.k-note{max-width:62ch;margin:14px 0 0;font-size:clamp(14.5px,1.4vw,16px);line-height:1.6;color:var(--mut);overflow-wrap:anywhere}
+.k-note b{color:var(--ink);font-weight:600}
+/* where the notes sit: under the heading row of the channel list and the 3D heart, under the
+   heartbeat intro, and under the class photo's caption (light, on the photo) */
+.ch-head > .k-note{flex-basis:100%;margin:4px 0 0}
+.p-intro .k-note{max-width:40ch;margin-top:10px}
+.kelas-copy .k-note{max-width:46ch;margin-top:clamp(6px,1vh,12px);color:#d3dbcf}
+/* while editing, the texts laid over the heartbeat and the class photo can be clicked */
+html.editing .p-intro,html.editing .kelas-copy{pointer-events:auto}

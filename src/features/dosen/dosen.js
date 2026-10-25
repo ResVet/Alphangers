@@ -1,7 +1,9 @@
 // Dosen: the lecturer directory. Instant search, blok and specialty filters, A to Z groups,
 // and a detail dialog listing every session the person teaches in the class schedule.
 import './dosen.css';
-import { createModel, compact, queryTokens, formatDate, timeRange } from '../../lib/schedule-model.js';
+import '../../copy/dosen.js';
+import { kHTML, kAttrs, kText, kSet, kAttr, tx } from '../../lib/texts.js';
+import { createModel, compact, queryTokens, formatDate, formatTime, kindKey } from '../../lib/schedule-model.js';
 import { esc, phonesHTML, bindCopy, makeAnnouncer, prefersReducedMotion, makeClock, labelRegion } from './contact.js';
 
 const CHUNK = 60;
@@ -11,6 +13,7 @@ let mounts = 0;
 
 // 33 specialty labels in the data, folded into groups a student would filter by.
 // Anything not listed (a new specialty after a data rebuild) lands in "Lainnya".
+// A group's label on the page is the page text "dosen.g.<id>"; label is its default.
 export const SPEC_GROUPS = [
   { id: 'dokter', label: 'Dokter non-Sp', specs: ['Dokter'] },
   { id: 'nondokter', label: 'Non-dokter', specs: ['Dosen'] },
@@ -25,6 +28,31 @@ export const SPEC_GROUPS = [
 ];
 const GROUP_BY_SPEC = new Map(SPEC_GROUPS.flatMap((g) => g.specs.map((s) => [s, g])));
 const OTHER = SPEC_GROUPS[SPEC_GROUPS.length - 1];
+const groupKey = (g) => 'dosen.g.' + g.id;
+
+/** A person's specialty, or the page text for none. */
+function specHTML(p, tag, cls) {
+  return p.spec ? '<' + tag + ' class="' + cls + '">' + esc(p.spec) + '</' + tag + '>' : kHTML('dosen.spec.none', null, tag, cls);
+}
+
+/** '08.00 - 09.40', '08.00 - selesai' or 'jam menyusul', the words as the schedule's page texts. */
+function rangeHTML(s) {
+  if (s.tba) return kHTML('jadwal.time.tba');
+  return formatTime(s.start) + ' - ' + (s.end ? formatTime(s.end) : kHTML('jadwal.time.end'));
+}
+
+/** A session's kind (Kuliah, Praktikum...) as the schedule's page text, or "Kuliah, sebagai PJ". */
+function kindHTML(s) {
+  const key = kindKey(s.kind);
+  if (s.pj) return kHTML('dosen.se.pj', { jenis: key ? tx(key) : s.kindLabel });
+  return key ? kHTML(key, null, 'span', 'dz-se-kd') : '<span class="dz-se-kd">' + esc(s.kindLabel) + '</span>';
+}
+
+/** Takes a page text off an element that no longer shows it. */
+function unkey(el) {
+  delete el.dataset.k;
+  delete el.dataset.kv;
+}
 
 // Leading words that are titles or honorifics, not the name people search or sort by.
 const TITLE_WORDS = new Set(['prof', 'dr', 'drs', 'dra', 'drg', 'drh', 'apt', 'ir', 'kompol', 'h', 'hj']);
@@ -64,7 +92,8 @@ function indexPeople(dosenData, model) {
         bloks: new Set(Array.isArray(p.bloks) ? p.bloks : []),
         codes,
         codeSet: new Set(codes.map(([, c]) => String(c).toLowerCase())),
-        hay: [p.name, sortKey(p.name), p.spec, group.label, ...codes.map(([, c]) => c)].map(compact).join('|'),
+        // the group's own label and the one the page shows, if the admin renamed it
+        hay: [p.name, sortKey(p.name), p.spec, group.label, tx(groupKey(group)), ...codes.map(([, c]) => c)].map(compact).join('|'),
         digits: phones.flatMap((ph) => [ph.n, ph.wa]).filter(Boolean).join('|'),
         teaches: model.sessionsByDosen(p.id).length,
       };
@@ -144,6 +173,7 @@ export function mountDosen(root, { schedule, dosen, now } = {}) {
     empty: $('.dz-empty'),
     more: $('.dz-more'),
     moreB: $('.dz-more-b'),
+    moreT: $('.dz-more-t'),
     less: $('.dz-less'),
     jump: $('.dz-jump'),
     dock: $('.dz-dock'),
@@ -181,11 +211,11 @@ export function mountDosen(root, { schedule, dosen, now } = {}) {
       const blok = model.blokById(b);
       return '<span class="dz-code"><span aria-hidden="true">' + esc(b.toUpperCase()) + '</span><span class="dz-sr">' + esc(blok ? blok.name : b) + ', kode</span> ' + esc(c) + '</span>';
     }).join('');
-    const teaches = x.teaches ? '<span class="dz-teach">' + x.teaches + ' sesi di jadwal</span>' : '';
+    const teaches = x.teaches ? kHTML('dosen.row.teach', { n: x.teaches }, 'span', 'dz-teach') : '';
     return '<li class="dz-row" data-id="' + esc(x.id) + '"' + (isVisible(x) ? '' : ' hidden') + '>' +
       '<div class="dz-who">' +
         '<button type="button" class="dz-name" data-open="' + esc(x.id) + '" aria-haspopup="dialog">' + esc(p.name) + '</button>' +
-        '<p class="dz-meta"><span class="dz-spec">' + esc(p.spec || 'Dosen') + '</span>' + codes + teaches + '</p>' +
+        '<p class="dz-meta">' + specHTML(p, 'span', 'dz-spec') + codes + teaches + '</p>' +
       '</div>' +
       '<div class="dz-phones">' + phonesHTML(p.phones) + '</div>' +
     '</li>';
@@ -264,28 +294,34 @@ export function mountDosen(root, { schedule, dosen, now } = {}) {
     const active = isActive();
     if (active) renderRest();
     el.clear.hidden = !active;
-    el.count.textContent = active ? shown + ' dari ' + people.length + ' dosen' : people.length + ' dosen';
-    el.active.textContent = activeLabel();
-    el.active.hidden = !el.active.textContent;
+    if (active) kSet(el.count, 'dosen.count.hit', { n: shown, total: people.length });
+    else kSet(el.count, 'dosen.count', { n: people.length });
+    showActive();
     const folded = !expanded && shown > (active ? FOLD_FILTERED : FOLD_MIN);
     root.classList.toggle('dz-folded', folded);
     root.classList.toggle('dz-open', expanded && shown > FOLD_MIN);
     el.more.hidden = !folded;
     el.less.hidden = !(expanded && shown > FOLD_MIN);
-    if (folded) el.moreB.textContent = 'Lihat semua ' + shown + ' dosen';
+    if (folded) kSet(el.moreT, 'dosen.more', { n: shown });
     renderChips();
     clearTimeout(countTimer);
-    if (active) countTimer = setTimeout(() => announce(shown ? shown + ' dosen ketemu.' : 'Nggak ketemu.'), 700);
+    if (active) countTimer = setTimeout(() => announce(shown ? tx('dosen.sr.found', { n: shown }) : tx('dosen.sr.none')), 700);
   }
 
-  /** "Blok 1 + Blok 2 · Non-dokter": what the list is narrowed to, in words. */
-  function activeLabel() {
-    const parts = [...filter.bloks].map((b) => model.blokById(b)?.name || b);
+  /** "Cuma yang ngajar di Blok 1 dan Blok 2, spesialis Non-dokter": what the list is narrowed to, in words. */
+  function showActive() {
+    const names = [...filter.bloks].map((b) => model.blokById(b)?.name || b);
     const g = filter.group && SPEC_GROUPS.find((x) => x.id === filter.group);
-    const words = [];
-    if (parts.length) words.push('ngajar di ' + parts.join(' dan '));
-    if (g) words.push(g.label);
-    return words.length ? 'Cuma yang ' + words.join(', spesialis ') : '';
+    const blok = names.join(' ' + tx('dosen.active.and') + ' ');
+    const spesialis = g ? tx(groupKey(g)) : '';
+    if (names.length && g) kSet(el.active, 'dosen.active.both', { blok, spesialis });
+    else if (names.length) kSet(el.active, 'dosen.active.blok', { blok });
+    else if (g) kSet(el.active, 'dosen.active.spec', { spesialis });
+    else {
+      unkey(el.active);
+      el.active.textContent = '';
+    }
+    el.active.hidden = !el.active.textContent.trim();
   }
 
   /**
@@ -303,17 +339,18 @@ export function mountDosen(root, { schedule, dosen, now } = {}) {
       const on = filter.bloks.has(b.id);
       const bloks = on ? filter.bloks : new Set([...filter.bloks, b.id]);
       const n = visibleQ.reduce((s, x) => s + (withBloks(x, bloks) && (!filter.group || x.group.id === filter.group) ? 1 : 0), 0);
-      return chipHTML('blok', b.id, b.name, n, on);
+      return chipHTML('blok', b.id, esc(b.name), n, on);
     }).join('');
     el.groupChips.innerHTML = SPEC_GROUPS.map((g) => {
       const n = visibleQ.reduce((s, x) => s + (x.group === g && withBloks(x, filter.bloks) ? 1 : 0), 0);
-      return chipHTML('group', g.id, g.label, n, filter.group === g.id);
+      return chipHTML('group', g.id, kHTML(groupKey(g)), n, filter.group === g.id);
     }).join('');
   }
 
+  /** label is HTML: a blok's name (escaped) or a group's page text. */
   function chipHTML(kind, id, label, n, on) {
     return '<button type="button" class="dz-chip" data-' + kind + '="' + esc(id) + '" aria-pressed="' + on + '"' + (n || on ? '' : ' disabled') + '>' +
-      esc(label) + ' <span class="dz-chip-n">' + n + '</span></button>';
+      label + ' <span class="dz-chip-n">' + n + '</span></button>';
   }
 
   function clearFilters() {
@@ -364,7 +401,7 @@ export function mountDosen(root, { schedule, dosen, now } = {}) {
     const bar = parseFloat(getComputedStyle(root).getPropertyValue('--dz-top')) || 64;
     window.scrollTo({ top: Math.max(0, top - bar - 12), behavior: 'auto' });
     el.moreB.focus({ preventScroll: true });
-    announce('Daftar diringkas.');
+    announce(tx('dosen.sr.folded'));
   }
 
   function onListFocus(event) {
@@ -406,30 +443,30 @@ export function mountDosen(root, { schedule, dosen, now } = {}) {
     const t = clock();
     const sessions = model.sessionsByDosen(x.id);
     const nextIdx = sessions.findIndex((s) => s.endAt > t);
-    const codes = x.codes.map(([b, c]) => (model.blokById(b)?.name || b) + ', kode ' + c).join('. ');
+    const codes = x.codes.map(([b, c]) => kHTML('dosen.dlg.code', { blok: model.blokById(b)?.name || b, kode: c })).join('. ');
     let list;
     if (sessions.length) {
       list = '<ol class="dz-se">' + sessions.map((s, i) => {
-        const tag = i === nextIdx ? '<span class="dz-se-next">berikutnya</span>' : '';
+        const tag = i === nextIdx ? kHTML('dosen.se.next', null, 'span', 'dz-se-next') : '';
         return '<li class="' + (s.endAt <= t ? 'is-past' : '') + '">' +
           '<button type="button" class="dz-se-b" data-date="' + s.date + '" data-uid="' + esc(s.uid) + '">' +
-            '<span class="dz-se-d">' + formatDate(s.date, 'short') + '<span class="dz-se-tm">' + timeRange(s) + '</span></span>' +
+            '<span class="dz-se-d">' + formatDate(s.date, 'short') + '<span class="dz-se-tm">' + rangeHTML(s) + '</span></span>' +
             '<span class="dz-se-t">' + esc(s.title) + '</span>' +
-            '<span class="dz-se-k">' + esc(s.kindLabel) + (s.pj ? ', sebagai PJ' : '') + tag + '</span>' +
+            '<span class="dz-se-k">' + kindHTML(s) + tag + '</span>' +
             '<span class="dz-sr">, buka di jadwal</span>' +
           '</button></li>';
       }).join('') + '</ol>';
     } else {
-      list = '<p class="dz-dlg-none">Belum ada jadwal ngajar di kelas Alpha.</p>';
+      list = kHTML('dosen.dlg.none', null, 'p', 'dz-dlg-none');
     }
     return '<div class="dz-dlg-top">' +
-        '<p class="dz-dlg-k">' + esc(p.spec || 'Dosen') + '</p>' +
+        specHTML(p, 'p', 'dz-dlg-k') +
         '<button type="button" class="dz-x" data-close aria-label="Tutup"><svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M6 6l12 12M18 6 6 18"/></svg></button>' +
       '</div>' +
       '<h3 class="dz-dlg-n" id="' + uid + '-dn" tabindex="-1">' + esc(p.name) + '</h3>' +
-      (codes ? '<p class="dz-dlg-codes">' + esc(codes) + '</p>' : '') +
+      (codes ? '<p class="dz-dlg-codes">' + codes + '</p>' : '') +
       '<div class="dz-dlg-ph">' + phonesHTML(p.phones) + '</div>' +
-      '<h4 class="dz-dlg-sub">Jadwal ngajar di kelas Alpha' + (sessions.length ? ' <span>' + sessions.length + ' sesi</span>' : '') + '</h4>' +
+      '<h4 class="dz-dlg-sub">' + kHTML('dosen.dlg.sub') + (sessions.length ? ' ' + kHTML('dosen.dlg.n', { n: sessions.length }, 'span', 'dz-dlg-cnt') : '') + '</h4>' +
       list;
   }
 
@@ -623,31 +660,32 @@ function cancelIdle(handle) {
 function shellHTML(uid) {
   return '<div class="dz-in">' +
     '<header class="dz-head">' +
-      '<h2 class="dz-h" id="' + uid + '-h"><span data-k="dosen.h1">dosennya</span> <em data-k="dosen.h2">siapa?</em></h2>' +
+      '<h2 class="dz-h" id="' + uid + '-h">' + kHTML('dosen.h1') + ' ' + kHTML('dosen.h2', null, 'em') + '</h2>' +
       '<p class="dz-count"></p>' +
     '</header>' +
+    kHTML('dosen.note', null, 'p', 'k-note') +
     '<div class="dz-tools">' +
-      '<label class="dz-lbl" for="' + uid + '-q">Cari dosen</label>' +
-      '<input class="dz-q" id="' + uid + '-q" type="search" autocomplete="off" autocapitalize="off" spellcheck="false" enterkeyhint="search" placeholder="nama, spesialis, nomor HP, kode blok">' +
+      '<label class="dz-lbl" for="' + uid + '-q"' + kAttrs('dosen.find') + '>' + kText('dosen.find') + '</label>' +
+      '<input class="dz-q" id="' + uid + '-q" type="search" autocomplete="off" autocapitalize="off" spellcheck="false" enterkeyhint="search"' + kAttr('kp', 'dosen.find.ph') + '>' +
       '<div class="dz-filters">' +
-        '<div class="dz-frow"><span class="dz-lbl" id="' + uid + '-fb">Ngajar di</span><div class="dz-chips dz-chips-blok" role="group" aria-labelledby="' + uid + '-fb"></div></div>' +
-        '<div class="dz-frow"><span class="dz-lbl" id="' + uid + '-fs">Spesialis</span><div class="dz-chips dz-chips-spec" role="group" aria-labelledby="' + uid + '-fs"></div></div>' +
+        '<div class="dz-frow"><span class="dz-lbl" id="' + uid + '-fb"' + kAttrs('dosen.f.blok') + '>' + kText('dosen.f.blok') + '</span><div class="dz-chips dz-chips-blok" role="group" aria-labelledby="' + uid + '-fb"></div></div>' +
+        '<div class="dz-frow"><span class="dz-lbl" id="' + uid + '-fs"' + kAttrs('dosen.f.spec') + '>' + kText('dosen.f.spec') + '</span><div class="dz-chips dz-chips-spec" role="group" aria-labelledby="' + uid + '-fs"></div></div>' +
       '</div>' +
       '<div class="dz-azrow">' +
         '<nav class="dz-az" aria-label="Lompat ke huruf"></nav>' +
-        '<button type="button" class="dz-clear" hidden>Hapus filter</button>' +
+        '<button type="button" class="dz-clear" hidden>' + kHTML('dosen.clear') + '</button>' +
       '</div>' +
     '</div>' +
     '<p class="dz-active" hidden></p>' +
     '<div class="dz-list"></div>' +
-    '<div class="dz-more" hidden><button type="button" class="dz-more-b"></button></div>' +
-    '<div class="dz-less" hidden><button type="button" class="dz-less-b" data-less>Ringkas daftar <span aria-hidden="true">↑</span></button></div>' +
-    '<div class="dz-empty" hidden><p class="dz-empty-t">Nggak <em>ketemu.</em></p><p class="dz-empty-s">Coba kata lain, atau hapus filternya.</p></div>' +
+    '<div class="dz-more" hidden><button type="button" class="dz-more-b"><span class="dz-more-t"></span></button></div>' +
+    '<div class="dz-less" hidden><button type="button" class="dz-less-b" data-less>' + kHTML('dosen.less') + ' <span aria-hidden="true">↑</span></button></div>' +
+    '<div class="dz-empty" hidden><p class="dz-empty-t">' + kHTML('dosen.empty.h1') + ' ' + kHTML('dosen.empty.h2', null, 'em') + '</p>' + kHTML('dosen.empty.sub', null, 'p', 'dz-empty-s') + '</div>' +
     '<i class="dz-end" aria-hidden="true"></i>' +
     '<div class="dz-dock" role="group" aria-label="Pintasan daftar dosen">' +
-      '<button type="button" class="dz-jump">Cari dosen</button>' +
-      '<button type="button" class="dz-dock-b" data-less>Ringkas</button>' +
-      '<button type="button" class="dz-dock-b" data-skip>Lewati daftar <span aria-hidden="true">↓</span></button>' +
+      '<button type="button" class="dz-jump">' + kHTML('dosen.dock.find') + '</button>' +
+      '<button type="button" class="dz-dock-b" data-less>' + kHTML('dosen.dock.less') + '</button>' +
+      '<button type="button" class="dz-dock-b" data-skip>' + kHTML('dosen.dock.skip') + ' <span aria-hidden="true">↓</span></button>' +
     '</div>' +
     '<dialog class="dz-dlg" aria-labelledby="' + uid + '-dn"><div class="dz-dlg-in"></div></dialog>' +
     '<p class="dz-live dz-sr" aria-live="polite"></p>' +

@@ -21,8 +21,8 @@ if (SHOTS) mkdirSync(SHOTS, { recursive: true });
 
 let srv, browser;
 before(async () => {
-  assert.ok(existsSync(join(ROOT, 'dist-mock', 'index.html')), 'run "npx vite build --mode mock --outDir dist-mock" first');
-  srv = await serveDist({ dir: join(ROOT, 'dist-mock') });
+  assert.ok(existsSync(join(process.env.DIST_MOCK_DIR || join(ROOT, 'dist-mock'), 'index.html')), 'run "npx vite build --mode mock --outDir dist-mock" first');
+  srv = await serveDist({ dir: process.env.DIST_MOCK_DIR || join(ROOT, 'dist-mock') });
   browser = await chromium.launch({ executablePath: EXE });
 });
 after(async () => {

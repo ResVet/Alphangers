@@ -27,34 +27,34 @@
 <div class="grain" aria-hidden="true"></div>
 
 <div id="loader" aria-hidden="true">
-  <div class="ld-row"><b>ALPHANGERS</b><span id="ldMsg">Menyambungkan monitor</span></div>
+  <div class="ld-row"><b data-k="loader.brand">ALPHANGERS</b><span id="ldMsg" data-k="loader.msg">Menyambungkan monitor</span></div>
   <canvas id="ldc"></canvas>
-  <div class="ld-row"><span class="ld-n"><span id="ldn">000</span><small>%</small></span><span>Class Alpha · FK Unsri</span></div>
+  <div class="ld-row"><span class="ld-n"><span id="ldn">000</span><small>%</small></span><span data-k="loader.meta">Class Alpha · FK Unsri</span></div>
 </div>
 
 <header class="bar" id="bar">
   <a class="brand" href="#top" id="homeBtn" aria-label="Alphangers, kembali ke atas">
     <span class="brand-m" aria-hidden="true"></span>
-    <span class="brand-t">ALPHANGERS</span>
+    <span class="brand-t" data-k="bar.brand">ALPHANGERS</span>
   </a>
   <nav class="bar-nav" aria-label="Bagian halaman">
-    <a href="#jadwal" data-jump="jadwal">Jadwal</a>
-    <a href="#menu" data-jump="menu">Drive</a>
-    <a href="#dosen" data-jump="dosen">Dosen</a>
-    <a href="#anatomi" data-jump="anatomi">Jantung 3D</a>
-    <a href="#divisi" data-jump="divisi">Divisi</a>
+    <a href="#jadwal" data-jump="jadwal"><span data-k="bar.nav.jadwal">Jadwal</span></a>
+    <a href="#menu" data-jump="menu"><span data-k="bar.nav.menu">Drive</span></a>
+    <a href="#dosen" data-jump="dosen"><span data-k="bar.nav.dosen">Dosen</span></a>
+    <a href="#anatomi" data-jump="anatomi"><span data-k="bar.nav.anatomi">Jantung 3D</span></a>
+    <a href="#divisi" data-jump="divisi"><span data-k="bar.nav.divisi">Divisi</span></a>
   </nav>
   <div class="bar-r">
-    <span class="bar-meta">FK Unsri · 2026</span>
+    <span class="bar-meta" data-k="bar.meta">FK Unsri · 2026</span>
     <button class="find" id="findBtn" type="button" aria-haspopup="dialog" aria-keyshortcuts="Control+K Meta+K" aria-label="Cari jadwal, dosen, channel, atau bagian jantung">
       <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="10.5" cy="10.5" r="6"/><path d="m15 15 5 5"/></svg>
-      <span class="find-t">Cari</span><kbd class="find-k" id="findKey">Ctrl K</kbd>
+      <span class="find-t" data-k="bar.find">Cari</span><kbd class="find-k" id="findKey">Ctrl K</kbd>
     </button>
     <button class="snd" id="snd" type="button" aria-pressed="false" aria-label="Suara detak jantung">
       <svg viewBox="0 0 28 16" aria-hidden="true"><path d="M1 9 H8 L10 5 L12.5 13 L15 1.5 L17.5 12 L19 9 H27"/></svg>
-      <span class="snd-t">Suara</span><span class="snd-s" id="sndS">off</span>
+      <span class="snd-t" data-k="bar.snd">Suara</span><span class="snd-s" id="sndS">off</span>
     </button>
-    <a class="menu-b" href="#menu" data-jump="menu">Menu</a>
+    <a class="menu-b" href="#menu" data-jump="menu"><span data-k="bar.menu">Menu</span></a>
   </div>
   <div class="prog" aria-hidden="true"><svg id="progSvg" preserveAspectRatio="none"><path class="pg-b" id="pgB"/><path class="pg-f" id="pgF"/></svg></div>
 </header>
@@ -94,18 +94,18 @@
         </div>
       </div>
     </div>
-    <div class="cue" aria-hidden="true"><span>Scroll</span><svg viewBox="0 0 74 18"><path d="M0 11 H22 L26 8 L30 11 H34 L37 14 L41 1 L45 17 L48 11 H56 C60 11 61 7 64 7 S68 11 74 11"/></svg></div>
+    <div class="cue" aria-hidden="true"><span data-k="hero.cue">Scroll</span><svg viewBox="0 0 74 18"><path d="M0 11 H22 L26 8 L30 11 H34 L37 14 L41 1 L45 17 L48 11 H56 C60 11 61 7 64 7 S68 11 74 11"/></svg></div>
   </section>
 
   <div class="mq" aria-hidden="true"><div class="mq-in" id="mq">
-    <span class="mq-set"><b>Alphangers</b><i>✚</i><s>assemble!</s><i>✚</i><b>Class Alpha</b><i>✚</i><b>FK Unsri</b><i>✚</i><s>2026</s><i>✚</i><b>Alphangers</b><i>✚</i><s>assemble!</s><i>✚</i><b>Class Alpha</b><i>✚</i><b>FK Unsri</b><i>✚</i><s>2026</s><i>✚</i></span>
-    <span class="mq-set"><b>Alphangers</b><i>✚</i><s>assemble!</s><i>✚</i><b>Class Alpha</b><i>✚</i><b>FK Unsri</b><i>✚</i><s>2026</s><i>✚</i><b>Alphangers</b><i>✚</i><s>assemble!</s><i>✚</i><b>Class Alpha</b><i>✚</i><b>FK Unsri</b><i>✚</i><s>2026</s><i>✚</i></span>
+    <span class="mq-set"><b data-k="hero.mq.name">Alphangers</b><i>✚</i><s data-k="hero.mq.cheer">assemble!</s><i>✚</i><b data-k="hero.mq.class">Class Alpha</b><i>✚</i><b data-k="hero.mq.fk">FK Unsri</b><i>✚</i><s data-k="hero.mq.year">2026</s><i>✚</i><b data-k="hero.mq.name">Alphangers</b><i>✚</i><s data-k="hero.mq.cheer">assemble!</s><i>✚</i><b data-k="hero.mq.class">Class Alpha</b><i>✚</i><b data-k="hero.mq.fk">FK Unsri</b><i>✚</i><s data-k="hero.mq.year">2026</s><i>✚</i></span>
+    <span class="mq-set"><b data-k="hero.mq.name">Alphangers</b><i>✚</i><s data-k="hero.mq.cheer">assemble!</s><i>✚</i><b data-k="hero.mq.class">Class Alpha</b><i>✚</i><b data-k="hero.mq.fk">FK Unsri</b><i>✚</i><s data-k="hero.mq.year">2026</s><i>✚</i><b data-k="hero.mq.name">Alphangers</b><i>✚</i><s data-k="hero.mq.cheer">assemble!</s><i>✚</i><b data-k="hero.mq.class">Class Alpha</b><i>✚</i><b data-k="hero.mq.fk">FK Unsri</b><i>✚</i><s data-k="hero.mq.year">2026</s><i>✚</i></span>
   </div></div>
 
   <section class="sec sec-jadwal" id="jadwal">
     <div class="wrap">
       <div class="info" id="info" hidden></div>
-      <div class="feat-root" id="jadwalRoot"><p class="feat-wait lbl">Memuat jadwal</p></div>
+      <div class="feat-root" id="jadwalRoot"><p class="feat-wait lbl" data-k="app.wait.jadwal">Memuat jadwal</p></div>
     </div>
   </section>
 
@@ -114,6 +114,7 @@
       <div class="ch-head">
         <h2 class="ch-h rv"><span data-k="menu.h1">ke mana</span> <em data-k="menu.h2">hari ini?</em></h2>
         <span class="lbl rv" style="--d:.1s" id="chCount">Menu · 10 channel</span>
+        <p class="k-note rv" style="--d:.15s" data-k="menu.note" data-opt data-empty data-ml data-ph="Catatan di bawah judul (kosong = tidak tampil)"></p>
       </div>
       <ol class="rows" id="rows"></ol>
     </div>
@@ -121,7 +122,7 @@
 
   <section class="sec sec-dosen" id="dosen">
     <div class="wrap">
-      <div class="feat-root" id="dosenRoot"><p class="feat-wait lbl">Memuat daftar dosen</p></div>
+      <div class="feat-root" id="dosenRoot"><p class="feat-wait lbl" data-k="app.wait.dosen">Memuat daftar dosen</p></div>
     </div>
   </section>
 
@@ -129,17 +130,18 @@
     <div class="stage" id="stage">
       <canvas class="ecg-c" id="ecgc" aria-hidden="true"></canvas>
       <canvas class="heart-c" id="heartc" role="img" aria-label="Model jantung 3D. Geser buat memutar."></canvas>
-      <div class="hud hud-l" aria-hidden="true"><span>Sadapan II</span><span>25 mm/s · 10 mm/mV</span></div>
-      <div class="hud hud-r" aria-hidden="true"><span>HR</span><b id="hr">072</b><span>bpm</span></div>
+      <div class="hud hud-l" aria-hidden="true"><span data-k="siklus.lead">Sadapan II</span><span data-k="siklus.scale">25 mm/s · 10 mm/mV</span></div>
+      <div class="hud hud-r" aria-hidden="true"><span data-k="siklus.hr">HR</span><b id="hr">072</b><span>bpm</span></div>
       <div class="tags" id="tags" aria-hidden="true"></div>
       <div class="p-intro" id="pIntro">
         <p class="kick" data-k="siklus.kick">Siklus jantung</p>
         <h2 class="p-h"><span data-k="siklus.h1">Satu detak,</span><br><em data-k="siklus.h2">biar kebayang.</em></h2>
         <p class="p-s" data-k="siklus.sub">Scroll pelan-pelan. Jantung dan EKG-nya jalan ikut scroll kamu.</p>
+        <p class="k-note" data-k="siklus.note" data-opt data-empty data-ml data-ph="Catatan di bawah judul (kosong = tidak tampil)"></p>
       </div>
       <div class="caps" id="caps"></div>
       <ol class="rail" id="rail" aria-hidden="true"><li>P</li><li>PR</li><li>QRS</li><li>ST</li><li>T</li></ol>
-      <p class="drag-hint" id="dragHint" aria-hidden="true">geser jantungnya</p>
+      <p class="drag-hint" id="dragHint" aria-hidden="true" data-k="siklus.drag">geser jantungnya</p>
     </div>
   </section>
 
@@ -148,13 +150,14 @@
       <div class="ch-head">
         <h2 class="ch-h rv" id="anatomiH"><span data-k="anatomi.h1">bongkar</span> <em data-k="anatomi.h2">jantungnya.</em></h2>
         <span class="lbl rv" style="--d:.1s" data-k="anatomi.meta">Model 3D · 55 bagian</span>
+        <p class="k-note rv" style="--d:.15s" data-k="anatomi.note" data-opt data-empty data-ml data-ph="Catatan di bawah judul (kosong = tidak tampil)"></p>
       </div>
     </div>
     <div class="feat-root" id="anatomiRoot"></div>
   </section>
 
   <section class="sec-divisi" id="divisi" aria-label="Divisi">
-    <div class="feat-root" id="divisiRoot"><p class="feat-wait lbl wrap">Memuat divisi</p></div>
+    <div class="feat-root" id="divisiRoot"><p class="feat-wait lbl wrap" data-k="app.wait.divisi">Memuat divisi</p></div>
   </section>
 
   <section class="kelas" id="kelas" aria-labelledby="kelasH">
@@ -168,17 +171,18 @@
         <p class="kelas-k" data-k="kelas.kick">Angkatan 2026</p>
         <h2 class="kelas-h" id="kelasH"><span data-k="kelas.h1">Class</span> <em data-k="kelas.h2">Alpha.</em></h2>
         <p class="kelas-s" data-k="kelas.sub">Pendidikan Dokter, Fakultas Kedokteran Universitas Sriwijaya.</p>
+        <p class="k-note" data-k="kelas.note" data-opt data-empty data-ml data-ph="Catatan di bawah judul (kosong = tidak tampil)"></p>
       </div>
     </div>
   </section>
 
   <footer class="foot">
     <div class="wrap">
-      <div class="big" id="big" aria-hidden="true"><span class="big-o">ALPHANGERS</span><span class="big-f">ALPHANGERS</span><span class="big-g" id="bigG">ALPHANGERS</span></div>
+      <div class="big" id="big" aria-hidden="true"><span class="big-o" data-k="foot.big">ALPHANGERS</span><span class="big-f" data-k="foot.big">ALPHANGERS</span><span class="big-g" id="bigG" data-k="foot.big">ALPHANGERS</span></div>
       <div class="ft">
-        <a class="credit" href="https://github.com/ResVet/Alphangers" target="_blank" rel="noopener" data-cur="buka" title="Alphangers di GitHub" data-k="foot.credit">Made with love by Resvet</a>
-        <span class="clock" id="clock"><i></i>Palembang · --:-- WIB</span>
-        <span class="ft-r"><span class="lbl" data-k="foot.meta">Class Alpha · FK Unsri 2026</span><button type="button" class="adm" id="adminBtn">Admin</button></span>
+        <a class="credit" href="https://github.com/ResVet/Alphangers" target="_blank" rel="noopener" data-cur="buka" title="Alphangers di GitHub" data-kt="foot.credit.t"><span data-k="foot.credit">Made with love by Resvet</span></a>
+        <span class="clock" id="clock"><i></i><span id="clockT">Palembang · --:-- WIB</span></span>
+        <span class="ft-r"><span class="lbl" data-k="foot.meta">Class Alpha · FK Unsri 2026</span><button type="button" class="adm" id="adminBtn"><span data-k="foot.admin">Admin</span></button></span>
       </div>
     </div>
   </footer>

@@ -3,6 +3,8 @@
 // or the keyboard, and a full view with every photo, the whole description and zoom.
 // The data lives in the links document (field "divisi"); without it the bundled list is used.
 import './divisi.css';
+import '../../copy/divisi.js';
+import { kHTML, kAttrs, kText } from '../../lib/texts.js';
 import { pictureHTML, watchLoaded } from '../../lib/photo.js';
 import { getViewer } from '../viewer/viewer.js';
 
@@ -37,22 +39,34 @@ export async function divisiOf(links) {
   });
 }
 
-export async function mountDivisi(root, { links }) {
+export async function mountDivisi(root, { links, portal }) {
   let items = await divisiOf(links);
   const decks = new Map(); // id -> { at }
+  let drawn = false;
   root.classList.add('dv');
 
   function render() {
     const n = items.length;
+    const lede = n === 8 ? 'divisi.lede' : 'divisi.lede.other';
+    // the heading fades in once (.rv); drawn again after an edit or a live update, it must not
+    // start hidden again
+    const revealed = !!root.querySelector('.dv-head .rv.in');
     root.innerHTML =
       '<header class="dv-head wrap">' +
-        '<h2 class="dv-h rv"><span data-k="divisi.h1">orang-orang di balik</span> <em data-k="divisi.h2">kelas ini.</em></h2>' +
-        '<p class="dv-lede rv" style="--d:.1s" data-k="divisi.lede">' + esc(n === 8 ? 'Delapan divisi, satu kelas. Ini mereka yang ngurus Class Alpha di balik layar.' : 'Divisi Class Alpha, yang ngurus kelas di balik layar.') + '</p>' +
+        '<h2 class="dv-h rv">' + kHTML('divisi.h1') + ' ' + kHTML('divisi.h2', null, 'em') + '</h2>' +
+        // two sentences: one for the class's eight divisions, one for any other number
+        '<p class="dv-lede rv" style="--d:.1s"' + kAttrs(lede) + '>' + kText(lede) + '</p>' +
+        kHTML('divisi.note', null, 'p', 'k-note') +
       '</header>' +
       '<nav class="dv-index" aria-label="Lompat ke divisi"><div class="dv-index-in">' +
         items.map((d, i) => '<a class="dv-ix" href="#dv-' + esc(d.id) + '" data-ix="' + esc(d.id) + '"><span>' + two(i + 1) + '</span>' + esc(d.name) + '</a>').join('') +
       '</div></nav>' +
       '<div class="dv-list">' + items.map((d, i) => chapterHTML(d, i, n)).join('') + '</div>';
+    if (drawn) {
+      if (revealed) root.querySelectorAll('.dv-head .rv').forEach((e) => e.classList.add('in'));
+      else portal?.observeReveal?.(root);
+    }
+    drawn = true;
     watchLoaded(root);
     for (const d of items) {
       const prev = decks.get(d.id);
@@ -81,7 +95,7 @@ export async function mountDivisi(root, { links }) {
           '<button type="button" class="dv-arrow" data-step="-1" aria-label="Foto sebelumnya"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M14.5 5.5 8 12l6.5 6.5"/></svg></button>' +
           '<p class="dv-pos" aria-live="polite"><b>1</b><span> / ' + SLOTS + '</span></p>' +
           '<button type="button" class="dv-arrow" data-step="1" aria-label="Foto berikutnya"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M9.5 5.5 16 12l-6.5 6.5"/></svg></button>' +
-          (photos.length ? '<button type="button" class="dv-more" data-open="0">Lihat semua foto' + (extra ? ' <span>+' + extra + '</span>' : '') + '</button>' : '') +
+          (photos.length ? '<button type="button" class="dv-more" data-open="0">' + kHTML('divisi.more') + (extra ? ' <span class="dv-more-n">+' + extra + '</span>' : '') + '</button>' : '') +
         '</div>' +
       '</div>' +
       '<div class="dv-deck" role="group" aria-roledescription="tumpukan foto" aria-label="Foto ' + esc(d.name) + '" tabindex="-1">' +
@@ -93,7 +107,7 @@ export async function mountDivisi(root, { links }) {
   function printHTML(d, ph, k) {
     if (!ph) {
       return '<figure class="dv-print is-empty" data-i="' + k + '" data-empty>' +
-        '<div class="dv-pic"><span class="dv-blank" aria-hidden="true"><b>' + esc(d.name) + '</b></span><span class="dv-soon">Foto menyusul</span></div>' +
+        '<div class="dv-pic"><span class="dv-blank" aria-hidden="true"><b>' + esc(d.name) + '</b></span>' + kHTML('divisi.soon', null, 'span', 'dv-soon') + '</div>' +
         '</figure>';
     }
     return '<figure class="dv-print" data-i="' + k + '">' +
@@ -158,7 +172,7 @@ export async function mountDivisi(root, { links }) {
     getViewer().open({
       photos,
       index: Math.min(slot, photos.length - 1),
-      kick: 'Divisi ' + two(items.indexOf(d) + 1),
+      kick: { k: 'divisi.view.kick', v: { no: two(items.indexOf(d) + 1) } },
       title: d.name,
       sub: d.full,
       desc: d.desc,

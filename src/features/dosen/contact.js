@@ -1,5 +1,7 @@
 // Phone links and copy-to-clipboard, shared by the schedule and the lecturer list.
 import './contact.css';
+import '../../copy/dosen.js';
+import { kHTML, kSet, tx, onTexts } from '../../lib/texts.js';
 
 const ESC = { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' };
 
@@ -23,24 +25,33 @@ export function phoneLabel(phone) {
   return phone?.f || phone?.n || '';
 }
 
-/** Markup for a person's phone numbers with call, WhatsApp and copy actions. */
-export function phonesHTML(phones, { empty = 'Nomor belum ada.' } = {}) {
-  const list = Array.isArray(phones) ? phones.filter((p) => p && (p.n || p.f)) : [];
-  if (!list.length) return '<p class="ct-none">' + esc(empty) + '</p>';
-  return '<ul class="ct-phones">' + list.map(phoneHTML).join('') + '</ul>';
+// The button texts every number repeats (page texts, src/copy/dosen.js), built once and again
+// after the texts change: the lecturer list has a few hundred numbers.
+let acts = null;
+onTexts(() => { acts = null; });
+function actsHTML() {
+  return acts || (acts = { call: kHTML('dosen.ph.call'), wa: kHTML('dosen.ph.wa'), copy: kHTML('dosen.ph.copy', null, 'span', 'ct-copy-t') });
 }
 
-function phoneHTML(phone) {
+/** Markup for a person's phone numbers with call, WhatsApp and copy actions. `empty` replaces the page text for no number. */
+export function phonesHTML(phones, { empty } = {}) {
+  const list = Array.isArray(phones) ? phones.filter((p) => p && (p.n || p.f)) : [];
+  if (!list.length) return empty != null ? '<p class="ct-none">' + esc(empty) + '</p>' : kHTML('dosen.ph.none', null, 'p', 'ct-none');
+  const a = actsHTML();
+  return '<ul class="ct-phones">' + list.map((p) => phoneHTML(p, a)).join('') + '</ul>';
+}
+
+function phoneHTML(phone, a) {
   const label = esc(phoneLabel(phone));
   const tel = telHref(phone);
   const wa = waHref(phone);
   return '<li class="ct-ph">' +
     '<span class="ct-num">' + label + '</span>' +
     '<span class="ct-acts">' +
-      (tel ? '<a class="ct-act" href="' + esc(tel) + '">Telp<span class="ct-sr"> ' + label + '</span></a>' : '') +
-      (wa ? '<a class="ct-act" href="' + esc(wa) + '" target="_blank" rel="noopener">WA<span class="ct-sr"> ' + label + '</span></a>' : '') +
+      (tel ? '<a class="ct-act" href="' + esc(tel) + '">' + a.call + '<span class="ct-sr"> ' + label + '</span></a>' : '') +
+      (wa ? '<a class="ct-act" href="' + esc(wa) + '" target="_blank" rel="noopener">' + a.wa + '<span class="ct-sr"> ' + label + '</span></a>' : '') +
       '<button type="button" class="ct-act" data-copy="' + esc(phone.n || phone.f) + '" data-copy-label="' + label + '">' +
-        '<span class="ct-copy-t">Salin</span><span class="ct-sr"> ' + label + '</span></button>' +
+        a.copy + '<span class="ct-sr"> ' + label + '</span></button>' +
     '</span>' +
   '</li>';
 }
@@ -83,12 +94,12 @@ export function bindCopy(root, announce) {
     const label = btn.dataset.copyLabel || btn.dataset.copy;
     const ok = await copyText(btn.dataset.copy);
     const text = btn.querySelector('.ct-copy-t');
-    if (text) text.textContent = ok ? 'Tersalin' : 'Gagal';
+    if (text) kSet(text, ok ? 'dosen.ph.copied' : 'dosen.ph.fail');
     btn.dataset.state = ok ? 'done' : 'fail';
-    announce?.(ok ? 'Nomor ' + label + ' disalin.' : 'Gagal menyalin. Nomornya ' + label + '.');
+    announce?.(tx(ok ? 'dosen.ph.sr.ok' : 'dosen.ph.sr.fail', { nomor: label }));
     clearTimeout(timers.get(btn));
     timers.set(btn, setTimeout(() => {
-      if (text) text.textContent = 'Salin';
+      if (text) kSet(text, 'dosen.ph.copy');
       delete btn.dataset.state;
       timers.delete(btn);
     }, 1800));

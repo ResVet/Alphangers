@@ -5,10 +5,10 @@ import { input, issueBadge } from './fields.js';
 import { confirmDialog, toast } from './ui.js';
 import { slugify } from './format.js';
 import { uploadPhoto, pickFiles } from '../edit/media.js';
+import { textList, buildTextList, collectPageTexts, shippedText, savedText, HERO_ENDS } from '../edit/sheet.js';
+import { GROUPS, groupOf, listCopy, copyEntry } from '../copy/index.js';
 import bundledDivisi from '../data/divisi.json';
 
-// the hero endings as the page ships them (src/legacy/app.js); the empty last line is the Polyester button
-const ENDS_DEFAULT = 'And yes this website is a bit vibecoded :D\nSemangat belajarnya!\nJangan tanya apa kepanjangan Resvet.\n';
 const SLOTS = 3;
 
 function uniqueId(base, taken) {
@@ -17,27 +17,36 @@ function uniqueId(base, taken) {
   return id;
 }
 
-// Every editable page text with the text the page ships. Inside the page editor's Panel view the
-// page itself answers (every section, as rendered). On /admin/ alone the page's markup is read,
-// which has all texts except those of sections built by script; texts already changed always show.
+// The texts of the page with what the page ships ([{ key, kind, d, ... }], see collectPageTexts).
+// Inside the page editor's Panel view the page itself answers (every section, as drawn). On
+// /admin/ alone the page's markup is read; the texts that sections build by script come from
+// their declarations (src/copy), and texts already changed always show.
 let textsOnce = null;
-function pageTexts() {
-  textsOnce = textsOnce || readPageTexts();
-  return textsOnce.then((m) => new Map(m));
-}
+const pageTexts = () => (textsOnce = textsOnce || readPageTexts());
+
+const ATTR = { kp: 'placeholder', kt: 'title' };
+const parseVars = (s) => {
+  try { const v = JSON.parse(s || 'null'); return v && typeof v === 'object' ? v : null; } catch { return null; }
+};
 
 async function readPageTexts() {
   try {
     const fromPage = window.parent !== window && window.parent.__alphaPageTexts?.();
-    if (fromPage?.length) return new Map(fromPage);
+    if (Array.isArray(fromPage) && fromPage.length) return fromPage;
   } catch { /* another origin: fall through */ }
-  const keys = new Map();
   try {
-    const html = await (await fetch('/', { credentials: 'omit' })).text();
+    // without the page's inline styles: parsed here they would only trip this page's CSP
+    const html = (await (await fetch('/', { credentials: 'omit' })).text())
+      .replace(/<style\b[\s\S]*?<\/style>/gi, '')
+      .replace(/\sstyle\s*=\s*("[^"]*"|'[^']*'|[^\s>]+)/gi, '');
     const doc = new DOMParser().parseFromString(html, 'text/html');
-    doc.querySelectorAll('[data-k]').forEach((el) => { if (!keys.has(el.dataset.k)) keys.set(el.dataset.k, el.textContent.trim()); });
-  } catch { /* offline: only the texts already changed */ }
-  return keys;
+    return collectPageTexts(doc.body, {
+      def: (el, kind) => (kind === 'k' ? shippedText(el) : el.getAttribute(ATTR[kind]) || ''),
+      vals: (el, kind) => parseVars(el.getAttribute(kind === 'k' ? 'data-kv' : 'data-' + kind + 'v')),
+      entry: copyEntry,
+    });
+  } catch { /* offline: only the declared texts and those already changed */ }
+  return [];
 }
 
 // the smallest copy of a photo record, for a thumbnail
@@ -68,41 +77,39 @@ export function renderSite(host, ctx) {
   const data = ctx.doc.draft;
 
   /* ---------- page texts ---------- */
-  const textsBox = h('div', { class: 'grid2' }, h('p', { class: 'hint wide' }, 'Memuat daftar teks…'));
+  // The same list as "Semua teks halaman" on the page: every declared text, the texts of the page,
+  // and changed texts found nowhere. A change goes into the draft at once, under the same rules.
+  const textsBox = h('div', { class: 'tl-box' }, h('p', { class: 'hint' }, 'Memuat daftar teks…'));
+  const own = (o, k) => o != null && Object.prototype.hasOwnProperty.call(o, k);
   const ensureT = () => {
     data.site = data.site || { t: {} };
     data.site.t = data.site.t || {};
     return data.site.t;
   };
-  pageTexts().then((keys) => {
+  pageTexts().then((page) => {
     const t = data.site?.t || {};
-    for (const k of Object.keys(t)) if (!keys.has(k) && k !== 'hero.ends') keys.set(k, '');
-    const field = (k, def, opts = {}) => {
-      const holder = { v: t[k] ?? '' };
-      return input({
-        label: opts.label || k,
-        obj: holder,
-        prop: 'v',
-        path: ['site', 't', k],
-        ctx,
-        type: opts.textarea || (def && def.length > 70) || String(t[k] ?? '').includes('\n') ? 'textarea' : 'text',
-        rows: opts.rows || 3,
-        max: 4000,
-        wide: true,
-        placeholder: def,
-        hint: opts.hint,
-        write: (v) => {
-          const tt = ensureT();
-          if (!v.trim() || v === def) delete tt[k];
-          else tt[k] = v;
-          return v;
-        },
-      });
-    };
+    const groups = buildTextList({ reg: listCopy(), page, saved: t, order: GROUPS, groupOf, special: [HERO_ENDS] });
+    const list = textList({
+      groups,
+      skin: 'adm',
+      open: 'hero',
+      saved: () => data.site?.t || {},
+      value: (it) => (own(t, it.key) ? t[it.key] : it.d),
+      onInput: (it, v) => {
+        const tt = ensureT();
+        const next = it.unknown ? (v.trim() ? v : undefined) : savedText(v, it.d, it.opt);
+        if (next === undefined) delete tt[it.key];
+        else tt[it.key] = next;
+        ctx.changed();
+      },
+    });
+    // a text the check flags opens where it is, so its message has a place to show
+    const flagged = [...(ctx.doc.result?.errors || []), ...(ctx.doc.result?.warnings || [])]
+      .filter((x) => x.path?.[0] === 'site' && x.path[1] === 't' && x.path.length > 2).map((x) => x.path[2]);
+    for (const k of flagged) list.reveal(k);
     replace(textsBox,
-      h('p', { class: 'hint wide' }, 'Kosongkan sebuah teks untuk kembali ke tulisan bawaan (yang tampil samar di kolomnya).'),
-      field('hero.ends', ENDS_DEFAULT, { label: 'Akhiran kalimat pembuka, satu per baris (baris kosong = tombol 100% Polyester)', textarea: true, rows: 4 }),
-      ...[...keys].map(([k, def]) => field(k, def)));
+      h('p', { class: 'hint' }, 'Kolom berisi teks yang tampil sekarang. Kosongkan sebuah kolom buat balik ke teks bawaan (tulisan samar di kolomnya).'),
+      list);
   });
 
   /* ---------- divisi ---------- */

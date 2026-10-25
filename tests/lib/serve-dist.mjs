@@ -33,7 +33,8 @@ export function headerRules(toml = readFileSync(join(ROOT, 'netlify.toml'), 'utf
 
 const matches = (pattern, path) => (pattern.endsWith('/*') ? path.startsWith(pattern.slice(0, -1)) : path === pattern);
 
-export function serveDist({ dir = join(ROOT, 'dist'), port = 0 } = {}) {
+// DIST_DIR points the tests at a build somewhere else (two builds side by side).
+export function serveDist({ dir = process.env.DIST_DIR || join(ROOT, 'dist'), port = 0 } = {}) {
   const rules = headerRules();
   const server = createServer((req, res) => {
     const path = decodeURIComponent(new URL(req.url, 'http://x').pathname);

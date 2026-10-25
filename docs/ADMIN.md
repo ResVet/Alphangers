@@ -27,21 +27,43 @@ Dock ada di bawah tengah layar:
 - **Lihat / Edit / Panel.** Pindah kapan saja; tampilan terakhir diingat selama tab terbuka. Selama Panel terbuka, menyimpan dilakukan dengan tombol **Simpan** di bawah panel; tombol urungkan dan Terbitkan di dock muncul lagi setelah kembali ke halaman.
 - **↶ ↷** urungkan dan ulangi (**Ctrl+Z**, **Ctrl+Shift+Z**). Setiap perubahan bisa diurungkan sampai diterbitkan.
 - **Terbitkan** (**Ctrl+S**). Angka di tombol itu jumlah bagian yang berubah. Semua perubahan tetap draf di perangkatmu sampai diterbitkan; pengunjung baru melihatnya setelah itu.
-- **⋯** berisi: semua teks halaman dalam satu formulir, Panel, buang semua draf, kecilkan dock, dan keluar.
+- **⋯** berisi: semua teks halaman dalam satu daftar, Panel, buang semua draf, kecilkan dock, dan keluar.
+
+Di HP, dock hanya menampilkan **Lihat** dan **Edit**; **Panel** ada di menu **⋯**, dan di layar yang sempit **Ulangi** juga pindah ke sana. Selama dock tampil, halaman diberi ruang di bawah, jadi tombol paling bawah (misalnya **Soal berikutnya** dan **Selesai & lihat nilai** di try out) tidak tertutup dock.
 
 Draf disimpan di browser. Kalau tab tertutup sebelum terbit, waktu dibuka lagi muncul **Lanjutkan draf sebelumnya?**.
 
 ### Mengubah teks
 
-Di mode Edit, semua teks yang bisa diubah diberi garis putus-putus. Ketuk, ketik, lalu ketuk di luar atau tekan Enter. Esc membatalkan ketikan itu. Kosongkan sebuah teks untuk kembali ke tulisan aslinya. Teks yang tidak bisa diketik langsung (misalnya akhiran kalimat pembuka di atas, satu per baris) ada di **⋯ > Semua teks halaman**.
+Hampir semua tulisan di halaman bisa diubah, termasuk isi tombol seperti **Buka channel** dan tulisan samar di kolom pencarian.
 
-Ada juga teks yang boleh kosong: catatan dan nama penyusun try out. Selama masih kosong, di mode Edit teks itu tampil sebagai kotak putus-putus dengan petunjuk (misalnya "Catatan buat halaman try out (kosong = tidak tampil)"), dan pengunjung tidak melihat apa-apa. Isi untuk menampilkannya, kosongkan lagi untuk menyembunyikannya.
+Di mode Edit, teks yang bisa diketik diberi garis putus-putus. Ketuk, ketik, lalu ketuk di luar atau tekan Enter. Esc membatalkan ketikan itu. Kosongkan sebuah teks untuk kembali ke tulisan bawaannya. Kalau isinya tidak berubah, tidak ada yang disimpan.
+
+Beberapa teks punya bagian dalam kurung kurawal, misalnya `{blok}` atau `{n}`, yang diisi halaman sendiri. Waktu kamu mengetik, teks tampil lengkap dengan kurung kurawalnya, dan di bawahnya muncul keterangan seperti "{blok} diisi otomatis, sekarang: Blok 4". Biarkan bagian itu tetap ada, boleh dipindah ke tempat lain di kalimat. Begitu selesai mengetik, halaman mengisinya lagi. Nama yang tidak dikenal halaman (misalnya salah ketik `{blk}`) tampil apa adanya, dan keterangannya jadi kuning.
+
+Di teks yang boleh tebal, apit kata dengan dua bintang: `**penting**` tampil tebal. Keterangan di bawah teks memberi tahu kalau teks itu bisa tebal.
+
+Tulisan di tombol dan link tidak diketik langsung, supaya tombolnya tidak kepencet. Tulisan itu diberi garis titik-titik hijau. Ketuk tombolnya, lalu pilih **Ubah teks** di bar yang muncul. Ada satu kolom untuk tiap tulisan di tombol itu. **Klik** atau **Buka** di bar yang sama menjalankan tombolnya seperti biasa. Tulisan samar di kolom isian dan keterangan yang muncul saat kursor diarahkan juga diubah lewat **Ubah teks**.
+
+Tulisan tetap di dalam kartu, misalnya "lagi jalan" dan "Online" di kartu sesi atau judul bagian di catatan jantung, juga diberi garis titik-titik. Ketuk kartunya, lalu pilih **Ubah teks** di barnya. Tulisan seperti itu sama di semua kartu, jadi mengubahnya di satu kartu mengubah semuanya. Kartu yang punya formulir sendiri, misalnya kartu try out, menaruh tulisan lainnya di **Teks lain**. Isi kartu divisi (nama, kepanjangan, deskripsi) tetap diketik langsung di tempat, dan kartunya ikut terpilih supaya bar aksinya tetap ada.
+
+Ada juga teks yang boleh kosong, misalnya catatan di bawah judul dan nama penyusun try out. Selama kosong, di mode Edit teks itu tampil sebagai kotak putus-putus dengan petunjuk, dan pengunjung tidak melihat apa-apa. Isi untuk menampilkannya, kosongkan lagi untuk menyembunyikannya.
+
+### Semua teks dalam satu daftar
+
+**⋯ > Semua teks halaman** membuka semua teks sekaligus, dikelompokkan per bagian halaman. Tiap teks punya nama yang menyebut tempatnya, misalnya **Layar nilai: judul** atau **Kartu blok: penyusun · Blok 3**. Teks dari bagian yang belum pernah kamu buka, seperti layar foto atau pencarian, juga ada di sana. **Cari teks** mencari isi teks maupun namanya, dan **Hanya yang diubah** menyisakan teks yang sudah kamu ganti. Tiap kolom berisi teks yang tampil sekarang. Kosongkan kolomnya untuk kembali ke bawaan, atau tekan **↺ Bawaan** di atasnya. Simpan dengan **Simpan**, lalu terbitkan seperti biasa.
+
+Tombol **Teks** di baris alat tiap bagian membuka daftar yang sama, langsung di bagian itu. Akhiran kalimat pembuka juga ada di daftar ini, satu per baris. Baris kosong di antaranya jadi tombol 100% Polyester.
+
+Teks yang pernah diubah tapi bagiannya belum tampil (misalnya kartu try out yang belum dibuka) atau sudah tidak ada masuk kelompok **Lainnya**. Kosongkan kolomnya kalau mau menghapusnya.
+
+Satu teks paling panjang 4.000 huruf, dan paling banyak 600 teks yang diubah. Kalau lewat, editor memberi tahu dan tidak menyimpan. Kembalikan beberapa teks ke bawaan dulu.
 
 ### Mengubah kartu (sesi, dosen, channel, pengumuman, divisi, foto)
 
-Di mode Edit, ketuk atau klik sebuah kartu. Kartu itu diberi bingkai hijau dan muncul bar aksi: di sebelah kartu kalau di laptop, di atas dock kalau di HP. Di mode Edit, klik pada kartu tidak membuka apa-apa (dosen, channel, foto), jadi tidak ada yang berpindah halaman di tengah-tengah edit. Tombol tanggal di jadwal dan panah di divisi tetap jalan seperti biasa.
+Di mode Edit, ketuk atau klik sebuah kartu. Kartu itu diberi bingkai hijau dan muncul bar aksi: di sebelah kartu kalau di laptop, di atas dock kalau di HP. Di HP, kalau bar itu menutupi kartunya, halaman bergeser sendiri supaya kartunya tetap kelihatan. Di mode Edit, klik pada kartu tidak membuka apa-apa (dosen, channel, foto), jadi tidak ada yang berpindah halaman di tengah-tengah edit. Tombol yang tulisannya bisa diubah juga begitu: ketukan pertama memilihnya, lalu **Klik** atau **Buka** di bar menjalankannya. Tombol tanggal di jadwal dan panah di divisi tetap jalan seperti biasa.
 
-Di atas tiap bagian ada baris alat untuk menambah: **+ Sesi**, **+ Dosen**, **+ Channel**, **+ Pengumuman**, **+ Divisi**, dan sebagainya.
+Di atas tiap bagian ada baris alat untuk menambah: **+ Sesi**, **+ Dosen**, **+ Channel**, **+ Pengumuman**, **+ Divisi**, dan sebagainya. Tombol **Teks** di ujung baris itu membuka semua tulisan bagian tersebut.
 
 ### Jadwal dan pembatalan
 
@@ -70,6 +92,7 @@ Di halaman try out:
 - Nama, judul, dan semester blok yang diubah ikut berubah di semua layar try out (halaman blok, layar masuk, hasil, pembahasan).
 - Di bawah kartu ada kotak **Catatan buat halaman try out**. Di halaman tiap blok ada catatan sendiri di bawah judulnya.
 - Teks lain di halaman try out (kalimat di kotak akun, kalimat soal penyimpanan di bawah kartu, judul dan penjelasan di layar masuk) bisa diketik langsung.
+- Kotak konfirmasi try out, misalnya **Selesaikan try out?** dan **Hapus sesi ini?**, juga bisa diketik langsung selama terbuka di mode Edit. Tombolnya dipilih dulu seperti tombol lain: **Ubah teks** untuk tulisannya, **Klik** untuk menjalankannya. Ketuk di luar kotak untuk menutupnya. Semua teks konfirmasi juga ada di **⋯ > Semua teks halaman**, kelompok Try out.
 - Ketuk judul halaman lalu **Ubah channel** untuk nama, label, dan keterangan channel Try Out CBT atau Try Out OSPE.
 - Try Out CBT dan Try Out OSPE masing-masing punya kartu Blok 1 sampai Blok 4 dan catatan halamannya sendiri. Akun Google dan NIM yang sama membuka keduanya.
 
@@ -118,7 +141,7 @@ Dokumen yang sama juga menyimpan daftar divisi beserta fotonya (`divisi`), foto 
 
 - **Divisi**: selama portal masih memakai daftar bawaan dari repo, klik **Ubah divisi** untuk menyalinnya ke sini. Setelah itu tiap divisi punya kolom nama, label, kepanjangan, dan deskripsi (kolom kosong menampilkan teks bawaannya samar), tombol urutan dan hapus, serta daftar fotonya: urutan (tiga teratas jadi tumpukan), keterangan, teks untuk pembaca layar, **Lepas**, dan **+ Tambah foto**. **Tambah divisi** membuat divisi baru.
 - **Foto kelas**: **Ganti foto** mengunggah foto baru, **Pakai foto bawaan** kembali ke foto dari repo.
-- **Teks halaman**: semua teks yang bisa diketik di mode Edit, plus akhiran kalimat pembuka. Kosongkan sebuah kolom untuk kembali ke tulisan bawaan.
+- **Teks halaman**: daftar yang sama dengan **Semua teks halaman** di mode Edit, dengan pencarian, **Hanya yang diubah**, dan **↺ Bawaan**. Perubahan langsung masuk draf; simpan dengan **Simpan** di bar bawah.
 
 ### Pengumuman
 

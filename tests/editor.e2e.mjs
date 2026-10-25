@@ -12,7 +12,7 @@ import { serveDist } from './lib/serve-dist.mjs';
 const ROOT = join(dirname(fileURLToPath(import.meta.url)), '..');
 let srv, browser;
 before(async () => {
-  srv = await serveDist({ dir: join(ROOT, 'dist-mock') });
+  srv = await serveDist({ dir: process.env.DIST_MOCK_DIR || join(ROOT, 'dist-mock') });
   browser = await chromium.launch({ executablePath: process.env.CHROMIUM || '/opt/pw-browsers/chromium' });
 });
 after(async () => { await browser?.close(); srv?.server.close(); });
@@ -37,6 +37,23 @@ async function open({ width = 1440, height = 900, query = '?admin&mock=admin', t
   return { page, context, errors, uploads, mobile };
 }
 const submit = (page) => page.click('.ed-sheet button[type=submit]');
+// a date where the schedule shows several sessions
+const TUESDAY = '2026-10-06T08:00:00+07:00';
+
+// Presses a page control in edit mode. A button or link holding page texts is selected by a
+// click (so its texts can be changed); it is then pressed from its bar (Klik or Buka).
+async function press(page, sel) {
+  const el = page.locator(sel).first();
+  const keyed = await el.evaluate((x) => {
+    const c = x.closest('button, a[href], [role=button], label, summary');
+    return !!c && (c.matches('[data-k], [data-kt]') || !!c.querySelector('[data-k], [data-kt]'));
+  });
+  await el.click();
+  if (keyed) await page.locator('.ed-bar .ed-bar-b').filter({ hasText: /^(Klik|Buka)$/ }).first().click();
+}
+// Draws a text of the test's own into the page, the way a section does (window.__alphaTexts is
+// there in mock builds only).
+const draw = (page, fn, arg) => page.evaluate(fn, arg);
 
 test('visitors never download the editor', async () => {
   const { page, context } = await open({ query: '' });
@@ -174,13 +191,15 @@ test('Panel: the /admin/ editor inside the page, drafts carried both ways', asyn
   const { page, context, errors } = await open();
   await page.waitForSelector('.ed-dock.is-admin');
   await page.click('.ed-seg:has-text("Edit")');
-  const lede = page.locator('[data-k="hero.cta"]').first();
-  await lede.scrollIntoViewIfNeeded();
-  await lede.click();
-  await page.keyboard.press('Control+a');
-  await page.keyboard.type('Buka jadwal kelas');
-  await page.keyboard.press('Enter');
+  // the button's text sits in a link: the link is selected, and its text changes from Ubah teks
+  const cta = page.locator('[data-k="hero.cta"]').first();
+  await cta.scrollIntoViewIfNeeded();
+  await cta.click();
+  await page.click('.ed-bar-b:has-text("Ubah teks")');
+  await page.fill('.ed-sheet .tl-in', 'Buka jadwal kelas');
+  await submit(page);
   await page.waitForFunction(() => /1/.test(document.querySelector('.ed-n')?.textContent || ''));
+  assert.equal(await cta.textContent(), 'Buka jadwal kelas');
 
   await page.click('.ed-seg:has-text("Panel")');
   const frame = page.frameLocator('.ed-panel-f');
@@ -203,7 +222,7 @@ test('Panel: the /admin/ editor inside the page, drafts carried both ways', asyn
 });
 
 test('online session with a join link, tags, and the same controls in the Panel', async () => {
-  const { page, context, errors } = await open();
+  const { page, context, errors } = await open({ time: TUESDAY });
   await page.waitForSelector('.ed-dock.is-admin');
   await page.click('.ed-seg:has-text("Edit")');
   const sess = page.locator('.jw-s[data-ref]').first();
@@ -243,7 +262,9 @@ test('online session with a join link, tags, and the same controls in the Panel'
   await frame.locator('.key-b', { hasText: 'Link' }).click();
   await frame.locator('button:has-text("Ubah divisi")').click();
   assert.equal(await frame.locator('h2.sub-title:has-text("Divisi") + div .card').count(), 8);
-  await frame.locator('h2.sub-title:has-text("Teks halaman") + div .fld').nth(5).waitFor();
+  // the same grouped list of page texts as on the page, its first group open
+  await frame.locator('h2.sub-title:has-text("Teks halaman") + div .tl-g').nth(3).waitFor();
+  await frame.locator('h2.sub-title:has-text("Teks halaman") + div .tl-row.fld').nth(2).waitFor();
 
   await page.click('.ed-seg:has-text("Lihat")');
   await page.waitForSelector('.ed-panel', { state: 'detached' });
@@ -255,7 +276,7 @@ test('online session with a join link, tags, and the same controls in the Panel'
 });
 
 test('switching back to Lihat leaves no outline behind', async () => {
-  const { page, context, errors } = await open();
+  const { page, context, errors } = await open({ time: TUESDAY });
   await page.waitForSelector('.ed-dock.is-admin');
   await page.click('.ed-seg:has-text("Edit")');
   const sess = page.locator('.jw-s[data-ref]').first();
@@ -370,7 +391,7 @@ test('try out page: card texts, a hidden credit, notes typed in place, published
   await page.click('.ed-seg:has-text("Edit")');
   await page.click('.to-blk[data-b="b3"] .to-bs');
   await page.click('.ed-bar-b:text-is("Buka")');
-  await page.click('.to-gate [data-act="gin"]');
+  await press(page, '.to-gate [data-act="gin"]');
   await page.waitForSelector('.to-setup .to-head', { timeout: 15000 });
   assert.equal(await page.locator('.to-head .to-by').isVisible(), true, 'the empty credit is a slot while editing');
   await page.click('.to-head .to-note');
@@ -405,7 +426,7 @@ test('a Drive channel page: the folder link and a note', async () => {
   await page.waitForSelector('#panel.on .folder');
   await page.waitForFunction(() => !document.querySelector('#curtain.move'));
   await page.click('#panel .folder .f-k');
-  assert.deepEqual(await page.locator('.ed-bar-b').allTextContents(), ['Ubah link', 'Buka folder', '×']);
+  assert.deepEqual((await page.locator('.ed-bar-b').allTextContents()).slice(0, 2), ['Ubah link', 'Buka folder']);
   await page.click('.ed-bar-b:has-text("Ubah link")');
   await page.fill('.ed-sheet input[name=url]', 'https://drive.google.com/drive/folders/praktikumBaru123');
   await submit(page);
@@ -420,6 +441,411 @@ test('a Drive channel page: the folder link and a note', async () => {
   await page.click('#panel .nextb');
   await page.waitForFunction(() => document.querySelector('#panel .p-hero')?.dataset.ch === 'kating' && !document.querySelector('#curtain.move'));
   assert.equal(await page.locator('#panel .p-note').isVisible(), false);
+  assert.deepEqual(errors, []);
+  await context.close();
+});
+
+test('a text with {names} and **bold**: typed raw, saved raw, shown filled', async () => {
+  const { page, context, errors } = await open({ width: 1280, height: 860 });
+  await page.waitForSelector('.ed-dock.is-admin');
+  await page.click('.ed-seg:has-text("Edit")');
+  await draw(page, () => {
+    const { registerCopy, kSet } = window.__alphaTexts;
+    registerCopy('jadwal', null, {
+      'jadwal.t-tpl': 'Jadwal setelah {blok} belum masuk.',
+      'jadwal.t-rich': { d: 'Bawa **jas lab** ke {ruang}.', rich: true },
+    });
+    const host = document.getElementById('jadwal');
+    host.prepend(kSet(Object.assign(document.createElement('p'), { id: 't-tpl' }), 'jadwal.t-tpl', { blok: 'Blok 4' }),
+      kSet(Object.assign(document.createElement('p'), { id: 't-rich' }), 'jadwal.t-rich', { ruang: 'Lab 2' }));
+  });
+  const tpl = page.locator('#t-tpl');
+  // drawn after edit mode started, and still typable
+  await page.waitForFunction(() => document.getElementById('t-tpl').classList.contains('ed-text'));
+  assert.equal(await tpl.textContent(), 'Jadwal setelah Blok 4 belum masuk.');
+  await tpl.scrollIntoViewIfNeeded();
+  await tpl.click();
+  assert.equal(await tpl.textContent(), 'Jadwal setelah {blok} belum masuk.', 'typing shows the text as written');
+  await page.waitForSelector('#ed-tip.is-in');
+  assert.match(await page.locator('#ed-tip').textContent(), /\{blok\} diisi otomatis, sekarang: Blok 4/);
+  await page.keyboard.press('Control+a');
+  await page.keyboard.type('Soal {blok} masih disusun.');
+  await page.keyboard.press('Enter');
+  assert.equal(await tpl.textContent(), 'Soal Blok 4 masih disusun.');
+  assert.equal(await page.evaluate(() => window.__alphaTexts.get()['jadwal.t-tpl']), 'Soal {blok} masih disusun.');
+  assert.equal(await page.locator('#ed-tip').isHidden(), true);
+
+  // the section redraws the text while it is typed (as a count or a clock would): nothing is lost
+  await tpl.click();
+  await page.keyboard.press('Control+a');
+  await page.keyboard.type('Soal {blok}');
+  await page.evaluate(() => window.__alphaTexts.kSet(document.getElementById('t-tpl'), 'jadwal.t-tpl', { blok: 'Blok 5' }));
+  await page.keyboard.type(' masih disusun.');
+  await page.keyboard.press('Enter');
+  assert.equal(await page.evaluate(() => window.__alphaTexts.get()['jadwal.t-tpl']), 'Soal {blok} masih disusun.');
+  assert.equal(await tpl.textContent(), 'Soal Blok 5 masih disusun.');
+
+  // Escape puts back what was there
+  await tpl.click();
+  await page.keyboard.press('Control+a');
+  await page.keyboard.type('Salah ketik');
+  await page.keyboard.press('Escape');
+  assert.equal(await tpl.textContent(), 'Soal Blok 5 masih disusun.');
+
+  // nothing changed, nothing saved
+  await page.evaluate(() => { window.__t0 = window.__alphaTexts.get(); });
+  await tpl.click();
+  await page.keyboard.press('Enter');
+  assert.equal(await page.evaluate(() => window.__alphaTexts.get() === window.__t0), true);
+
+  // **bold**
+  const rich = page.locator('#t-rich');
+  await rich.click();
+  assert.equal(await rich.textContent(), 'Bawa **jas lab** ke {ruang}.');
+  assert.match(await page.locator('#ed-tip').textContent(), /\*\*penting\*\*/);
+  await page.keyboard.press('Control+a');
+  await page.keyboard.type('Bawa **jas lab dan sarung tangan** ke {ruang}.');
+  await page.keyboard.press('Enter');
+  assert.equal(await rich.locator('b').textContent(), 'jas lab dan sarung tangan');
+  assert.equal(await rich.textContent(), 'Bawa jas lab dan sarung tangan ke Lab 2.');
+  assert.equal(await page.evaluate(() => window.__alphaTexts.get()['jadwal.t-rich']), 'Bawa **jas lab dan sarung tangan** ke {ruang}.');
+  assert.deepEqual(errors, []);
+  await context.close();
+});
+
+test('a text inside a button: changed from Ubah teks, and the button still works from Klik', async () => {
+  const { page, context, errors } = await open({ width: 1280, height: 860 });
+  await page.waitForSelector('.ed-dock.is-admin');
+  await page.click('.ed-seg:has-text("Edit")');
+  await draw(page, () => {
+    const { registerCopy, kHTML } = window.__alphaTexts;
+    registerCopy('jadwal', null, { 'jadwal.t-btn': 'Tombol uji', 'jadwal.t-btn2': 'baris kedua' });
+    const b = document.createElement('button');
+    b.type = 'button';
+    b.id = 't-btn';
+    b.innerHTML = kHTML('jadwal.t-btn') + ' ' + kHTML('jadwal.t-btn2', null, 'small');
+    window.__clicks = 0;
+    b.addEventListener('click', () => window.__clicks++);
+    document.getElementById('jadwal').prepend(b);
+  });
+  await page.waitForFunction(() => document.querySelector('#t-btn [data-k]')?.classList.contains('ed-ctl-k'));
+  assert.equal(await page.locator('#t-btn [data-k="jadwal.t-btn"]').getAttribute('contenteditable'), null, 'a button text is not typed into');
+  const btn = page.locator('#t-btn');
+  await btn.scrollIntoViewIfNeeded();
+  await btn.click();
+  assert.equal(await page.evaluate(() => window.__clicks), 0, 'in edit mode a click selects the button');
+  assert.deepEqual((await page.locator('.ed-bar-b').allTextContents()).slice(0, 2), ['Ubah teks', 'Klik']);
+  await page.click('.ed-bar-b:has-text("Ubah teks")');
+  assert.equal(await page.locator('.ed-sheet .tl-in').count(), 2, 'one field per text in the button');
+  assert.equal(await page.inputValue('.ed-sheet .tl-in >> nth=0'), 'Tombol uji');
+  await page.fill('.ed-sheet .tl-in >> nth=0', 'Tombol baru');
+  await submit(page);
+  await page.waitForFunction(() => document.querySelector('#t-btn [data-k="jadwal.t-btn"]').textContent === 'Tombol baru');
+  await btn.click();
+  await page.click('.ed-bar-b:text-is("Klik")');
+  assert.equal(await page.evaluate(() => window.__clicks), 1, 'Klik presses the button');
+  assert.deepEqual(errors, []);
+  await context.close();
+});
+
+test('on a laptop the bar over a selection low on the screen stops above the dock', async () => {
+  const { page, context, errors } = await open({ width: 1280, height: 860 });
+  await page.waitForSelector('.ed-dock.is-admin');
+  await page.click('.ed-seg:has-text("Edit")');
+  await draw(page, () => {
+    const { registerCopy, kHTML } = window.__alphaTexts;
+    registerCopy('jadwal', null, { 'jadwal.t-low': 'Tombol paling bawah di layar' });
+    const b = document.createElement('button');
+    b.type = 'button';
+    b.id = 't-low';
+    b.style.cssText = 'position:fixed;left:0;bottom:6px;z-index:50';
+    b.innerHTML = kHTML('jadwal.t-low');
+    window.__clicks = 0;
+    b.addEventListener('click', () => window.__clicks++);
+    document.getElementById('jadwal').prepend(b);
+  });
+  await page.waitForFunction(() => document.querySelector('#t-low [data-k]')?.classList.contains('ed-ctl-k'));
+  await page.click('#t-low');
+  await page.waitForFunction(() => {
+    const b = document.querySelector('.ed-bar');
+    return b && !b.hidden && b.getAnimations().every((a) => a.playState !== 'running') && b.getBoundingClientRect().top > 100;
+  });
+  const [bar, dock] = await page.evaluate(() => ['.ed-bar', '.ed-dock'].map((s) => document.querySelector(s).getBoundingClientRect().toJSON()));
+  assert.ok(bar.bottom <= dock.top, `the bar (${Math.round(bar.top)}-${Math.round(bar.bottom)}) stays above the dock (from ${Math.round(dock.top)})`);
+  await page.click('.ed-bar-b:text-is("Klik")');
+  assert.equal(await page.evaluate(() => window.__clicks), 1, 'Klik presses the button');
+  assert.deepEqual(errors, []);
+  await context.close();
+});
+
+test('Semua teks halaman: a text of a part never opened, search, save, reset one', async () => {
+  const { page, context, errors } = await open({ width: 1280, height: 860 });
+  await page.waitForSelector('.ed-dock.is-admin');
+  await page.click('.ed-seg:has-text("Edit")');
+  // declared by a part of the page that is not drawn yet
+  await draw(page, () => {
+    window.__alphaTexts.registerCopy('viewer', null, { 'viewer.t-never': 'Keterangan foto yang belum dibuka' });
+    window.__alphaTexts.registerCopy('jadwal', null, { 'jadwal.t-scope': 'Teks jadwal buat uji' });
+  });
+  const openList = async () => {
+    await page.click('[aria-label="Menu editor"]');
+    await page.click('.ed-menu [role=menuitem]:has-text("Semua teks halaman")');
+    await page.waitForSelector('.ed-sheet .tl');
+  };
+  await openList();
+  assert.ok(await page.locator('.tl-g').count() >= 3, 'texts come in groups');
+  await page.fill('.tl-qi', 'foto yang belum');
+  const row = page.locator('.tl-row[data-key="viewer.t-never"]');
+  await row.waitFor();
+  await page.waitForFunction(() => [...document.querySelectorAll('.tl-g')].filter((g) => !g.hidden).length === 1);
+  assert.equal(await row.locator('.tl-in').inputValue(), 'Keterangan foto yang belum dibuka');
+  await row.locator('.tl-in').fill('Keterangan foto baru');
+  assert.match(await page.locator('.tl-sum').textContent(), /1 diubah/);
+  await submit(page);
+  await page.waitForSelector('.ed-sheet', { state: 'detached' });
+  assert.equal(await page.evaluate(() => window.__alphaTexts.get()['viewer.t-never']), 'Keterangan foto baru');
+
+  // only what changed, then one back to its default
+  await openList();
+  await page.click('.tl-only');
+  await row.waitFor();
+  assert.equal(await page.locator('.tl-row:visible').count(), 1);
+  await row.locator('.tl-reset').click();
+  assert.equal(await row.locator('.tl-in').inputValue(), 'Keterangan foto yang belum dibuka');
+  await submit(page);
+  await page.waitForSelector('.ed-sheet', { state: 'detached' });
+  assert.equal(await page.evaluate(() => 'viewer.t-never' in window.__alphaTexts.get()), false);
+
+  // a section's "Teks" opens the list at that section
+  await page.evaluate(() => document.getElementById('jadwal').scrollIntoView());
+  await page.click('.ed-tools[aria-label="Ubah Jadwal"] .ed-tools-b:text-is("Teks")');
+  await page.waitForSelector('.ed-sheet .tl-scope');
+  assert.deepEqual(await page.locator('.tl-g:visible').evaluateAll((gs) => gs.map((g) => g.dataset.g)), ['jadwal']);
+  await page.click('.ed-sheet .ed-btn:has-text("Batal")');
+  assert.deepEqual(errors, []);
+  await context.close();
+});
+
+test('an optional note shows once written and hides again when emptied', async () => {
+  const { page, context, errors } = await open({ width: 1280, height: 860 });
+  await page.waitForSelector('.ed-dock.is-admin');
+  await page.click('.ed-seg:has-text("Edit")');
+  await draw(page, () => {
+    const { registerCopy, kSet } = window.__alphaTexts;
+    registerCopy('jadwal', null, { 'jadwal.t-note': { d: '', opt: true, ml: true, ph: 'Catatan buat kelas (boleh kosong)' } });
+    document.getElementById('jadwal').prepend(kSet(Object.assign(document.createElement('p'), { id: 't-note', className: 'k-note' }), 'jadwal.t-note'));
+  });
+  const note = page.locator('#t-note');
+  await page.waitForFunction(() => document.getElementById('t-note').classList.contains('ed-text'));
+  assert.equal(await note.getAttribute('data-empty'), '');
+  assert.equal(await note.isVisible(), true, 'an empty note is a spot to write in while editing');
+  await note.scrollIntoViewIfNeeded();
+  await note.click();
+  await page.keyboard.type('Bawa buku catatan.');
+  await page.evaluate(() => document.activeElement.blur());
+  await page.waitForFunction(() => !document.getElementById('t-note').hasAttribute('data-empty'));
+  await page.click('.ed-seg:has-text("Lihat")');
+  assert.equal(await note.isVisible(), true);
+  assert.equal(await note.textContent(), 'Bawa buku catatan.');
+  await page.click('.ed-seg:has-text("Edit")');
+  await note.click();
+  await page.keyboard.press('Control+a');
+  await page.keyboard.press('Backspace');
+  await page.evaluate(() => document.activeElement.blur());
+  await page.waitForFunction(() => document.getElementById('t-note').hasAttribute('data-empty'));
+  assert.equal(await page.evaluate(() => 'jadwal.t-note' in window.__alphaTexts.get()), false, 'a note with an empty default just goes back to it');
+  await page.click('.ed-seg:has-text("Lihat")');
+  assert.equal(await note.isVisible(), false);
+  assert.deepEqual(errors, []);
+  await context.close();
+});
+
+test('a text drawn inside an open dialog is typed there, its hint on top', async () => {
+  const { page, context, errors } = await open({ width: 1280, height: 860 });
+  await page.waitForSelector('.ed-dock.is-admin');
+  await page.click('.ed-seg:has-text("Edit")');
+  await page.keyboard.press('Control+k');
+  await page.waitForSelector('dialog.fd[open]');
+  await draw(page, () => {
+    const { registerCopy, kSet } = window.__alphaTexts;
+    registerCopy('find', null, { 'find.t-dlg': 'Ketik nama {apa} di sini.' });
+    document.querySelector('dialog.fd[open]').append(kSet(Object.assign(document.createElement('p'), { id: 't-dlg' }), 'find.t-dlg', { apa: 'dosen' }));
+  });
+  await page.waitForFunction(() => document.getElementById('t-dlg').classList.contains('ed-text'));
+  await page.click('#t-dlg');
+  await page.waitForSelector('#ed-tip.is-in');
+  assert.equal(await page.evaluate(() => document.getElementById('ed-tip').closest('dialog')?.classList.contains('fd')), true, 'the hint sits in the dialog, above it');
+  await page.keyboard.press('Control+a');
+  await page.keyboard.type('Cari {apa} di sini.');
+  await page.keyboard.press('Enter');
+  assert.equal(await page.locator('#t-dlg').textContent(), 'Cari dosen di sini.');
+  assert.equal(await page.locator('dialog.fd[open]').count(), 1, 'the dialog stays open');
+  assert.deepEqual(errors, []);
+  await context.close();
+});
+
+test('at 390px the list of page texts fits the screen', async () => {
+  const { page, context, errors } = await open({ width: 390, height: 844 });
+  await page.waitForSelector('.ed-dock.is-admin');
+  await page.click('.ed-seg:has-text("Edit")');
+  await page.click('[aria-label="Menu editor"]');
+  await page.click('.ed-menu [role=menuitem]:has-text("Semua teks halaman")');
+  await page.waitForSelector('.ed-sheet .tl-row');
+  await page.waitForTimeout(300);
+  const m = await page.evaluate(() => {
+    const sb = document.querySelector('.ed-sheet .ed-sb');
+    const r = document.querySelector('.ed-sheet').getBoundingClientRect();
+    const wide = [...document.querySelectorAll('.ed-sheet *')].filter((x) => { const b = x.getBoundingClientRect(); return b.width && (b.right > innerWidth + 0.5 || b.left < -0.5); }).map((x) => x.className);
+    const taps = [...document.querySelectorAll('.tl-gh, .tl-only, .ed-sheet .tl-in, .ed-sheet .ed-sf .ed-btn')].map((x) => x.getBoundingClientRect().height);
+    return { sb: sb.scrollWidth - sb.clientWidth, left: r.left, right: r.right, wide, minTap: Math.min(...taps) };
+  });
+  assert.equal(m.sb, 0, 'no sideways scroll in the list');
+  assert.ok(m.left >= 0 && m.right <= 390, 'the sheet is inside the screen');
+  assert.deepEqual(m.wide, []);
+  assert.ok(m.minTap >= 38, 'taps are comfortable (' + m.minTap + 'px)');
+  assert.deepEqual(errors, []);
+  await context.close();
+});
+
+test('on a small phone the dock fits, its menu closes on a text, and the bar keeps the card in view', async () => {
+  const { page, context, errors } = await open({ width: 360, height: 740, time: TUESDAY });
+  await page.waitForSelector('.ed-dock.is-admin');
+  await page.click('.ed-seg:has-text("Edit")');
+  await page.click('[data-k="hero.kick"]');
+  await page.keyboard.press('Control+a');
+  await page.keyboard.type('Portal kelas Alpha 2026');
+  await page.keyboard.press('Enter');
+  await page.waitForFunction(() => document.querySelector('.ed-pub .ed-n').textContent === '1');
+  // every control on screen and at touch size; Panel and Ulangi wait in the menu
+  const dock = await page.evaluate(() => [...document.querySelectorAll('.ed-dock button')]
+    .filter((x) => x.getClientRects().length && !x.closest('.ed-menu'))
+    .map((x) => { const r = x.getBoundingClientRect(); return (x.getAttribute('aria-label') || x.textContent).trim() + (r.left >= 0 && r.right <= innerWidth ? '' : ' OFF') + (r.height < 38 ? ' SMALL' : ''); }));
+  assert.deepEqual(dock, ['Lihat', 'Edit', 'Urungkan (Ctrl+Z)', 'Terbitkan1', 'Menu editor']);
+  // the menu has Ulangi and Panel, and goes away when a text is tapped
+  await page.click('[aria-label="Menu editor"]');
+  assert.equal(await page.locator('.ed-menu [role=menuitem]:has-text("Ulangi")').isVisible(), true);
+  // (its left end: the open menu covers the rest of it on this screen)
+  await page.click('[data-k="hero.kick"]', { position: { x: 6, y: 6 } });
+  assert.equal(await page.locator('.ed-menu').isHidden(), true);
+  await page.keyboard.press('Escape');
+  // a session card: the bar shows every action on screen, and the card scrolls out from under it
+  await page.locator('.jw-s[data-ref]').first().evaluate((x) => x.scrollIntoView({ block: 'end' }));
+  await page.locator('.jw-s[data-ref]').first().click({ position: { x: 60, y: 24 } });
+  await page.waitForSelector('.ed-bar:not([hidden]) .ed-bar-b:has-text("Hapus")');
+  // (it ends above the bar, or, too tall for that, starts just under the top bar)
+  await page.waitForFunction(() => {
+    const c = document.querySelector('.jw-s[data-ref]').getBoundingClientRect(), b = document.querySelector('.ed-bar').getBoundingClientRect();
+    return c.bottom <= b.top || (c.top >= 0 && c.top <= 90);
+  });
+  const bar = await page.evaluate(() => [...document.querySelectorAll('.ed-bar .ed-bar-b')].filter((b) => { const r = b.getBoundingClientRect(); return r.left < 0 || r.right > innerWidth || b.scrollWidth > b.clientWidth; }).map((b) => b.textContent));
+  assert.deepEqual(bar, []);
+  // the publish question names each changed part on its own line
+  await page.click('.ed-bar-b.is-x');
+  await page.click('.ed-pub');
+  assert.match(await page.locator('.ed-ask-p').textContent(), /^Yang berubah \(1 bagian\):\n• Teks halaman, channel, Drive dan divisi\n/);
+  await page.click('.ed-ask .ed-btn:has-text("Batal")');
+  assert.deepEqual(errors, []);
+  await context.close();
+});
+
+test('on a phone the try out buttons stay above the dock, and its dialogs are page texts', async () => {
+  const { page, context, errors } = await open({ width: 390, height: 844, query: '?admin&mock=admin&cbt=ok#tryout' });
+  await page.waitForSelector('.ed-dock.is-admin');
+  await page.click('#panel.on .to-blk[data-b="b3"]');
+  await page.click('.to-gate [data-act="gin"]');
+  await page.click('[data-act="mode"][data-v="latihan"]');
+  await page.click('.to-start');
+  await page.click('.to-o >> nth=0');
+  await page.click('[data-act="check"]');
+  await page.waitForSelector('#toFoot [data-act="next"]');
+  // the bottom buttons can be pressed where they are drawn, once the page has settled
+  const clear = (q) => page.waitForFunction((q) => [...document.querySelectorAll(q)]
+    .filter((b) => b.getClientRects().length).every((b) => {
+      const r = b.getBoundingClientRect();
+      const hit = document.elementFromPoint(r.left + r.width / 2, r.top + r.height / 2);
+      return hit === b || b.contains(hit);
+    }), q, { timeout: 5000 });
+  await clear('#toFoot button');
+  await page.evaluate(() => document.getElementById('panel').scrollTo(0, 1e6));
+  await clear('#toFoot button');
+  // the question list rises from the bottom; its Selesai button too
+  await page.click('.to-navb');
+  await page.waitForSelector('.to-nav.open');
+  await clear('.to-nav [data-act="finish"]');
+  await page.click('.to-nav [data-act="finish"]');
+  await page.waitForSelector('.to-dlg.on');
+  // in Edit the dialog's words are typed in place and its buttons are selected, not pressed
+  await page.click('.ed-seg:has-text("Edit")');
+  await page.waitForFunction(() => document.querySelector('.to-dlg [data-k="to.dlg.fin.h"]')?.classList.contains('ed-text'));
+  await page.click('.to-dlg [data-dok]');
+  await page.waitForSelector('.ed-bar:not([hidden]) .ed-bar-b:text-is("Klik")');
+  assert.equal(await page.locator('.to-dlg').count(), 1, 'still open');
+  await page.click('.to-dlg [data-k="to.dlg.fin.h"]');
+  await page.keyboard.press('Control+a');
+  await page.keyboard.type('Udah yakin selesai?');
+  await page.keyboard.press('Enter');
+  assert.equal(await page.evaluate(() => window.__alphaTexts.get()['to.dlg.fin.h']), 'Udah yakin selesai?');
+  await press(page, '.to-dlg [data-dok]');
+  await page.waitForSelector('#toScore', { timeout: 15000 });
+  assert.deepEqual(errors, []);
+  await context.close();
+});
+
+test('a label inside a card selects the card, and changes from its Ubah teks', async () => {
+  const { page, context, errors } = await open({ width: 1280, height: 860, time: TUESDAY });
+  await page.waitForSelector('.ed-dock.is-admin');
+  await page.click('.ed-seg:has-text("Edit")');
+  await page.locator('.jw-s[data-ref]').first().scrollIntoViewIfNeeded();
+  // a label every session card shares, drawn with its value
+  await draw(page, () => {
+    const { registerCopy, kSet } = window.__alphaTexts;
+    registerCopy('jadwal', null, { 'jadwal.t-card': 'Ruang {ruang}' });
+    document.querySelector('.jw-s[data-ref]').append(kSet(Object.assign(document.createElement('span'), { id: 't-card' }), 'jadwal.t-card', { ruang: 'B2' }));
+  });
+  await page.waitForFunction(() => document.getElementById('t-card')?.classList.contains('ed-ctl-k'));
+  assert.equal(await page.locator('#t-card').getAttribute('contenteditable'), null, 'not typed into inside a card');
+  await page.click('#t-card');
+  await page.waitForSelector('.ed-bar:not([hidden]) .ed-bar-b:has-text("Batalkan")');
+  await page.click('.ed-bar-b:text-is("Ubah teks")');
+  assert.equal(await page.inputValue('.ed-sheet .tl-row[data-key="jadwal.t-card"] .tl-in'), 'Ruang {ruang}');
+  assert.match(await page.locator('.ed-sheet .tl-row[data-key="jadwal.t-card"] .tl-hint').textContent(), /\{ruang\} diisi otomatis, sekarang: B2/);
+  await page.fill('.ed-sheet .tl-row[data-key="jadwal.t-card"] .tl-in', 'Ruang kuliah {ruang}');
+  await submit(page);
+  await page.waitForFunction(() => document.getElementById('t-card').textContent === 'Ruang kuliah B2');
+  assert.equal(await page.evaluate(() => window.__alphaTexts.get()['jadwal.t-card']), 'Ruang kuliah {ruang}');
+  assert.deepEqual(errors, []);
+  await context.close();
+});
+
+test('a dialog added after edit mode started has its texts typable at once', async () => {
+  const { page, context, errors } = await open({ width: 390, height: 844 });
+  await page.waitForSelector('.ed-dock.is-admin');
+  await page.click('.ed-seg:has-text("Edit")');
+  // like the photo viewer: appended to the body when it opens, a kicker with {no}
+  await draw(page, () => {
+    const { registerCopy, kHTML } = window.__alphaTexts;
+    registerCopy('viewer', null, { 'viewer.t-kick': 'Foto {no} dari {n}' });
+    const d = document.createElement('dialog');
+    d.id = 't-pv';
+    d.innerHTML = kHTML('viewer.t-kick', { no: 3, n: 8 }, 'p') + '<button type="button" id="t-pv-x">Tutup</button>';
+    d.querySelector('#t-pv-x').addEventListener('click', () => d.close());
+    // a click on the photo area closes it, as the viewer does
+    d.addEventListener('click', (e) => { if (e.target === d || e.target.closest('p')) d.close(); });
+    document.body.append(d);
+    d.showModal();
+  });
+  const kick = page.locator('#t-pv [data-k="viewer.t-kick"]');
+  await page.waitForFunction(() => document.querySelector('#t-pv [data-k]')?.classList.contains('ed-text'));
+  await kick.tap();
+  assert.equal(await kick.textContent(), 'Foto {no} dari {n}');
+  await page.waitForSelector('#ed-tip.is-in');
+  assert.match(await page.locator('#ed-tip').textContent(), /\{no\} diisi otomatis, sekarang: 3/);
+  await page.keyboard.press('Control+a');
+  await page.keyboard.type('Foto ke-{no} (dari {n})');
+  await page.evaluate(() => document.activeElement.blur());
+  assert.equal(await kick.textContent(), 'Foto ke-3 (dari 8)');
+  assert.equal(await page.evaluate(() => window.__alphaTexts.get()['viewer.t-kick']), 'Foto ke-{no} (dari {n})');
+  assert.equal(await page.locator('#t-pv[open]').count(), 1, 'typing did not close the dialog');
   assert.deepEqual(errors, []);
   await context.close();
 });

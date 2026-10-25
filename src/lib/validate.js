@@ -61,10 +61,11 @@ const HEX_RE = /^#[0-9a-f]{6}$/;
 // taken in (src/lib/bundled.js). UTC, e.g. 2026-10-22T02:14:36Z.
 const STAMP_RE = /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}(?::\d{2}(?:\.\d{1,3})?)?Z$/;
 
-// C0 and C1 controls except tab and newline, plus the bidi overrides that can
-// make text read differently from how it is stored.
+// C0 and C1 controls except tab and newline, the bidi overrides that can make text read
+// differently from how it is stored, and the invisible characters a copy and paste brings
+// along (zero-width space, word joiner, byte order mark). The emoji joiner U+200D stays.
 // eslint-disable-next-line no-control-regex
-const CONTROL_RE = /[\u0000-\u0008\u000B-\u001F\u007F-\u009F\u200e\u200f\u202a-\u202e\u2066-\u2069]/g;
+const CONTROL_RE = /[\u0000-\u0008\u000B-\u001F\u007F-\u009F\u061c\u200b\u200e\u200f\u202a-\u202e\u2060\u2066-\u2069\ufeff]/g;
 
 /* ---------- issue collection ---------- */
 

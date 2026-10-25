@@ -21,7 +21,7 @@ if (SHOTS) mkdirSync(SHOTS, { recursive: true });
 let srv, browser, noGl;
 
 before(async () => {
-  assert.ok(existsSync(join(ROOT, 'dist', 'index.html')), 'run "npm run build" first');
+  assert.ok(existsSync(join(process.env.DIST_DIR || join(ROOT, 'dist'), 'index.html')), 'run "npm run build" first');
   srv = await serveDist();
   browser = await chromium.launch({ executablePath: EXE, args: GL });
   noGl = await chromium.launch({ executablePath: EXE, args: ['--disable-3d-apis'] });

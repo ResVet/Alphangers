@@ -2,8 +2,11 @@
 // (selector), a short label for the action bar, the actions for one element, and the tools shown
 // at the top of its section while edit mode is on. Every change goes through ctx.store.edit(),
 // which validates the whole document before keeping anything.
-import { openForm, confirmDialog, alertDialog, h } from './sheet.js';
+import { openForm, confirmDialog, alertDialog, h, textList, buildTextList, collectPageTexts, HERO_ENDS } from './sheet.js';
+import { CONTROL, EDITOR_UI } from './overlay.js';
 import { uploadPhoto, pickFiles } from './media.js';
+import { GROUPS, GROUP_LABELS, groupOf } from '../copy/index.js';
+import { tx, copyEntry, textLabel } from '../lib/texts.js';
 import { SESSION_KINDS, ANNOUNCEMENT_TAGS, HEART_IDS, CHANNEL_KIND_NAMES } from '../lib/validate.js';
 import { KIND_LABELS, TAG_LABELS, slugify, todayWib } from '../admin/format.js';
 import { pictureHTML } from '../lib/photo.js';
@@ -275,7 +278,8 @@ async function blokForm(ctx, blok) {
 const jadwal = {
   kind: 'session',
   selector: '.jw-s[data-ref]',
-  label: (el) => 'Sesi ' + (el.dataset.tba != null ? 'jam menyusul' : el.querySelector('.jw-s-from')?.textContent || ''),
+  // "jam menyusul" is the schedule's own page text when it is declared (src/copy/jadwal.js)
+  label: (el) => 'Sesi ' + (el.dataset.tba != null ? (copyEntry('jadwal.time.tba') ? tx('jadwal.time.tba') : 'jam menyusul') : el.querySelector('.jw-s-from')?.textContent || ''),
   actions(el, ctx) {
     const ref = parseRef(el.dataset.ref);
     const cur = sessionValue(ctx, ref);
@@ -293,6 +297,7 @@ const jadwal = {
   },
   section: '#jadwal',
   sectionLabel: 'Jadwal',
+  group: 'jadwal',
   tools(ctx) {
     const date = () => ctx.views.jadwal?.current().date || todayWib();
     return [
@@ -407,6 +412,7 @@ const dosen = {
   },
   section: '#dosen',
   sectionLabel: 'Dosen',
+  group: 'dosen',
   tools: (ctx) => [{ label: '+ Dosen', primary: true, run: () => dosenForm(ctx, null) }],
 };
 
@@ -465,6 +471,7 @@ const channel = {
   },
   section: '#menu',
   sectionLabel: 'Drive',
+  group: 'menu',
   tools: (ctx) => [{ label: '+ Channel', primary: true, run: () => channelForm(ctx, null) }],
 };
 
@@ -540,6 +547,7 @@ const info = {
   },
   section: '#jadwal',
   sectionLabel: 'Pengumuman',
+  group: 'info',
   tools: (ctx) => [
     { label: '+ Pengumuman', primary: true, run: () => infoForm(ctx, null) },
     { label: 'Semua pengumuman', run: () => allInfo(ctx) },
@@ -720,6 +728,7 @@ const divisi = {
   },
   section: '#divisi',
   sectionLabel: 'Divisi',
+  group: 'divisi',
   tools: (ctx) => [{ label: '+ Divisi', primary: true, run: () => divisiForm(ctx, null) }],
 };
 
@@ -817,21 +826,20 @@ async function tryoutCardForm(ctx, el) {
     sub: open ? 'Teks di kartu try out dan di halaman bloknya.' : 'Teks di kartu try out. Soal blok ini belum masuk.',
     fields,
     value: Object.fromEntries(fields.map((x) => [x.name, own(x.name) ? t[prefix + x.name] : defs[x.name]])),
-    onSubmit: (v) => safeEdit(ctx, () => ctx.store.edit('links', (d) => {
-      d.site = d.site || { t: {} };
-      d.site.t = d.site.t || {};
-      for (const x of CARD_FIELDS) {
-        if (!(x.f in v)) continue;
-        const key = prefix + x.f, val = String(v[x.f]), def = defs[x.f];
-        if (val === def || (!val.trim() && (!x.opt || !def))) delete d.site.t[key];
-        else d.site.t[key] = val.trim() ? val : '';
-      }
-    }, 'Kartu try out')),
+    onSubmit: (v) => saveTexts(ctx, CARD_FIELDS.filter((x) => x.f in v).map((x) => ({
+      key: prefix + x.f, value: String(v[x.f]), def: defs[x.f], opt: !!x.opt, label: x.label,
+    })), 'Kartu try out'),
   });
 }
 
-// lets one click through to what the element normally does (the overlay passes [data-edit-pass])
+// lets one click through to what the element normally does (the overlay passes [data-edit-pass]);
+// a dropdown opens its list instead
 function clickThrough(el) {
+  if (el.matches('select')) {
+    el.focus();
+    try { el.showPicker?.(); } catch { /* some browsers refuse without a fresh tap */ }
+    return;
+  }
   el.setAttribute('data-edit-pass', '');
   try { el.click(); } finally { el.removeAttribute('data-edit-pass'); }
 }
@@ -840,6 +848,7 @@ const tryoutCard = {
   kind: 'tryout',
   selector: '#panel .to-blk[data-b]',
   label: (el) => 'Kartu ' + (el.querySelector('[data-k$=".name"]')?.textContent || ''),
+  covers: (el, key) => CARD_FIELDS.some((x) => key === 'to.' + el.dataset.b + '.' + x.f),
   actions: (el, ctx) => [
     { label: 'Ubah teks', primary: true, run: () => tryoutCardForm(ctx, el) },
     el.classList.contains('on') ? { label: 'Buka', run: () => clickThrough(el) } : null,
@@ -847,41 +856,157 @@ const tryoutCard = {
 };
 
 // ======================================================================
-// page texts that are not typed into directly (hero endings, marquee, everything at once)
+// texts in buttons and links, the texts a card's own form does not cover, and every page text
+// at once
 
-export async function textsPanel(ctx) {
-  const keys = new Map();
-  // texts marked data-opt (a credit, a note) may be left empty on purpose: then they do not show
-  const optional = new Set();
-  document.querySelectorAll('[data-k]').forEach((el) => {
-    if (!keys.has(el.dataset.k)) keys.set(el.dataset.k, ctx.texts.original(el));
-    if (el.hasAttribute('data-opt')) optional.add(el.dataset.k);
-  });
-  const t = ctx.store.get('links').site?.t || {};
-  const fields = [
-    { name: 'hero.ends', label: 'Akhiran kalimat pembuka, satu per baris (baris kosong = tombol 100% Polyester)', type: 'textarea', rows: 4, wide: true },
-    ...[...keys].map(([k, def]) => ({ name: k, label: k, wide: true, max: 4000, placeholder: def, hint: optional.has(k) ? 'Kosongkan supaya tidak tampil.' : undefined })),
-  ];
-  const value = Object.fromEntries(fields.map((f) => [f.name, t[f.name] ?? (f.name === 'hero.ends' ? ENDS_DEFAULT : keys.get(f.name))]));
-  await openForm({
-    title: 'Teks halaman',
-    sub: 'Semua teks yang bisa diubah. Kosongkan untuk kembali ke teks bawaan (yang bertanda "tidak tampil" jadi tersembunyi).',
-    fields,
-    value,
-    onSubmit: (v) => safeEdit(ctx, () => ctx.store.edit('links', (d) => {
-      d.site = d.site || { t: {} };
-      d.site.t = d.site.t || {};
-      for (const [k, val] of Object.entries(v)) {
-        const def = k === 'hero.ends' ? ENDS_DEFAULT : keys.get(k);
-        const s = String(val);
-        if (s === def || (!s.trim() && (!optional.has(k) || !def))) delete d.site.t[k];
-        else d.site.t[k] = s.trim() ? s : '';
-      }
-    }, 'Teks halaman')),
+const FINE = () => matchMedia('(hover: hover) and (pointer: fine)').matches;
+const KEYED = '[data-k], [data-kp], [data-kt]';
+const ATTR = { kp: 'placeholder', kt: 'title' };
+const own = (o, k) => o != null && Object.prototype.hasOwnProperty.call(o, k);
+const parseVars = (s) => {
+  try { const v = JSON.parse(s || 'null'); return v && typeof v === 'object' ? v : null; } catch { return null; }
+};
+
+/** The keyed texts inside el (el itself first), in page order, one per key: [{ node, kind, key }]. */
+function keysIn(el) {
+  const out = [], seen = new Set();
+  for (const node of [el, ...el.querySelectorAll(KEYED)]) {
+    if (!node.matches(KEYED) || node.closest(EDITOR_UI)) continue;
+    for (const kind of ['k', 'kp', 'kt']) {
+      const key = node.dataset[kind];
+      if (key && !seen.has(key)) { seen.add(key); out.push({ node, kind, key }); }
+    }
+  }
+  return out;
+}
+
+// one text of the page as the list shows it, read from the element that shows it
+function itemFor(ctx, { node, kind, key }) {
+  const T = ctx.texts;
+  const e = T.copyEntry(key);
+  const d = String((kind === 'k' ? T.original(node) : T.defaultAttr(node, ATTR[kind])) ?? '');
+  const vals = (kind === 'k' ? T.varsFor(node) : parseVars(node.dataset[kind + 'v'])) || {};
+  const k = kind === 'k';
+  return {
+    key, kind, group: groupOf(key), d, vars: T.varsOf(d), vals: Object.keys(vals).length ? vals : null, many: false,
+    ml: k && (!!e?.ml || node.hasAttribute('data-ml')), rich: k && (!!e?.rich || node.hasAttribute('data-rich')),
+    opt: k && (!!e?.opt || node.hasAttribute('data-opt')), ph: e?.ph || (k && node.dataset.ph) || '', h: e?.h || '', label: textLabel(key), where: e ? 'reg' : 'page',
+  };
+}
+
+/** Every keyed text in the page now, for the list here and for the admin panel (window.__alphaPageTexts). */
+export function pageEntries(texts) {
+  return collectPageTexts(document.body, {
+    def: (el, kind) => (kind === 'k' ? texts.original(el) : texts.defaultAttr(el, ATTR[kind])),
+    vals: (el, kind) => (kind === 'k' ? texts.varsFor(el) : parseVars(el.dataset[kind + 'v'])),
+    entry: (key) => texts.copyEntry(key),
   });
 }
 
-// the hero endings as the page ships them (src/legacy/app.js); the empty last line is the Polyester button
-const ENDS_DEFAULT = 'And yes this website is a bit vibecoded :D\nSemangat belajarnya!\nJangan tanya apa kepanjangan Resvet.\n';
+// Saves what a list of texts changed, under the same rules and limits as a text typed in place.
+// Answers { errors } to keep the form open with them, null when done.
+function saveTexts(ctx, changes, label, list = null) {
+  const errs = list ? list.errors() : [];
+  if (errs.length) return { errors: errs };
+  if (!changes.length) return null;
+  return safeEdit(ctx, () => ctx.setTexts(changes, label));
+}
 
-export const ADAPTERS = [print, kelas, jadwal, blokPill, dosen, channel, info, heartPart, divisi, panelHero, tryoutCard];
+const kindOf = (el) => (el.matches('a[href]') ? 'Link' : el.matches('input, textarea') ? 'Kolom' : el.matches('select') ? 'Pilihan' : el.matches(CONTROL) ? 'Tombol' : 'Teks');
+const shownText = (el) => String((el.matches('input, textarea') ? el.getAttribute('placeholder') : el.textContent) || '').replace(/\s+/g, ' ').trim();
+const describe = (el) => { const t = shownText(el); return kindOf(el) + (t ? ': ' + (t.length > 60 ? t.slice(0, 59) + '…' : t) : ''); };
+
+/** "Ubah teks": one field per text inside el (or the given ones), raw, with its hints and a reset. */
+async function textsForm(ctx, el, only = null, sub = null) {
+  const t = ctx.store.get('links').site?.t || {};
+  const items = (only || keysIn(el)).map((x) => itemFor(ctx, x));
+  if (!items.length) return;
+  let list = null;
+  await openForm({
+    title: 'Ubah teks',
+    sub: sub || describe(el),
+    fields: [{ type: 'custom', name: 'texts', render: () => {
+      list = textList({ groups: [{ id: 'x', label: '', items }], flat: true, saved: t, value: (it) => (own(t, it.key) ? t[it.key] : it.d) });
+      list.read = () => list.changes();
+      return list;
+    } }],
+    onSubmit: (v) => saveTexts(ctx, v.texts, 'Teks', list),
+  });
+}
+
+// A button, a link or another control that holds texts: selected in edit mode instead of
+// pressed. Ubah teks changes its texts; Buka or Klik does what it normally does.
+const CONTROL_ANY = CONTROL + ', input[data-kp], textarea[data-kp], [data-kt]';
+const hasKeys = (el) => el.matches(KEYED) || !!el.querySelector(KEYED);
+function keyedControl(target) {
+  for (let el = target.closest(CONTROL_ANY); el; el = el.parentElement?.closest(CONTROL_ANY)) {
+    if (el.closest(EDITOR_UI)) return null;
+    if (hasKeys(el)) return el;
+  }
+  return null;
+}
+const opens = (el) => el.matches('a[href]:not([href="#"]), summary, [aria-haspopup], [data-cur="buka"]');
+function clickAction(el) {
+  if (!el.matches(CONTROL) || el.matches('input, textarea, [disabled], [aria-disabled="true"]')) return null;
+  return { label: opens(el) ? 'Buka' : 'Klik', run: () => clickThrough(el) };
+}
+const control = {
+  kind: 'control',
+  match: keyedControl,
+  label: (el) => describe(el),
+  actions: (el, ctx) => [{ label: 'Ubah teks', primary: true, run: () => textsForm(ctx, el) }, clickAction(el)],
+};
+
+// A card whose own form leaves some of its texts out also gets Ubah teks (or Teks lain, next
+// to a form already called Ubah teks), before any red action.
+function withTexts(a) {
+  if (a === control || !a.actions) return a;
+  return {
+    ...a,
+    async actions(el, ctx) {
+      const acts = ((await a.actions(el, ctx)) || []).filter(Boolean);
+      const rest = keysIn(el).filter((x) => !a.covers?.(el, x.key));
+      if (!rest.length) return acts;
+      const act = { label: acts.some((x) => x.label === 'Ubah teks') ? 'Teks lain' : 'Ubah teks', run: () => textsForm(ctx, el, rest, a.label?.(el, ctx)) };
+      const at = acts.findIndex((x) => x.danger);
+      acts.splice(at < 0 ? acts.length : at, 0, act);
+      return acts;
+    },
+  };
+}
+
+/**
+ * Every page text in one list (dock menu "Semua teks halaman", and "Teks" in each section's
+ * tools, which opens it at that section): every declared text, sections never opened included,
+ * the texts of the page itself, and changed texts found nowhere ("Lainnya").
+ */
+export async function textsPanel(ctx, { group = null } = {}) {
+  const t = ctx.store.get('links').site?.t || {};
+  const groups = buildTextList({ reg: ctx.texts.listCopy(), page: pageEntries(ctx.texts), saved: t, order: GROUPS, groupOf, special: [HERO_ENDS] });
+  let list = null;
+  await openForm({
+    title: 'Teks halaman',
+    sub: 'Semua teks yang bisa diubah. Kosongkan kolom buat balik ke teks bawaan.',
+    cls: 'is-texts',
+    autofocus: FINE(),
+    fields: [{ type: 'custom', name: 'texts', render: () => {
+      list = textList({ groups, saved: t, value: (it) => (own(t, it.key) ? t[it.key] : it.d), only: group, open: group || 'hero' });
+      list.read = () => list.changes();
+      return list;
+    } }],
+    onSubmit: (v) => saveTexts(ctx, v.texts, 'Teks halaman', list),
+  });
+}
+
+// Where "Teks" sits for the parts of the page that have no tools of their own (the others get it
+// in their tools): the hero, the heart, the class photo, the footer, and an open channel page or
+// try out.
+export const TEXT_SPOTS = [
+  { id: 'hero', at: '#top', group: 'hero' },
+  { id: 'anatomi', at: '#anatomi', group: 'anatomi' },
+  { id: 'kelas', at: '#kelas', group: 'kelas' },
+  { id: 'foot', at: 'footer.foot', group: 'foot' },
+  { id: 'panel', at: '#panel.on .p-hero', before: true, group: (at) => (at.closest('.to-wrap') ? 'to' : 'ch') },
+].map((s) => ({ ...s, label: (g) => GROUP_LABELS[g] }));
+
+export const ADAPTERS = [print, kelas, jadwal, blokPill, dosen, channel, info, heartPart, divisi, panelHero, tryoutCard, control].map(withTexts);

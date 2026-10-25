@@ -866,7 +866,7 @@ html.fine .to-fig:not(.ld):not(.bad) .to-fz:hover{box-shadow:0 0 0 2px var(--grx
 @media (max-width:760px){.to-bloks{grid-template-columns:1fr}.to-blk{min-height:0}.to-bn{font-size:80px}
   .to-blk.off{flex-direction:row;flex-wrap:wrap;align-items:center;gap:4px 12px;padding:16px 20px}.to-blk.off .to-bt{flex-basis:100%}.to-blk.off .to-bx{margin:0 0 0 auto}.to-blk.off .to-bn{font-size:56px;top:2px}.to-blk.off .to-bby{order:1;flex-basis:100%}}
 @media (max-width:560px){.to-kpis{grid-template-columns:repeat(2,minmax(0,1fr))}.to-modes{grid-template-columns:1fr}.to-tp li{grid-template-columns:1fr auto;gap:6px 12px}.to-tp-b{grid-column:1 / -1;grid-row:2}.to-mon{min-height:214px;padding:18px}.to-mon-ecg{top:5%;height:34%;width:100%;-webkit-mask-image:none;mask-image:none}}
-@media (max-width:420px){.to-foot .ghost span{display:none}.to-foot .to-btn{padding:0 16px}.to-ib.sm span{display:none}.to-ib.sm{width:34px;padding:0;justify-content:center}}
+@media (max-width:420px){.to-foot [data-act="prev"] span{display:none}.to-foot .to-btn{padding:0 16px}.to-ib.sm span{display:none}.to-ib.sm{width:34px;padding:0;justify-content:center}}
 @media (max-width:400px){#panel.to-running .back span{display:none}.to-tm{min-width:0;padding:6px 8px}}
 /* fold-phone cover screens: three footer buttons still fit on one row */
 @media (max-width:340px){

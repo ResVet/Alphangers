@@ -2,33 +2,29 @@
 // The text side (search, part list, notes) works on its own, so the section is still useful
 // without WebGL; the 3D scene is loaded only when the section comes near the screen.
 import './anatomi.css';
-import { PARTS, INDEX, GROUPS, VIEW_FOR } from './palette.js';
+import '../../copy/anatomi.js';
+import { kHTML, kSet, tx, copyEntry } from '../../lib/texts.js';
+import { PARTS, INDEX, VIEW_FOR } from './palette.js';
 import { ecgV, RR } from '../../legacy/ecg.js';
 
 const MODEL_URL = '/models/heart.glb';
 const META_URL = '/models/heart-meta.json';
 const POSTER_URL = '/models/heart-poster.webp';
-const MODES = [
-  { id: 'whole', label: 'Utuh', hint: 'Bentuk luar, arteri koroner, dan vena jantung' },
-  { id: 'cut', label: 'Belah', hint: 'Dibelah biar kelihatan ruang, katup, dan septum' },
-  { id: 'ecg', label: 'Listrik', hint: 'Jalur listrik jantung, sinkron sama EKG' },
-  { id: 'flow', label: 'Aliran darah', hint: 'Darah kaya dan miskin oksigen lewat ruang dan katupnya' },
-];
-const CUTS = [
-  { id: 'front', label: 'Depan' },
-  { id: 'four', label: 'Empat ruang' },
-  { id: 'base', label: 'Dasar katup' },
-];
-// what happens during one beat, in ms after the SA node fires (matches the model's activation times)
+// Every word shown here is a page text in src/copy/anatomi.js: a view's label is
+// "anatomi.mode.<id>" and its tooltip "anatomi.mode.<id>.t", a cut's label "anatomi.cut.<id>".
+const MODES = [{ id: 'whole' }, { id: 'cut' }, { id: 'ecg' }, { id: 'flow' }];
+const CUTS = [{ id: 'front' }, { id: 'four' }, { id: 'base' }];
+// what happens during one beat, in ms after the SA node fires (matches the model's activation times);
+// the phase's name is the page text "anatomi.ph.<id>", what happens in it "anatomi.ph.<id>.d"
 const PHASES = [
-  [0, 40, 'Nodus SA menembak', 'Impuls lahir di nodus SA dan mulai menyebar ke dinding atrium.'],
-  [40, 95, 'Gelombang P', 'Kedua atrium terdepolarisasi, dari kanan ke kiri lewat berkas Bachmann.'],
-  [95, 120, 'Segmen PR', 'Impuls ditahan sebentar di nodus AV, kasih waktu atrium ngisi ventrikel.'],
-  [120, 165, 'Berkas His', 'Impuls turun lewat berkas His ke cabang kanan dan kiri di septum.'],
-  [165, 235, 'Kompleks QRS', 'Purkinje nyebarin impuls, ventrikel terdepolarisasi dari septum dan apeks ke basis.'],
-  [235, 330, 'Segmen ST', 'Seluruh ventrikel lagi terdepolarisasi dan berkontraksi, darah dipompa keluar.'],
-  [330, 520, 'Gelombang T', 'Ventrikel repolarisasi dan mulai relaksasi.'],
-  [520, 1e9, 'Diastol', 'Jantung istirahat dan terisi lagi sampai nodus SA menembak berikutnya.'],
+  [0, 40, 'sa'],
+  [40, 95, 'p'],
+  [95, 120, 'pr'],
+  [120, 165, 'his'],
+  [165, 235, 'qrs'],
+  [235, 330, 'st'],
+  [330, 520, 't'],
+  [520, 1e9, 'dia'],
 ];
 const ECG_OFFSET = 0.035; // seconds between the SA node firing and the template's beat start
 
@@ -39,6 +35,18 @@ const el = (tag, cls, text) => {
   return n;
 };
 const fold = (s) => String(s || '').normalize('NFKD').replace(/[̀-ͯ]/g, '').toLowerCase();
+// an element showing a page text, and a tooltip taken from one
+const kEl = (tag, cls, key) => kSet(el(tag, cls), key);
+const kTitle = (n, key) => {
+  n.dataset.kt = key;
+  n.title = tx(key);
+  return n;
+};
+// a part group's name: its page text "anatomi.g.<group>", or the group's id when it has none
+function groupEl(tag, cls, g) {
+  const key = 'anatomi.g.' + g;
+  return copyEntry(key) ? kEl(tag, cls, key) : el(tag, cls, g);
+}
 
 // Pulls the 3D code, the model and its notes into the HTTP cache while the reader is still a few
 // sections away, so the heart is ready by the time it scrolls into view. Skipped on Save-Data.
@@ -76,7 +84,7 @@ export function mountAnatomi(root, { heart, portal }) {
   keysHelp.id = 'hxKeys';
   const load = el('div', 'hx-load');
   const loadBar = el('i', 'hx-load-b');
-  const loadT = el('span', 'hx-load-t lbl', 'Memuat model jantung');
+  const loadT = kEl('span', 'hx-load-t lbl', 'anatomi.load');
   load.append(el('span', 'hx-load-r', null), loadT);
   load.firstChild.append(loadBar);
   const tip = el('div', 'hx-tip');
@@ -86,13 +94,14 @@ export function mountAnatomi(root, { heart, portal }) {
   modes.setAttribute('role', 'radiogroup');
   modes.setAttribute('aria-label', 'Tampilan model');
   MODES.forEach((m, i) => {
-    const b = el('button', 'hx-mode', m.label);
+    const b = el('button', 'hx-mode');
+    b.append(kEl('span', null, 'anatomi.mode.' + m.id));
     b.type = 'button';
     b.dataset.mode = m.id;
     b.setAttribute('role', 'radio');
     b.setAttribute('aria-checked', i === 0 ? 'true' : 'false');
     b.tabIndex = i === 0 ? 0 : -1;
-    b.title = m.hint;
+    kTitle(b, 'anatomi.mode.' + m.id + '.t');
     modes.append(b);
   });
 
@@ -102,7 +111,8 @@ export function mountAnatomi(root, { heart, portal }) {
   cutBtns.setAttribute('role', 'group');
   cutBtns.setAttribute('aria-label', 'Arah belahan');
   CUTS.forEach((c, i) => {
-    const b = el('button', 'hx-segb', c.label);
+    const b = el('button', 'hx-segb');
+    b.append(kEl('span', null, 'anatomi.cut.' + c.id));
     b.type = 'button';
     b.dataset.cut = c.id;
     b.setAttribute('aria-pressed', i === 0 ? 'true' : 'false');
@@ -112,8 +122,8 @@ export function mountAnatomi(root, { heart, portal }) {
   cutRange.type = 'range';
   cutRange.min = '-1'; cutRange.max = '1'; cutRange.step = '0.01'; cutRange.value = '0';
   cutRange.setAttribute('aria-label', 'Geser bidang belahan');
-  const cutLab = el('label', 'hx-rl lbl', 'Geser belahan');
-  cutLab.append(cutRange);
+  const cutLab = el('label', 'hx-rl lbl');
+  cutLab.append(kEl('span', null, 'anatomi.cut.slide'), cutRange);
   cutBox.append(cutBtns, cutLab);
 
   const ecgBox = el('div', 'hx-ecg');
@@ -125,13 +135,16 @@ export function mountAnatomi(root, { heart, portal }) {
   const ecgLive = el('p', 'sr');
   ecgLive.setAttribute('aria-live', 'polite');
   const ecgCtl = el('div', 'hx-ecg-ctl');
-  const playB = el('button', 'hx-tbtn', RM ? 'Putar' : 'Jeda');
+  const playT = kEl('span', null, RM ? 'anatomi.ecg.play' : 'anatomi.ecg.pause');
+  const playB = el('button', 'hx-tbtn');
+  playB.append(playT);
   playB.type = 'button';
   playB.setAttribute('aria-pressed', RM ? 'false' : 'true');
-  const slowB = el('button', 'hx-tbtn', 'Pelan');
+  const slowB = el('button', 'hx-tbtn');
+  slowB.append(kEl('span', null, 'anatomi.ecg.slow'));
   slowB.type = 'button';
   slowB.setAttribute('aria-pressed', 'false');
-  slowB.title = 'Putar seperempat kecepatan';
+  kTitle(slowB, 'anatomi.ecg.slow.t');
   const scrub = el('input', 'hx-range');
   scrub.type = 'range';
   scrub.min = '0'; scrub.max = '833'; scrub.step = '1'; scrub.value = '0';
@@ -141,37 +154,39 @@ export function mountAnatomi(root, { heart, portal }) {
 
   const flowKey = el('div', 'hx-flow');
   flowKey.hidden = true;
-  flowKey.innerHTML = '<span><i class="o2-lo"></i>Darah miskin O₂</span><span><i class="o2-hi"></i>Darah kaya O₂</span>';
+  flowKey.innerHTML = '<span><i class="o2-lo"></i>' + kHTML('anatomi.flow.lo') + '</span><span><i class="o2-hi"></i>' + kHTML('anatomi.flow.hi') + '</span>';
   const flowPhase = el('b', 'hx-flow-p', '');
   flowKey.append(flowPhase);
 
   const tools = el('div', 'hx-tools');
-  const tool = (label, txt, cls = '') => {
+  // the tooltip is a page text; the name for screen readers stays here
+  const tool = (label, key, txt, cls = '') => {
     const b = el('button', 'hx-tool ' + cls, txt);
     b.type = 'button';
     b.setAttribute('aria-label', label);
-    b.title = label;
+    kTitle(b, key);
     tools.append(b);
     return b;
   };
-  const zoomIn = tool('Perbesar', '+');
-  const zoomOut = tool('Perkecil', '−');
-  const homeB = tool('Balik ke posisi awal', '', 'hx-home');
+  const zoomIn = tool('Perbesar', 'anatomi.tool.in', '+');
+  const zoomOut = tool('Perkecil', 'anatomi.tool.out', '−');
+  const homeB = tool('Balik ke posisi awal', 'anatomi.tool.home', '', 'hx-home');
   homeB.innerHTML = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 12a8 8 0 1 0 2.4-5.7"/><path d="M4 4v4.5h4.5"/></svg>';
-  const corB = tool('Tampilkan pembuluh koroner', '', 'hx-cor');
+  const corB = tool('Tampilkan pembuluh koroner', 'anatomi.tool.cor', '', 'hx-cor');
   corB.innerHTML = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3c-1 4-5 5-5 9s3 5 3 9"/><path d="M12 3c1 4 6 4 6 8s-4 6-4 10"/></svg>';
   corB.setAttribute('aria-pressed', 'true');
-  const fsB = tool('Layar penuh', '', 'hx-fs');
+  const fsB = tool('Layar penuh', 'anatomi.tool.fs', '', 'hx-fs');
   fsB.innerHTML = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 9V4h5M20 9V4h-5M4 15v5h5M20 15v5h-5"/></svg>';
   if (!wrap.requestFullscreen) fsB.hidden = true;
 
   const TOUCH = !matchMedia('(hover: hover) and (pointer: fine)').matches;
-  const hint = el('p', 'hx-hint lbl', TOUCH ? 'Geser ke samping buat muter, dua jari buat zoom, ketuk bagiannya' : 'Seret buat muter, scroll buat zoom, klik bagian mana aja');
+  const hint = kEl('p', 'hx-hint lbl', TOUCH ? 'anatomi.hint.touch' : 'anatomi.hint.mouse');
   const peek = el('div', 'hx-peek');
   peek.hidden = true;
   const peekN = el('b', 'hx-peek-n');
   const peekS = el('p', 'hx-peek-s');
-  const peekGo = el('button', 'hx-peek-go', 'Baca catatannya');
+  const peekGo = el('button', 'hx-peek-go');
+  peekGo.append(kEl('span', null, 'anatomi.peek.go'));
   peekGo.type = 'button';
   const peekX = el('button', 'hx-peek-x', '×');
   peekX.type = 'button';
@@ -185,7 +200,8 @@ export function mountAnatomi(root, { heart, portal }) {
   const find = el('div', 'hx-find');
   const q = el('input', 'hx-q');
   q.type = 'search';
-  q.placeholder = 'Cari bagian, misal: mitral, LAD, nodus AV';
+  q.dataset.kp = 'anatomi.find.ph';
+  q.placeholder = tx('anatomi.find.ph');
   q.setAttribute('aria-label', 'Cari bagian jantung');
   q.autocomplete = 'off';
   q.spellcheck = false;
@@ -213,12 +229,14 @@ export function mountAnatomi(root, { heart, portal }) {
       groups.get(p.group).push(p);
     }
     if (!groups.size) {
-      list.append(el('p', 'hx-none', 'Gak ketemu. Coba nama Latin atau singkatannya.'));
+      list.append(kEl('p', 'hx-none', 'anatomi.find.none'));
       return;
     }
     for (const [g, items] of groups) {
       const box = el('div', 'hx-grp');
-      box.append(el('p', 'hx-grp-h lbl', `${GROUPS[g] || g} · ${items.length}`));
+      const h = el('p', 'hx-grp-h lbl');
+      h.append(groupEl('span', null, g), ' · ' + items.length);
+      box.append(h);
       const ul = el('ul', 'hx-items');
       items.forEach((p) => {
         const li = el('li');
@@ -236,9 +254,9 @@ export function mountAnatomi(root, { heart, portal }) {
   }
 
   // ---------- notes for one part (plain text only, never HTML)
-  function section(title, body) {
+  function section(key, body) {
     const s = el('section', 'hx-sec');
-    s.append(el('h4', 'hx-sec-h lbl', title));
+    s.append(kEl('h4', 'hx-sec-h lbl', key));
     if (body) s.append(body);
     return s;
   }
@@ -248,7 +266,7 @@ export function mountAnatomi(root, { heart, portal }) {
     if (!p) return;
     info.dataset.id = p.id;
     const head = el('header', 'hx-ih');
-    head.append(el('p', 'hx-kick kick', GROUPS[p.group] || p.group));
+    head.append(groupEl('p', 'hx-kick kick', p.group));
     head.append(el('h3', 'hx-name', p.name));
     const names = el('p', 'hx-alt');
     names.append(el('i', null, p.latin));
@@ -264,15 +282,15 @@ export function mountAnatomi(root, { heart, portal }) {
         if (m) { li.append(el('b', null, m[1] + '. ')); li.append(document.createTextNode(m[2])); } else li.textContent = t;
         ul.append(li);
       });
-      info.append(section('Anatomi', ul));
+      info.append(section('anatomi.sec.anatomi', ul));
     }
-    if (p.function) info.append(section('Fungsi', el('p', null, p.function)));
+    if (p.function) info.append(section('anatomi.sec.fungsi', el('p', null, p.function)));
     if (p.numbers?.length) {
       const dl = el('dl', 'hx-num');
       p.numbers.forEach((n) => { dl.append(el('dt', null, n.k), el('dd', null, n.v)); });
-      info.append(section('Angka penting', dl));
+      info.append(section('anatomi.sec.angka', dl));
     }
-    if (p.supply) info.append(section('Perdarahan', el('p', null, p.supply)));
+    if (p.supply) info.append(section('anatomi.sec.darah', el('p', null, p.supply)));
     if (p.clinical?.length) {
       const box = el('div', 'hx-clin');
       p.clinical.forEach((c) => {
@@ -280,9 +298,9 @@ export function mountAnatomi(root, { heart, portal }) {
         d.append(el('b', null, c.t), el('p', null, c.d));
         box.append(d);
       });
-      info.append(section('Klinis', box));
+      info.append(section('anatomi.sec.klinis', box));
     }
-    if (p.ecg) info.append(section('Di EKG', el('p', null, p.ecg)));
+    if (p.ecg) info.append(section('anatomi.sec.ekg', el('p', null, p.ecg)));
     if (p.related?.length) {
       const r = el('div', 'hx-rel');
       p.related.forEach((rid) => {
@@ -293,10 +311,9 @@ export function mountAnatomi(root, { heart, portal }) {
         b.dataset.id = rid;
         r.append(b);
       });
-      info.append(section('Terkait', r));
+      info.append(section('anatomi.sec.terkait', r));
     }
-    const note = el('p', 'hx-src', 'Ringkasan belajar dari buku ajar dan rujukan klinis. Buat ujian, tetap cek slide dan buku pegangan blok.');
-    info.append(note);
+    info.append(kEl('p', 'hx-src', 'anatomi.src'));
   }
 
   // ---------- selection
@@ -372,12 +389,13 @@ export function mountAnatomi(root, { heart, portal }) {
     if (ecgBox.hidden && flowKey.hidden) return;
     const ph = PHASES.findIndex(([a, b]) => ms >= a && ms < b);
     if (ph !== phaseIdx) {
+      // only when the phase changes, not on every frame
       phaseIdx = ph;
-      const [, , k, d] = PHASES[ph];
-      ecgK.textContent = k;
-      ecgP.textContent = d;
-      flowPhase.textContent = ms >= 165 && ms < 520 ? 'Sistol' : 'Diastol';
-      if (!playing) ecgLive.textContent = `${k}. ${d}`;
+      const key = 'anatomi.ph.' + PHASES[ph][2];
+      kSet(ecgK, key);
+      kSet(ecgP, key + '.d');
+      kSet(flowPhase, ms >= 165 && ms < 520 ? 'anatomi.flow.sys' : 'anatomi.flow.dia');
+      if (!playing) ecgLive.textContent = `${tx(key)}. ${tx(key + '.d')}`;
     }
     if (ecgBox.hidden) return;
     // the grid and the grey trace only change with the strip's size: drawn once into a layer,
@@ -433,7 +451,7 @@ export function mountAnatomi(root, { heart, portal }) {
   scrub.addEventListener('change', () => { scrubbing = false; });
   function togglePlay(on = !playing) {
     playing = on;
-    playB.textContent = on ? 'Jeda' : 'Putar';
+    kSet(playT, on ? 'anatomi.ecg.pause' : 'anatomi.ecg.play');
     playB.setAttribute('aria-pressed', on ? 'true' : 'false');
     scene?.setPlaying(on);
   }
@@ -535,7 +553,7 @@ export function mountAnatomi(root, { heart, portal }) {
     const name = i > 0 ? parts.get(PARTS[i])?.name : '';
     canvas.style.cursor = name ? 'pointer' : 'grab';
     if (FINE_CURSOR && cr && crt) {
-      if (name) { crt.textContent = name; cr.classList.add('lab'); } else { crt.textContent = 'putar'; cr.classList.add('lab'); }
+      if (name) { crt.textContent = name; cr.classList.add('lab'); } else { crt.textContent = tx('anatomi.cur'); cr.classList.add('lab'); }
       return;
     }
     if (!name) { tip.classList.remove('on'); return; }
@@ -617,7 +635,7 @@ export function mountAnatomi(root, { heart, portal }) {
   }
   const ro = 'ResizeObserver' in window ? new ResizeObserver(() => { scene?.resize(); fitInsets(); }) : null;
 
-  function noWebgl(msg) {
+  function noWebgl(key) {
     // a still picture of the model, so the stage is not an empty box
     const img = el('img', 'hx-poster');
     img.src = POSTER_URL;
@@ -626,12 +644,12 @@ export function mountAnatomi(root, { heart, portal }) {
     stage.prepend(img);
     wrap.classList.add('hx-off');
     load.classList.add('hx-load-off');
-    loadT.textContent = msg;
+    kSet(loadT, key);
     modes.hidden = tools.hidden = hint.hidden = true;
   }
 
   if (!webglOK()) {
-    noWebgl('Browser ini belum bisa nampilin 3D. Catatan tiap bagian tetap bisa dibaca dari daftar di samping.');
+    noWebgl('anatomi.nogl');
   } else {
     Promise.all([import('./scene.js'), fetch(META_URL).then((r) => { if (!r.ok) throw new Error('meta ' + r.status); return r.json(); })])
       .then(([mod, meta]) => mod.createScene(canvas, {
@@ -663,7 +681,7 @@ export function mountAnatomi(root, { heart, portal }) {
       })
       .catch((err) => {
         console.error(err);
-        noWebgl('Model 3D-nya gagal dimuat. Catatan tiap bagian tetap bisa dibaca dari daftar di samping.');
+        noWebgl('anatomi.fail');
       });
   }
 

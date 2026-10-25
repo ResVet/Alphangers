@@ -5,7 +5,12 @@
 // the next photo and, on a phone, swiped down to close. Zooming past 1.3x swaps in the original
 // file. The panel beside (or under) the photo carries the text and a strip of every photo.
 // Back on a phone closes it, like any other full-screen view.
+//
+// open() takes the texts around the photo (kick, title, sub, desc) as plain strings, or as a page
+// text { k: 'divisi.view.kick', v: { no: '03' } } so it can be changed like any other.
 import './viewer.css';
+import '../../copy/viewer.js';
+import { kSet } from '../../lib/texts.js';
 import { pictureHTML, fullSrc, watchLoaded } from '../../lib/photo.js';
 
 const RM = () => matchMedia('(prefers-reduced-motion: reduce)').matches;
@@ -13,6 +18,20 @@ const TOUCH = () => !matchMedia('(hover: hover) and (pointer: fine)').matches;
 const EASE = 'cubic-bezier(.32,.72,0,1)';
 const clamp = (x, a, b) => (x < a ? a : x > b ? b : x);
 const esc = (s) => String(s ?? '').replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[c]);
+const isKey = (v) => !!(v && typeof v === 'object' && v.k);
+
+/** Shows a plain string or a page text in el; a page text from an earlier photo is taken off. */
+function put(el, v) {
+  if (isKey(v)) return kSet(el, v.k, v.v);
+  if (el.dataset.k) {
+    delete el.dataset.k;
+    delete el.dataset.kv;
+    for (const a of ['data-ml', 'data-rich', 'data-opt', 'data-ph', 'data-empty']) el.removeAttribute(a);
+  }
+  el.textContent = v || '';
+  return el;
+}
+const has = (v) => (isKey(v) ? true : !!v);
 
 let viewer = null;
 export function getViewer() {
@@ -55,7 +74,7 @@ function createViewer() {
   const $ = (s) => dlg.querySelector(s);
   const stage = $('.pv-stage'), frame = $('.pv-frame'), pan = $('.pv-pan'), strip = $('.pv-strip'), zv = $('.pv-zv');
   const hint = $('.pv-hint');
-  hint.textContent = TOUCH() ? 'Ketuk 2x atau cubit buat zoom, geser buat ganti foto' : 'Scroll atau klik 2x buat zoom, panah buat ganti foto';
+  kSet(hint, TOUCH() ? 'viewer.hint.touch' : 'viewer.hint.mouse');
 
   let st = null; // { photos, index, title, sub, kick, desc, from, onIndex }
   let img = null, s = 1, tx = 0, ty = 0, hiRes = false;
@@ -64,12 +83,10 @@ function createViewer() {
   // ---------- rendering
   function render(dir = 0) {
     const ph = st.photos[st.index];
-    $('.pv-kick').textContent = st.kick || '';
-    $('.pv-title').textContent = st.title || '';
-    $('.pv-sub').textContent = st.sub || '';
-    $('.pv-sub').hidden = !st.sub;
-    $('.pv-desc').textContent = st.desc || '';
-    $('.pv-desc').hidden = !st.desc;
+    put($('.pv-kick'), st.kick);
+    put($('.pv-title'), st.title);
+    put($('.pv-sub'), st.sub).hidden = !has(st.sub);
+    put($('.pv-desc'), st.desc).hidden = !has(st.desc);
     $('.pv-cap').textContent = ph?.cap || '';
     $('.pv-cap').hidden = !ph?.cap;
     $('.pv-count').textContent = st.photos.length > 1 ? (st.index + 1) + ' / ' + st.photos.length : '';

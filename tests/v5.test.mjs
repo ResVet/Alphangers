@@ -62,6 +62,9 @@ test('page text keys and values', () => {
 test('control characters and bidi overrides are removed from page texts', () => {
   const r = validate('links', { ...links, site: { t: { 'foot.credit': 'Made\u202e with\u0007 love' } } });
   assert.equal(r.data.site.t['foot.credit'], 'Made with love');
+  // invisible characters a paste brings along go too; the emoji joiner stays
+  const z = validate('links', { ...links, site: { t: { 'foot.meta': '\ufeffClass\u200b Alpha\u2060\u061c 👩\u200d⚕️' } } });
+  assert.equal(z.data.site.t['foot.meta'], 'Class Alpha 👩\u200d⚕️');
 });
 
 // ---------- cancelled sessions

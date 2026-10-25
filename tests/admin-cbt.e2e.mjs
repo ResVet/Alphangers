@@ -22,8 +22,8 @@ if (SHOTS) mkdirSync(SHOTS, { recursive: true });
 
 let srv, browser;
 before(async () => {
-  assert.ok(existsSync(join(ROOT, 'dist-mock', 'admin', 'index.html')), 'run "npx vite build --mode mock --outDir dist-mock" first');
-  srv = await serveDist({ dir: join(ROOT, 'dist-mock') });
+  assert.ok(existsSync(join(process.env.DIST_MOCK_DIR || join(ROOT, 'dist-mock'), 'admin', 'index.html')), 'run "npx vite build --mode mock --outDir dist-mock" first');
+  srv = await serveDist({ dir: process.env.DIST_MOCK_DIR || join(ROOT, 'dist-mock') });
   browser = await chromium.launch({ executablePath: process.env.CHROMIUM || '/opt/pw-browsers/chromium' });
 });
 after(async () => { await browser?.close(); srv?.server.close(); });
@@ -378,7 +378,11 @@ for (const [w, h] of [[1280, 800], [390, 844]]) {
     const s = await open('/?admin&mock=admin', { width: w, height: h });
     const { page } = s;
     await page.waitForSelector('.ed-dock.is-admin');
-    await page.click('.ed-seg:has-text("Panel")');
+    // on a phone the dock keeps Lihat and Edit; Panel is in its menu
+    if (w < 640) {
+      await page.click('[aria-label="Menu editor"]');
+      await page.click('.ed-menu [role=menuitem]:has-text("Panel")');
+    } else await page.click('.ed-seg:has-text("Panel")');
     const frame = page.frameLocator('.ed-panel-f');
     await frame.getByRole('button', { name: 'Peserta try out' }).click();
     await frame.getByLabel('Kode setup').fill('mock-setup-code');

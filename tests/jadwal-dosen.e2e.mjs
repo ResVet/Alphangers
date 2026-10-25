@@ -600,6 +600,8 @@ describe('together', () => {
     await dosenRendered(page);
     assert.deepEqual(await axeSeriousOrCritical(page), [], 'page');
     await page.evaluate(() => window.jadwal.go('2026-10-03'));
+    // "Hari ini" turns on with a .2s fade; measured mid-fade its contrast looks too low
+    await page.waitForFunction(() => getComputedStyle(document.querySelector('[data-act="today"]')).opacity === '1');
     assert.deepEqual(await axeSeriousOrCritical(page), [], 'empty day');
     await page.click('[data-act="cal"]');
     assert.deepEqual(await axeSeriousOrCritical(page), [], 'calendar open');

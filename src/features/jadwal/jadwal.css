@@ -28,6 +28,9 @@
 
 /* heading row */
 .jw-head{display:flex;flex-wrap:wrap;align-items:flex-end;justify-content:space-between;gap:18px 24px}
+.jw-title{min-width:0}
+/* the admin's note under the heading (.k-note in shell.css; hidden while empty) */
+.jw-title .k-note{margin-top:clamp(10px,1.6cqi,16px)}
 .jw-h{font-family:var(--disp);font-weight:800;font-size:clamp(34px,7cqi,84px);line-height:1.02;letter-spacing:-.03em;padding-bottom:.06em;text-wrap:balance}
 .jw-h em{font-family:var(--ser);font-style:italic;font-weight:400;color:var(--grx);letter-spacing:0}
 .jw-bloks{display:flex;flex-wrap:wrap;gap:6px}
@@ -150,7 +153,7 @@
 .jw-s-t{margin-top:10px;font-family:var(--disp);font-weight:700;font-size:clamp(19px,2.3cqi,25px);line-height:1.18;letter-spacing:-.01em;text-wrap:balance;overflow-wrap:anywhere}
 .jw-s-note{margin-top:10px;padding-left:12px;border-left:2px solid var(--line2);font-size:14px;line-height:1.5;color:var(--mut);max-width:64ch;text-wrap:pretty}
 .jw-tim{margin-top:12px;font-size:14.5px;color:var(--mut)}
-.jw-tim strong{color:var(--ink);font-weight:600;margin-right:4px}
+.jw-tim b{color:var(--ink);font-weight:600;margin-right:4px}
 .jw-ppl{margin-top:14px;display:grid;gap:16px}
 .jw-p{min-width:0}
 .jw-p-top{display:flex;flex-wrap:wrap;align-items:center;gap:4px 10px}
@@ -210,8 +213,9 @@
 .jw-tag.is-gab{border-style:solid;border-color:rgba(244,198,90,.55);color:var(--amb)}
 .jw-s.is-batal .jw-tag{opacity:.5}
 .jw-mini.jw-join{background:var(--grx);border-color:var(--grx);color:#07100a;font-weight:600}
-.jw-s-why{margin-top:10px;display:flex;gap:8px;font-size:14.5px;line-height:1.45;color:#ffb3ba;max-width:60ch}
-.jw-s-why::before{content:"Alasan";flex:none;padding-top:2px;font-family:var(--mono);font-size:10px;letter-spacing:.18em;text-transform:uppercase;color:var(--jw-red)}
+.jw-why{margin-top:10px;display:flex;gap:8px;font-size:14.5px;line-height:1.45;max-width:60ch}
+.jw-why-k{flex:none;padding-top:2px;font-family:var(--mono);font-size:10px;letter-spacing:.18em;text-transform:uppercase;color:var(--jw-red)}
+.jw-s-why{color:#ffb3ba}
 
 .jw-x{position:absolute;inset:0 -6px;z-index:2;pointer-events:none;perspective:900px;perspective-origin:50% 40%}
 .jw-x-tilt{position:absolute;left:-1%;right:-1%;top:var(--jw-tape-y,62%);height:0;transform-style:preserve-3d;

@@ -12,15 +12,7 @@ export const PARTS = [
 ];
 export const INDEX = Object.fromEntries(PARTS.map((id, i) => [id, i]));
 
-export const GROUPS = {
-  umum: 'Umum',
-  ruang: 'Ruang dan dinding',
-  pembuluh_besar: 'Pembuluh besar',
-  koroner: 'Arteri koroner',
-  vena_jantung: 'Vena jantung',
-  katup: 'Katup dan penyangganya',
-  konduksi: 'Sistem konduksi',
-};
+// The groups' names are page texts, "anatomi.g.<group>" in src/copy/anatomi.js.
 
 // Textbook convention: oxygen-rich vessels red, oxygen-poor blue, valves pale, conduction in the
 // site's green so it reads as "the electrical part" at a glance. Muscle is a deep, slightly cool red.

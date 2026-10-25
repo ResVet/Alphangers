@@ -7,7 +7,7 @@ import './styles/shell.css';
 import links from './data/links.json';
 import { startPortal } from './legacy/app.js';
 import { load, subscribe } from './lib/content.js';
-import { createTexts } from './lib/texts.js';
+import { createTexts, kSet } from './lib/texts.js';
 
 const portal = startPortal({ links });
 // Page texts the admin changed (links document, site.t). Applied to every element with a
@@ -43,15 +43,16 @@ function whenNear(el, margin, fn) {
   io.observe(el);
 }
 
-function failed(root, what) {
+// a section whose script or data did not load says so, in its page text (app.fail.<section>, src/copy/shell.js)
+function failed(root, key) {
   root.textContent = '';
   const p = document.createElement('p');
   p.className = 'feat-wait lbl';
-  p.textContent = `${what} gagal dimuat. Coba muat ulang halamannya.`;
+  kSet(p, key);
   root.append(p);
 }
 
-async function mountFeature(path, rootId, keys, exportName, label, keep = false) {
+async function mountFeature(path, rootId, keys, exportName, failKey, keep = false) {
   const root = document.getElementById(rootId);
   const loader = features[path];
   if (!root || !loader) return null;
@@ -67,20 +68,20 @@ async function mountFeature(path, rootId, keys, exportName, label, keep = false)
     return view;
   } catch (err) {
     console.error(err);
-    if (!keep) failed(root, label);
+    if (!keep) failed(root, failKey);
     return null;
   }
 }
 
 // Each section mounts once. ensure() lets search mount one early when a result lives there.
 const SECTIONS = {
-  info: ['./features/info/info.js', 'info', ['announcements'], 'mountInfo', 'Pengumuman'],
-  jadwal: ['./features/jadwal/jadwal.js', 'jadwalRoot', ['schedule', 'dosen'], 'mountJadwal', 'Jadwal'],
-  dosen: ['./features/dosen/dosen.js', 'dosenRoot', ['schedule', 'dosen'], 'mountDosen', 'Daftar dosen'],
-  anatomi: ['./features/anatomi/anatomi.js', 'anatomiRoot', ['heart'], 'mountAnatomi', 'Model jantung'],
-  divisi: ['./features/divisi/divisi.js', 'divisiRoot', ['links'], 'mountDivisi', 'Divisi'],
-  // the class photo is already in the page; the module only adds the full view (keep = true)
-  kelas: ['./features/kelas/kelas.js', 'kelas', ['links'], 'mountKelas', 'Foto kelas', true],
+  info: ['./features/info/info.js', 'info', ['announcements'], 'mountInfo', 'app.fail.info'],
+  jadwal: ['./features/jadwal/jadwal.js', 'jadwalRoot', ['schedule', 'dosen'], 'mountJadwal', 'app.fail.jadwal'],
+  dosen: ['./features/dosen/dosen.js', 'dosenRoot', ['schedule', 'dosen'], 'mountDosen', 'app.fail.dosen'],
+  anatomi: ['./features/anatomi/anatomi.js', 'anatomiRoot', ['heart'], 'mountAnatomi', 'app.fail.anatomi'],
+  divisi: ['./features/divisi/divisi.js', 'divisiRoot', ['links'], 'mountDivisi', 'app.fail.divisi'],
+  // the class photo is already in the page; the module only adds the full view (keep = true, so it never says it failed)
+  kelas: ['./features/kelas/kelas.js', 'kelas', ['links'], 'mountKelas', null, true],
 };
 const mounted = {};
 // views by section name once mounted; the live editor reads the day on screen and such from them

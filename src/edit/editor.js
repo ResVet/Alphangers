@@ -10,13 +10,17 @@ import './edit.css';
 import { firebaseConfig, appCheckSiteKey } from '../lib/firebase-config.js';
 import { createStore } from './store.js';
 import { createOverlay } from './overlay.js';
-import { ADAPTERS, textsPanel } from './adapters.js';
-import { h, confirmDialog, alertDialog, chooseDialog } from './sheet.js';
+import { ADAPTERS, textsPanel, pageEntries, TEXT_SPOTS } from './adapters.js';
+import { h, confirmDialog, alertDialog, chooseDialog, applyTextChanges, tooLongText, TEXT_MAX, normText } from './sheet.js';
+import '../copy/index.js';
+import { registerCopy, kSet, kHTML, getTexts } from '../lib/texts.js';
 import { explain } from '../admin/errors.js';
 
 const HINT = 'alpha.admin';
 const MODE = 'alpha.admin.mode';
-const KEY_NAMES = { links: 'Halaman, Drive dan divisi', announcements: 'Pengumuman', schedule: 'Jadwal', dosen: 'Dosen', heart: 'Catatan jantung' };
+const KEY_NAMES = { links: 'Teks halaman, channel, Drive dan divisi', announcements: 'Pengumuman', schedule: 'Jadwal', dosen: 'Dosen', heart: 'Catatan jantung' };
+// the changed parts one per line, so a name with a comma in it still reads as one part
+const partsList = (keys) => keys.map((k) => '• ' + (KEY_NAMES[k] || k)).join('\n');
 
 function ls(k, v) {
   try {
@@ -122,18 +126,28 @@ async function run({ portal, texts, views, bundledDivisi, signIn: wantSignIn }) 
         prog.hidden = !text;
         return (t) => { prog.textContent = t || ''; prog.hidden = !t; };
       },
-      // a [data-k] text typed on the page. Emptied, it goes back to the page's own text, except
-      // a text marked data-opt (a credit, a note) that may stay empty: then it hides.
+      // a [data-k] text typed on the page, raw ({names} and **bold** as written). The same as the
+      // page's own text, or emptied, it goes back to it, except an optional text (a credit, a
+      // note) that may stay empty: then it hides. Too long, the typed text is kept to shorten.
       setText(key, value, el) {
-        const def = texts.original(el);
-        const optional = !!el?.hasAttribute?.('data-opt');
+        const n = normText(value).length;
+        if (n > TEXT_MAX) return { ok: false, keep: true, errors: [tooLongText(n)] };
+        const opt = !!(texts.copyEntry(key)?.opt || el?.hasAttribute?.('data-opt'));
+        return ctx.setTexts([{ key, value, def: String(texts.original(el) ?? ''), opt }], 'Teks');
+      },
+      // several texts at once ([{ key, value, def, opt, unknown, label }]), under the same rules
+      // and limits (src/lib/validate.js) as one typed on the page
+      setTexts(changes, label = 'Teks') {
+        const cur = store.get('links').site?.t || {};
+        const names = new Map(changes.map((c) => [c.key, c.label || c.key]));
+        const { t, errors } = applyTextChanges(cur, changes, (k) => names.get(k));
+        if (errors.length) return { ok: false, errors };
         return store.edit('links', (d) => {
           d.site = d.site || { t: {} };
-          d.site.t = d.site.t || {};
-          if (value === def || (!value.trim() && (!optional || !def))) delete d.site.t[key];
-          else d.site.t[key] = value.trim() ? value : '';
-        }, 'Teks');
+          d.site.t = t;
+        }, label);
       },
+      openTexts: (group) => textsPanel(ctx, { group }),
       // a divisi field typed in place (name, full, tag, desc)
       setField(el, value) {
         const id = el.closest('.dv-ch')?.dataset.id;
@@ -149,22 +163,22 @@ async function run({ portal, texts, views, bundledDivisi, signIn: wantSignIn }) 
       },
     };
 
-    // the Panel view (an iframe on this origin) lists every page text with what the page ships
-    window.__alphaPageTexts = () => {
-      const m = new Map();
-      document.querySelectorAll('[data-k]').forEach((el) => { if (!m.has(el.dataset.k)) m.set(el.dataset.k, texts.original(el)); });
-      return [...m];
-    };
+    // the Panel view (an iframe on this origin) lists the texts of this page with what it ships
+    window.__alphaPageTexts = () => pageEntries(texts);
+    // tests of the mock build draw texts of their own
+    if (import.meta.env.MODE === 'mock') window.__alphaTexts = { registerCopy, kSet, kHTML, get: getTexts };
 
-    const overlay = createOverlay({ adapters: ADAPTERS, ctx });
+    const overlay = createOverlay({ adapters: ADAPTERS, ctx, textTools: TEXT_SPOTS });
     let view = 'view', panel = null, switching = null;
 
     // ---------- dock
     const modeView = h('button', { type: 'button', class: 'ed-seg', 'aria-pressed': 'true', title: 'Halaman seperti yang dilihat pengunjung', onclick: () => setView('view') }, 'Lihat');
     const modeEdit = h('button', { type: 'button', class: 'ed-seg', 'aria-pressed': 'false', title: 'Ketik dan ubah langsung di halaman', onclick: () => setView('edit') }, 'Edit');
-    const modePanel = h('button', { type: 'button', class: 'ed-seg', 'aria-pressed': 'false', title: 'Formulir, JSON dan riwayat', onclick: () => setView('panel') }, 'Panel');
+    const modePanel = h('button', { type: 'button', class: 'ed-seg ed-seg-p', 'aria-pressed': 'false', title: 'Formulir, JSON dan riwayat', onclick: () => setView('panel') }, 'Panel');
     const undoB = h('button', { type: 'button', class: 'ed-ib', 'aria-label': 'Urungkan (Ctrl+Z)', title: 'Urungkan (Ctrl+Z)', onclick: () => step(-1) }, '↶');
-    const redoB = h('button', { type: 'button', class: 'ed-ib', 'aria-label': 'Ulangi (Ctrl+Shift+Z)', title: 'Ulangi (Ctrl+Shift+Z)', onclick: () => step(1) }, '↷');
+    const redoB = h('button', { type: 'button', class: 'ed-ib ed-redo', 'aria-label': 'Ulangi (Ctrl+Shift+Z)', title: 'Ulangi (Ctrl+Shift+Z)', onclick: () => step(1) }, '↷');
+    // on a small phone Ulangi moves from the dock into the menu (edit.css)
+    const redoM = h('button', { type: 'button', role: 'menuitem', class: 'ed-mi-redo', onclick: () => { toggleMenu(false); step(1); } }, 'Ulangi');
     const count = h('span', { class: 'ed-count', 'aria-live': 'polite' });
     const pubN = h('span', { class: 'ed-n', 'aria-hidden': 'true' });
     const pub = h('button', { type: 'button', class: 'ed-btn is-pri ed-pub', onclick: publish }, 'Terbitkan', pubN);
@@ -173,10 +187,11 @@ async function run({ portal, texts, views, bundledDivisi, signIn: wantSignIn }) 
     const who = h('span', { class: 'ed-who', title: user.email, text: (user.name || user.email || 'A').trim().charAt(0).toUpperCase() });
     const menu = h('div', { class: 'ed-menu', role: 'menu', hidden: true },
       h('p', { class: 'ed-menu-k', text: user.email }),
-      h('button', { type: 'button', role: 'menuitem', onclick: () => { toggleMenu(false); textsPanel(ctx); } }, 'Semua teks halaman'),
+      redoM,
+      h('button', { type: 'button', role: 'menuitem', onclick: () => { toggleMenu(false); ctx.openTexts(null); } }, 'Semua teks halaman'),
       h('button', { type: 'button', role: 'menuitem', onclick: () => { toggleMenu(false); setView('panel'); } }, 'Panel: formulir, JSON dan riwayat'),
       h('button', { type: 'button', role: 'menuitem', onclick: () => { toggleMenu(false); discardAll(); } }, 'Buang semua draf'),
-      h('button', { type: 'button', role: 'menuitem', onclick: () => { toggleMenu(false); dock.classList.toggle('is-min'); } }, 'Kecilkan dock'),
+      h('button', { type: 'button', role: 'menuitem', onclick: () => { toggleMenu(false); setMin(true); } }, 'Kecilkan dock'),
       h('button', { type: 'button', role: 'menuitem', onclick: async () => {
         toggleMenu(false);
         if (store.dirtyKeys().length && !(await confirmDialog('Keluar dari akun admin?', 'Draf yang belum diterbitkan tetap tersimpan di perangkat ini.', { ok: 'Keluar' }))) return;
@@ -185,7 +200,7 @@ async function run({ portal, texts, views, bundledDivisi, signIn: wantSignIn }) 
       } }, 'Keluar'));
     dock.textContent = '';
     dock.append(
-      h('button', { type: 'button', class: 'ed-min', 'aria-label': 'Buka dock editor', onclick: () => dock.classList.remove('is-min') }, 'Admin'),
+      h('button', { type: 'button', class: 'ed-min', 'aria-label': 'Buka dock editor', onclick: () => setMin(false) }, 'Admin'),
       h('div', { class: 'ed-dock-in' },
         who,
         h('div', { class: 'ed-segs', role: 'group', 'aria-label': 'Tampilan' }, modeView, modeEdit, modePanel),
@@ -198,9 +213,17 @@ async function run({ portal, texts, views, bundledDivisi, signIn: wantSignIn }) 
     function toggleMenu(open = menu.hidden) {
       menu.hidden = !open;
       menuB.setAttribute('aria-expanded', String(open));
-      if (open) menu.querySelector('[role=menuitem]')?.focus();
+      if (open) [...menu.querySelectorAll('[role=menuitem]')].find((b) => !b.disabled && b.getClientRects().length)?.focus();
     }
-    document.addEventListener('click', (e) => { if (!menu.hidden && !e.target.closest('.ed-menu, [aria-haspopup=menu]')) toggleMenu(false); });
+    // a press anywhere else closes the menu, a text tapped to type included (edit mode keeps that
+    // click from reaching the document, so this listens before anything else does)
+    document.addEventListener('pointerdown', (e) => { if (!menu.hidden && !e.target.closest('.ed-menu, [aria-haspopup=menu]')) toggleMenu(false); }, true);
+    menu.addEventListener('keydown', (e) => { if (e.key === 'Escape') { e.preventDefault(); e.stopPropagation(); toggleMenu(false); menuB.focus(); } });
+    // the small dock leaves the page more room at the bottom (edit.css, --ed-room)
+    function setMin(v) {
+      dock.classList.toggle('is-min', v);
+      document.documentElement.classList.toggle('ed-dock-min', v);
+    }
 
     function paint() {
       const dirty = store.dirtyKeys();
@@ -209,7 +232,7 @@ async function run({ portal, texts, views, bundledDivisi, signIn: wantSignIn }) 
       pub.disabled = !dirty.length;
       pubN.textContent = dirty.length ? String(dirty.length) : '';
       undoB.disabled = !store.canUndo();
-      redoB.disabled = !store.canRedo();
+      redoB.disabled = redoM.disabled = !store.canRedo();
       // the panel has its own save bar; publishing from the dock waits until the panel is closed
       dock.classList.toggle('is-panel', view === 'panel');
     }
@@ -230,7 +253,7 @@ async function run({ portal, texts, views, bundledDivisi, signIn: wantSignIn }) 
         overlay.setOn(next === 'edit');
         ss(MODE, next);
         if (next === 'panel') openPanel();
-        else if (next === 'edit' && from !== 'panel') toast('Mode edit: ketuk teks buat mengetik, ketuk kartu buat aksinya.');
+        else if (next === 'edit' && from !== 'panel') toast('Mode edit: ketuk teks buat mengetik, ketuk tombol atau kartu buat pilihannya.');
         paint();
       })().finally(() => { switching = null; });
       return switching;
@@ -276,7 +299,7 @@ async function run({ portal, texts, views, bundledDivisi, signIn: wantSignIn }) 
     async function publish() {
       const dirty = store.dirtyKeys();
       if (!dirty.length) return;
-      const ok = await confirmDialog('Terbitkan perubahan?', 'Yang berubah: ' + dirty.map((k) => KEY_NAMES[k] || k).join(', ') + '. Semua pengunjung dapat versi baru saat membuka halaman. Versi lama tetap ada di riwayat panel admin.', { ok: 'Terbitkan' });
+      const ok = await confirmDialog('Terbitkan perubahan?', 'Yang berubah (' + dirty.length + ' bagian):\n' + partsList(dirty) + '\n\nSemua pengunjung dapat versi baru saat membuka halaman. Versi lama tetap ada di riwayat panel admin.', { ok: 'Terbitkan' });
       if (!ok) return;
       pub.disabled = true;
       const note = ctx.progress('Menerbitkan…');
@@ -322,7 +345,7 @@ async function run({ portal, texts, views, bundledDivisi, signIn: wantSignIn }) 
     // drafts from an earlier visit on this device
     const pend = store.pending();
     if (pend.length) {
-      const yes = await confirmDialog('Lanjutkan draf sebelumnya?', 'Ada perubahan yang belum diterbitkan di: ' + pend.map((k) => KEY_NAMES[k] || k).join(', ') + '.', { ok: 'Pulihkan', cancel: 'Buang' });
+      const yes = await confirmDialog('Lanjutkan draf sebelumnya?', 'Ada perubahan yang belum diterbitkan di:\n' + partsList(pend), { ok: 'Pulihkan', cancel: 'Buang' });
       if (yes) store.restorePending(); else store.dropPending();
     }
     const start = ss(MODE);

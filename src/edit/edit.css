@@ -1,7 +1,7 @@
 /* Live editor: the dock, edit-mode outlines, the action bar, section tools, sheets and dialogs.
    Loaded only for the admin. */
-.ed-ui,.ed-bar,.ed-dlg{font-family:var(--body);color:var(--ink);--ed-bg:#0c170d;--ed-line:rgba(238,242,232,.14);--ed-red:#ff5a66}
-.ed-ui *,.ed-bar *,.ed-dlg *{box-sizing:border-box}
+.ed-ui,.ed-bar,.ed-dlg,.ed-tip{font-family:var(--body);color:var(--ink);--ed-bg:#0c170d;--ed-line:rgba(238,242,232,.14);--ed-red:#ff5a66}
+.ed-ui *,.ed-bar *,.ed-dlg *,.ed-tip *{box-sizing:border-box}
 html.fine .ed-ui,html.fine .ed-ui *,html.fine .ed-bar *,html.fine .ed-dlg,html.fine .ed-dlg *{cursor:auto!important}
 html.fine .ed-ui button,html.fine .ed-bar button,html.fine .ed-dlg button,html.fine .ed-dlg label,html.fine .ed-ui a{cursor:pointer!important}
 html.fine .ed-text{cursor:text!important}
@@ -35,6 +35,8 @@ html.fine .ed-text{cursor:text!important}
 .ed-menu-k{padding:8px 10px 6px;font-family:var(--mono);font-size:10px;letter-spacing:.06em;color:var(--dim);overflow:hidden;text-overflow:ellipsis}
 .ed-menu [role=menuitem]{display:block;width:100%;padding:10px 12px;border-radius:10px;text-align:left;font-size:14px;color:var(--ink);text-decoration:none;transition:background-color .15s}
 .ed-menu [role=menuitem]:hover,.ed-menu [role=menuitem]:focus-visible{background:rgba(238,242,232,.07)}
+.ed-menu [role=menuitem]:disabled{opacity:.4;pointer-events:none}
+.ed-menu .ed-mi-redo{display:none}
 
 /* ---------- buttons */
 .ed-btn{display:inline-flex;align-items:center;justify-content:center;gap:6px;height:38px;padding:0 16px;border-radius:999px;border:1px solid var(--ed-line);
@@ -55,9 +57,16 @@ html.fine .ed-text{cursor:text!important}
   .ed-ib:hover{background:rgba(238,242,232,.08)}
   .ed-seg:not([aria-pressed="true"]):hover{color:var(--ink)}
 }
+/* touch: no control under 38px */
+@media (pointer:coarse){
+  .ed-seg{height:38px}
+  .ed-ib{width:40px;height:40px}
+  .ed-btn{height:40px}
+  .ed-btn.is-sm{height:38px}
+}
 
 /* ---------- edit mode on the page */
-.ed-layer{position:fixed;inset:0;z-index:150;pointer-events:none}
+.ed-layer{position:fixed;inset:0;z-index:150;pointer-events:none;margin:0;padding:0;border:0;background:none;width:auto;height:auto;overflow:visible}
 .ed-hl,.ed-sel{position:absolute;left:0;top:0;border-radius:12px;opacity:0;transition:opacity .15s}
 .ed-hl{outline:1.5px dashed rgba(134,242,94,.55);outline-offset:0}
 .ed-sel{outline:2px solid var(--grx);box-shadow:0 0 0 6px rgba(134,242,94,.12)}
@@ -70,10 +79,17 @@ html.editing [data-opt][data-empty],html.editing [data-opt-line][data-empty]{dis
 html.editing [data-opt-line][data-empty]{opacity:.6}
 html.editing [data-ph]:empty::before{content:attr(data-ph);color:var(--dim);font-style:italic;font-weight:400;text-transform:none;letter-spacing:0}
 html.editing .to-note[data-empty]{border-style:dashed;background:none}
+/* an empty optional note under a heading: a dashed spot to write in */
+html.editing :is(.k-note,.p-note,.to-note)[data-empty]{display:block;min-height:44px;padding:10px 14px;border:1.5px dashed rgba(134,242,94,.4);border-radius:12px;background:none;color:var(--dim)}
+html.editing :is(.k-note,.p-note,.to-note)[data-empty]:focus{border-color:var(--grx);outline:none;color:var(--ink)}
+/* a text inside a button or link: tap the button to change it (Ubah teks) */
+html.editing .ed-ctl-k{text-decoration:underline dotted rgba(134,242,94,.75);text-decoration-thickness:1.5px;text-underline-offset:3px}
+html.editing .ed-kp::placeholder{color:rgba(134,242,94,.7)}
 html.editing .dv-print[data-slot="0"] .dv-pic{animation-play-state:paused}
 
 .ed-bar{position:fixed;left:0;top:0;z-index:185;display:flex;align-items:center;gap:4px;max-width:calc(100vw - 16px);padding:5px;border-radius:16px;
-  border:1px solid var(--ed-line);background:rgba(10,19,11,.97);box-shadow:0 18px 44px -14px rgba(0,0,0,.9);animation:ed-pop .18s ease-out}
+  border:1px solid var(--ed-line);background:rgba(10,19,11,.97);box-shadow:0 18px 44px -14px rgba(0,0,0,.9);animation:ed-pop .18s ease-out;
+  right:auto;bottom:auto;margin:0;color:var(--ink)}
 .ed-bar[hidden]{display:none}
 @keyframes ed-pop{from{opacity:0;transform:var(--from,translateY(4px))}}
 .ed-bar-k{padding:0 8px 0 6px;font-family:var(--mono);font-size:10px;letter-spacing:.14em;text-transform:uppercase;color:var(--grx);white-space:nowrap;max-width:200px;overflow:hidden;text-overflow:ellipsis}
@@ -83,19 +99,24 @@ html.editing .dv-print[data-slot="0"] .dv-pic{animation-play-state:paused}
 .ed-bar-b.is-x{width:34px;padding:0;font-size:20px;color:var(--mut)}
 @media (hover:hover) and (pointer:fine){.ed-bar-b:not(.is-pri):hover{background:rgba(238,242,232,.08)}}
 @media (hover:none),(pointer:coarse){
-  /* phones: the action bar sits above the dock, full width, scrollable sideways */
-  .ed-bar{left:8px;right:8px;top:auto;bottom:calc(76px + env(safe-area-inset-bottom));transform:none!important;overflow-x:auto;scrollbar-width:none}
-  .ed-bar::-webkit-scrollbar{display:none}
-  .ed-bar-b{height:40px}
+  /* phones: the action bar sits above the dock, full width. Its name and × take the first line and
+     the actions wrap below, so none of them is out of sight. */
+  .ed-bar{left:8px;right:8px;top:auto;bottom:var(--ed-room,calc(76px + env(safe-area-inset-bottom)));transform:none!important;flex-wrap:wrap;gap:4px}
+  .ed-bar-k{flex:1 1 calc(100% - 52px);min-width:0;max-width:none;padding:2px 6px 0 8px;white-space:normal;overflow-wrap:anywhere;line-height:1.4}
+  .ed-bar-b{order:2;flex:1 0 auto;height:40px}
+  .ed-bar-b.is-x{order:1;flex:none;width:40px}
 }
 
 .ed-tools{position:relative;z-index:8;display:flex;flex-wrap:wrap;align-items:center;gap:6px;max-width:1320px;margin:0 auto 10px;padding:8px var(--gut)}
 .ed-tools-k{font-family:var(--mono);font-size:10px;letter-spacing:.2em;text-transform:uppercase;color:var(--grx);margin-right:6px}
 .ed-tools-b{height:34px;padding:0 14px;border-radius:999px;border:1px dashed rgba(134,242,94,.45);font-family:var(--disp);font-weight:600;font-size:13px;color:var(--ink);
-  background:rgba(7,13,8,.8);transition:background-color .15s,border-color .15s}
+  background:rgba(7,13,8,.8);transition:background-color .15s,border-color .15s,color .15s,transform .14s ease-out}
 .ed-tools-b.is-pri{border-style:solid;border-color:var(--grx);color:var(--grx)}
-@media (hover:hover) and (pointer:fine){.ed-tools-b:hover{background:rgba(134,242,94,.1);border-color:var(--grx)}}
+.ed-tools-b.is-q{border-style:solid;border-color:var(--ed-line);color:var(--mut)}
+.ed-tools-b:active{transform:scale(.97)}
+@media (hover:hover) and (pointer:fine){.ed-tools-b:hover{background:rgba(134,242,94,.1);border-color:var(--grx)}.ed-tools-b.is-q:hover{color:var(--ink)}}
 .sec-jadwal .ed-tools,.sec-dosen .ed-tools,.sec-anatomi .ed-tools{margin-bottom:0}
+@media (pointer:coarse){.ed-tools-b{height:40px}}
 .pulse .ed-tools{display:none}
 
 /* ---------- dialogs and sheets */
@@ -174,8 +195,11 @@ html.editing .dv-print[data-slot="0"] .dv-pic{animation-play-state:paused}
 .ed-phw>.ed-btn{justify-self:start}
 
 @media (max-width:639.98px){
-  .ed-sheet{width:100%;height:auto;max-height:calc(100dvh - 20px);margin:auto 0 0;border-radius:22px 22px 0 0;border-bottom:0}
-  .ed-sheet .ed-form{max-height:calc(100dvh - 20px)}
+  /* the sheet rises from the bottom and stays above the on-screen keyboard (--ed-kb, --ed-vh from sheet.js) */
+  .ed-sheet{width:100%;max-width:none;height:fit-content;max-height:calc(var(--ed-vh,100dvh) - 20px);margin:auto 0 var(--ed-kb,0px);border-radius:22px 22px 0 0;border-bottom:0}
+  .ed-sheet .ed-form{max-height:calc(var(--ed-vh,100dvh) - 20px)}
+  .ed-sheet.is-texts{height:calc(var(--ed-vh,100dvh) - 20px)}
+  .ed-sb{padding:14px 16px 20px}
   .ed-fields{grid-template-columns:1fr}
   .ed-fld.is-half{grid-column:1/-1}
   .ed-ph{grid-template-columns:88px minmax(0,1fr) auto}
@@ -185,17 +209,45 @@ html.editing .dv-print[data-slot="0"] .dv-pic{animation-play-state:paused}
   .ed-who,.ed-div{display:none}
   .ed-count{display:none}
   .ed-dock-in>.ed-pub{margin-left:auto}
-  .ed-seg{padding:0 10px}
+  .ed-seg{padding:0 10px;letter-spacing:.08em}
+  /* Panel is in the ⋯ menu too: the dock shows it only while it is open, so the rest fits */
+  .ed-seg-p:not([aria-pressed="true"]){display:none}
   .ed-btn{padding:0 12px}
   .ed-dock.is-min{left:auto;right:12px}
 }
-@media (prefers-reduced-motion:reduce){.ed-dock,.ed-dlg,.ed-bar{animation:none!important;transition:none!important}}
-/* the page's own toasts sit above the dock while the editor is open */
-html.ed-on .toast{bottom:calc(84px + env(safe-area-inset-bottom));z-index:195}
-html.ed-on .dz-dock{bottom:calc(84px + env(safe-area-inset-bottom))}
+/* small phones: Ulangi moves into the ⋯ menu, and below 340px everything sits a little closer */
+@media (max-width:400px){
+  .ed-dock-in>.ed-redo{display:none}
+  .ed-menu .ed-mi-redo{display:block}
+}
+@media (max-width:340px){
+  .ed-dock{padding:5px 5px 5px 6px}
+  .ed-dock-in{gap:0}
+  .ed-seg{padding:0 8px;letter-spacing:.04em}
+  .ed-dock .ed-btn{padding:0 9px;gap:4px}
+  .ed-dock .ed-ib{width:38px;height:38px}
+}
+@media (prefers-reduced-motion:reduce){.ed-dock,.ed-dlg,.ed-bar,.ed-tip,.tl-chev{animation:none!important;transition:none!important}}
+/* The room the dock takes at the bottom of the screen. While the editor is open, in Lihat and in
+   Edit, the page keeps its last lines, its bottom bars (the try out's buttons, its question list on
+   phones) and its messages above the dock. */
+html.ed-on{--ed-room:calc(76px + env(safe-area-inset-bottom))}
+@media (pointer:coarse){html.ed-on{--ed-room:calc(80px + env(safe-area-inset-bottom))}}
+html.ed-on.ed-dock-min{--ed-room:calc(62px + env(safe-area-inset-bottom))}
+html.ed-on body{padding-bottom:var(--ed-room)}
+html.ed-on #panel::after{content:"";display:block;height:var(--ed-room)}
+html.ed-on .to-foot{padding-bottom:calc(14px + var(--ed-room))}
+@media (max-width:1079.98px){html.ed-on .to-nav{padding-bottom:calc(18px + var(--ed-room))}}
+html.ed-on .toast{bottom:calc(var(--ed-room) + 8px);z-index:195}
+html.ed-on .dz-dock{bottom:calc(var(--ed-room) + 8px)}
+/* with the phone's action bar up, a message goes above it (--ed-bar-h from overlay.js) */
+html.ed-on.ed-bar-up .toast{bottom:calc(var(--ed-room) + var(--ed-bar-h,56px) + 8px)}
+/* edit mode: a click selects, so the ring around the cursor does not say what a click would do */
+html.editing #cr.lab{width:60px;height:60px;margin:-30px 0 0 -30px;background:transparent}
+html.editing #cr.lab span{opacity:0}
 
 /* Panel: the /admin/ editor in a frame over the page, the dock still on top to switch back */
-.ed-panel{position:fixed;inset:0;z-index:188;box-sizing:border-box;padding-bottom:calc(76px + env(safe-area-inset-bottom));background:#070d08}
+.ed-panel{position:fixed;inset:0;z-index:188;box-sizing:border-box;padding-bottom:var(--ed-room,calc(76px + env(safe-area-inset-bottom)));background:#070d08}
 .ed-panel-f{border-bottom:1px solid rgba(238,242,232,.1)!important}
 .ed-panel-f{display:block;width:100%;height:100%;border:0;background:transparent}
 html.ed-panel-on,html.ed-panel-on body{overflow:hidden}
@@ -203,3 +255,85 @@ html.ed-panel-on,html.ed-panel-on body{overflow:hidden}
 html.ed-panel-on #cd,html.ed-panel-on #cr{display:none!important}
 /* undo, redo and publishing belong to the page; the panel saves with its own bar */
 .ed-dock.is-panel .ed-ib:not([aria-haspopup]),.ed-dock.is-panel .ed-pub,.ed-dock.is-panel .ed-count,.ed-dock.is-panel .ed-div{display:none}
+
+/* ---------- typing a text: the hint under it ({names} filled in, **bold**, may stay empty) */
+.ed-tip{position:fixed;left:0;top:0;right:auto;bottom:auto;z-index:186;margin:0;display:grid;gap:4px;width:max-content;max-width:min(360px,calc(100vw - 16px));
+  padding:8px 11px;border-radius:12px;border:1px solid var(--ed-line);background:rgba(10,19,11,.97);box-shadow:0 14px 34px -12px rgba(0,0,0,.85);
+  font:12.5px/1.45 var(--body);color:var(--mut);pointer-events:none;overflow:visible;
+  opacity:0;translate:0 4px;transition:opacity .16s cubic-bezier(.23,1,.32,1),translate .16s cubic-bezier(.23,1,.32,1)}
+.ed-tip.is-above{translate:0 -4px}
+.ed-tip.is-in{opacity:1;translate:0 0}
+.ed-tip[hidden]{display:none}
+.ed-tip-l,.tl-hl{display:block;overflow-wrap:anywhere}
+.ed-tip-l code,.tl-hl code{display:inline-block;padding:0 6px;margin-right:2px;border-radius:6px;background:rgba(134,242,94,.12);color:var(--grx);font:11.5px/1.6 var(--mono)}
+.ed-tip-l b,.tl-hl b{color:var(--ink);font-weight:600}
+.ed-tip-l.is-warn,.tl-hl.is-warn{color:var(--amb)}
+.ed-tip-l.is-warn code,.tl-hl.is-warn code{background:rgba(244,198,90,.12);color:var(--amb)}
+
+/* ---------- the list of page texts (Semua teks halaman, Ubah teks) */
+.ed-sheet.is-texts{width:min(720px,calc(100vw - 24px))}
+.ed-fld:has(> .tl){gap:0}
+.tl{display:grid;gap:10px;min-width:0}
+.tl-bar{position:sticky;top:-16px;z-index:2;display:flex;flex-wrap:wrap;align-items:center;gap:8px;margin:-16px -22px 0;padding:14px 22px 10px;
+  background:var(--ed-bg);border-bottom:1px solid var(--ed-line)}
+.tl-q{position:relative;flex:1 1 140px;min-width:0}
+.tl-qic{position:absolute;left:13px;top:50%;width:13px;height:13px;margin-top:-8px;border:1.5px solid var(--mut);border-radius:50%;pointer-events:none}
+.tl-qic::after{content:"";position:absolute;right:-5px;bottom:-4px;width:6px;height:1.5px;background:var(--mut);transform:rotate(45deg)}
+.ed-dlg input.tl-qi{padding-left:36px}
+.ed-dlg textarea.tl-in{field-sizing:content;min-height:72px;max-height:45vh}
+.tl-only{flex:none;display:inline-flex;align-items:center;gap:8px;height:44px;padding:0 14px;border-radius:12px;border:1px solid var(--ed-line);font-size:13.5px;color:var(--mut);
+  transition:background-color .15s,border-color .15s,color .15s,transform .14s ease-out}
+.tl-only:active{transform:scale(.97)}
+.tl-only[aria-pressed="true"]{background:rgba(134,242,94,.12);border-color:var(--grx);color:var(--ink)}
+.tl-onlyn{min-width:20px;height:20px;padding:0 6px;border-radius:999px;background:var(--amb);color:#07100a;font:600 11px/20px var(--mono);text-align:center}
+.tl-onlyn:empty{display:none}
+.tl-scope{display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:8px;padding:8px 8px 8px 14px;border-radius:12px;border:1px dashed rgba(134,242,94,.35);
+  background:rgba(134,242,94,.05);font-size:13.5px;color:var(--mut)}
+.tl-scope b{color:var(--ink);font-weight:600}
+.tl-all{height:36px;padding:0 14px;border-radius:999px;border:1px solid var(--ed-line);font-size:13px;color:var(--ink)}
+.tl-sum{font-family:var(--mono);font-size:10.5px;letter-spacing:.08em;text-transform:uppercase;color:var(--dim)}
+.tl-warn{padding:10px 14px;border-radius:12px;border:1px solid rgba(255,90,102,.4);background:rgba(255,90,102,.08);color:#ffd1d5;font-size:13.5px}
+.tl-warn[hidden],.tl-none[hidden],.tl-hint[hidden],.tl-def[hidden],.tl-err[hidden],.tl-reset[hidden],.tl-row[hidden],.tl-g[hidden],.tl-gb[hidden]{display:none}
+.tl-g{border:1px solid var(--ed-line);border-radius:14px}
+.tl-gt{margin:0;font:inherit}
+.tl-gh{display:flex;align-items:center;gap:10px;width:100%;min-height:50px;padding:10px 16px;border-radius:14px;text-align:left;font-family:var(--disp);font-weight:700;font-size:15px;color:var(--ink);
+  transition:background-color .15s}
+.tl-gl{flex:1;min-width:0;overflow-wrap:anywhere}
+.tl-gn{display:inline-flex;align-items:center;gap:8px;font:400 11px/1 var(--mono);letter-spacing:.06em;color:var(--dim)}
+.tl-gc{padding:3px 7px;border-radius:999px;background:rgba(244,198,90,.12);color:var(--amb);font-weight:400}
+.tl-chev{flex:none;width:8px;height:8px;margin:0 2px 4px 4px;border-right:1.5px solid var(--mut);border-bottom:1.5px solid var(--mut);transform:rotate(45deg);transition:transform .2s cubic-bezier(.23,1,.32,1)}
+.tl-gh[aria-expanded="true"] .tl-chev{transform:translateY(4px) rotate(-135deg)}
+.tl-gb{display:grid;gap:4px;padding:0 16px 16px;border-top:1px solid var(--ed-line)}
+.tl-gnote{padding-top:12px;font-size:12.5px;color:var(--dim)}
+.tl-row{display:grid;gap:6px;min-width:0;padding-top:14px}
+.tl.is-flat{gap:14px}
+.tl.is-flat .tl-row{padding-top:0}
+.tl-rh{display:flex;align-items:center;justify-content:space-between;gap:8px;min-height:32px}
+.tl-k{min-width:0;font-size:13.5px;font-weight:600;line-height:1.35;color:var(--ink);overflow-wrap:anywhere}
+.tl-row.is-changed .tl-k{color:var(--grx)}
+.tl-row.is-changed .tl-k::before{content:"";display:inline-block;width:6px;height:6px;margin:0 7px 1px 0;border-radius:50%;background:var(--amb)}
+.tl-reset{flex:none;height:34px;padding:0 12px;border-radius:999px;border:1px solid var(--ed-line);font-size:12.5px;color:var(--mut);white-space:nowrap;transition:color .15s,border-color .15s,transform .14s ease-out}
+.tl-reset:active{transform:scale(.96)}
+.tl-row.is-err .tl-in{border-color:var(--ed-red)}
+.tl-hint{display:grid;gap:3px;font-size:12.5px;line-height:1.45;color:var(--dim)}
+.tl-def{font-size:12.5px;line-height:1.45;color:var(--dim);overflow-wrap:anywhere;white-space:pre-line}
+.tl-def span{font-family:var(--mono);font-size:10.5px;letter-spacing:.06em;text-transform:uppercase}
+.tl-err{font-size:13px;color:#ffb3b9}
+.tl-none{padding:14px 2px;font-size:13.5px;color:var(--dim)}
+@media (hover:hover) and (pointer:fine){
+  .tl-gh:hover{background:rgba(238,242,232,.04)}
+  .tl-reset:hover,.tl-all:hover{color:var(--ink);border-color:rgba(238,242,232,.32)}
+  .tl-only:not([aria-pressed="true"]):hover{color:var(--ink)}
+}
+/* phones: 16px text in fields so the browser does not zoom in on focus, and controls at touch size */
+@media (pointer:coarse){
+  .ed-dlg input:not([type=checkbox]),.ed-dlg select,.ed-dlg textarea{font-size:16px}
+  .tl-reset{height:38px}
+  .tl-all{height:40px}
+}
+@media (max-width:639.98px){
+  .ed-sheet.is-texts{width:100%}
+  .tl-bar{margin:-14px -16px 0;padding:12px 16px 10px;top:-14px}
+  .tl-gh{padding:10px 14px}
+  .tl-gb{padding:0 14px 14px}
+}

@@ -1,10 +1,15 @@
 // Jadwal: the class schedule by day, with a week strip, a month calendar, a live
 // "now / next" readout and calendar export. Mounts into any element.
+// Every word on it is a page text the admin can change (src/copy/jadwal.js): elements carry their
+// key in data-k and src/lib/texts.js repaints them when a text changes. Dates, times and numbers are
+// formatting and stay here; session titles, names, notes and blok names come from the data.
 import './jadwal.css';
+import '../../copy/jadwal.js';
+import { kHTML, kAttrs, kText, kAttr, kSet } from '../../lib/texts.js';
 import {
   createModel, todayWIB, addDays, startOfWeek, weekdayOf, monthGrid, monthOf, addMonths, daysInMonth,
-  daysBetween, parseISO, isISODate, formatDate, formatTime, relativeDay, daysUntilLabel, countdownParts,
-  timeRange, startLabel, DAYS, DAYS_SHORT, MONTHS, MONTHS_SHORT,
+  daysBetween, parseISO, isISODate, formatDate, formatTime, relativeDayKey, daysUntilText, countdownParts,
+  startLabel, kindKey, DAYS, DAYS_SHORT, MONTHS, MONTHS_SHORT,
 } from '../../lib/schedule-model.js';
 import {
   sessionCalendar, dayCalendar, blokCalendar, sessionFilename, dayFilename, blokFilename,
@@ -43,15 +48,39 @@ function storeDate(iso) {
   }
 }
 
-function whenLabel(s, today) {
-  const rel = relativeDay(s.date, today);
-  return (rel || formatDate(s.date, 'medium')) + ', ' + startLabel(s);
+/** 'besok' as its page text, or the date itself ('Senin, 12 Okt') when it has no name relative to today. */
+function dayHTML(iso, today, style) {
+  const key = relativeDayKey(iso, today);
+  return key ? kHTML(key) : '<span class="jw-dt">' + formatDate(iso, style) + '</span>';
+}
+
+/** '08.00', or 'jam menyusul' while the time is not out. */
+function startHTML(s) {
+  return s.tba ? kHTML('jadwal.time.tba') : formatTime(s.start);
+}
+
+/** '08.00 - 09.40', '08.00 - selesai' or 'jam menyusul'. */
+function rangeHTML(s) {
+  if (s.tba) return kHTML('jadwal.time.tba');
+  return formatTime(s.start) + ' - ' + (s.end ? formatTime(s.end) : kHTML('jadwal.time.end'));
+}
+
+/** 'besok, 08.00' or 'Senin, 12 Okt, jam menyusul'. */
+function whenHTML(s, today) {
+  return dayHTML(s.date, today, 'medium') + ', ' + startHTML(s);
+}
+
+/** A session's kind, as its page text. */
+function kindHTML(s, cls) {
+  const key = kindKey(s.kind);
+  return key ? kHTML(key, null, 'span', cls) : '<span' + (cls ? ' class="' + cls + '"' : '') + '>' + esc(s.kindLabel) + '</span>';
 }
 
 /** '12 hari lagi' as a big number with its words, or 'besok' and the like as words only. */
-function daysHTML(label) {
-  const n = /^\d+/.exec(label);
-  return n ? '<p class="jw-ro-n">' + n[0] + ' <small>' + label.slice(n[0].length).trim() + '</small></p>' : '<p class="jw-ro-n is-words">' + label + '</p>';
+function daysHTML(iso, today) {
+  const { key, vars } = daysUntilText(iso, today);
+  if (!vars) return kHTML(key, null, 'p', 'jw-ro-n is-words');
+  return '<p class="jw-ro-n">' + vars.n + ' ' + kHTML(key === 'jadwal.day.ago' ? 'jadwal.mon.ago' : 'jadwal.mon.days', null, 'small') + '</p>';
 }
 
 export function mountJadwal(root, { schedule, dosen, now } = {}) {
@@ -209,7 +238,10 @@ export function mountJadwal(root, { schedule, dosen, now } = {}) {
     const w = weekdayOf(d);
     const { y, m, d: day } = parseISO(d);
 
-    el.rel.textContent = relativeDay(d, state.today) || daysUntilLabel(d, state.today);
+    // 'hari ini', 'besok', 'lusa', 'kemarin', else '12 hari lagi' or '3 hari lalu'
+    const relKey = relativeDayKey(d, state.today);
+    const until = relKey ? { key: relKey } : daysUntilText(d, state.today);
+    kSet(el.rel, until.key, until.vars);
     el.rel.classList.toggle('is-today', d === state.today);
     el.date.innerHTML = '<em>' + DAYS[w] + ',</em> <span class="jw-date-d">' + day + ' ' + MONTHS[m - 1] + '</span> <span class="jw-date-y">' + y + '</span>';
 
@@ -217,10 +249,10 @@ export function mountJadwal(root, { schedule, dosen, now } = {}) {
     if (blok) {
       const ketua = blok.ketua ? model.dosenById.get(blok.ketua) : null;
       el.blokline.innerHTML = '<span class="jw-blokline-n">' + esc(blok.name) + '</span> <span class="jw-blokline-t">' + esc(blok.title) + '</span>' +
-        '<span class="jw-blokline-r">' + formatDate(blok.start, 'dayShort') + ' - ' + formatDate(blok.end, 'dayShort') +
-        (ketua ? ', ketua <button type="button" class="jw-link" data-dosen="' + esc(ketua.id) + '">' + esc(ketua.name) + '</button>' : '') + '</span>';
+        '<span class="jw-blokline-r"><span class="jw-dt">' + formatDate(blok.start, 'dayShort') + ' - ' + formatDate(blok.end, 'dayShort') + '</span>' +
+        (ketua ? ', ' + kHTML('jadwal.blok.ketua') + ' <button type="button" class="jw-link" data-dosen="' + esc(ketua.id) + '">' + esc(ketua.name) + '</button>' : '') + '</span>';
     } else {
-      el.blokline.innerHTML = '<span class="jw-blokline-t">Di luar masa blok</span>';
+      el.blokline.innerHTML = kHTML('jadwal.blok.out', null, 'span', 'jw-blokline-t');
     }
 
     const prev = model.prevDate(d);
@@ -238,9 +270,13 @@ export function mountJadwal(root, { schedule, dosen, now } = {}) {
       const last = timed[timed.length - 1];
       const later = info.sessions.length - timed.length;
       const off = info.sessions.filter((x) => x.cancelled).length;
-      el.sum.textContent = info.sessions.length + ' sesi, ' +
-        (first ? formatTime(first.start) + ' - ' + (last.end ? formatTime(last.end) : 'selesai') + (later ? ', ' + later + ' jam menyusul' : '') : 'jam menyusul') +
-        (off ? (off === info.sessions.length ? ', semua dibatalkan' : ', ' + off + ' dibatalkan') : '');
+      // '4 sesi, 08.00 - 12.10, 1 jam menyusul, 1 dibatalkan'
+      const parts = [kHTML('jadwal.sum.n', { n: info.sessions.length })];
+      parts.push(first
+        ? formatTime(first.start) + ' - ' + (last.end ? formatTime(last.end) : kHTML('jadwal.time.end')) + (later ? ', ' + kHTML('jadwal.sum.tba', { n: later }) : '')
+        : kHTML('jadwal.time.tba'));
+      if (off) parts.push(off === info.sessions.length ? kHTML('jadwal.sum.alloff') : kHTML('jadwal.sum.off', { n: off }));
+      el.sum.innerHTML = parts.join(', ');
       el.list.innerHTML = '<ol class="jw-tl">' + info.sessions.map((s, i) => sessionHTML(s, i)).join('') + '</ol>';
     } else {
       el.sum.textContent = '';
@@ -266,24 +302,27 @@ export function mountJadwal(root, { schedule, dosen, now } = {}) {
       (s.tba
         ? '<div class="jw-s-time"><span class="jw-s-from is-tba" aria-hidden="true">--.--</span><span class="jw-sr">Jam belum diumumkan</span></div>'
         : '<div class="jw-s-time"><span class="jw-s-from">' + formatTime(s.start) + '</span>' +
-          '<span class="jw-s-to"><span class="jw-sr">sampai </span>' + (s.end ? formatTime(s.end) : 'selesai') + '</span></div>') +
+          '<span class="jw-s-to"><span class="jw-sr">sampai </span>' + (s.end ? formatTime(s.end) : kHTML('jadwal.time.end')) + '</span></div>') +
       '<div class="jw-s-body">' +
-        '<p class="jw-s-meta">' + (s.cancelled ? '<span class="jw-batal">Dibatalkan</span>' : '') + '<span class="jw-kind">' + esc(s.kindLabel) + '</span>' +
-          (s.tba ? '<span class="jw-tba">Jam menyusul</span>' : '') +
-          s.tags.map((t) => '<span class="jw-tag' + (/^kelas gabungan$/i.test(t) ? ' is-gab" title="Kelas Alpha dan Beta bersama' : '') + '">' + esc(t) + '</span>').join('') +
-          (s.online ? '<span class="jw-online">Online</span>' : s.blok.loc ? '<span class="jw-loc">' + esc(s.blok.loc) + '</span>' : '') +
-          '<span class="jw-now-tag">lagi jalan</span></p>' +
+        '<p class="jw-s-meta">' + (s.cancelled ? kHTML('jadwal.s.batal', null, 'span', 'jw-batal') : '') + kindHTML(s, 'jw-kind') +
+          (s.tba ? kHTML('jadwal.s.tba', null, 'span', 'jw-tba') : '') +
+          s.tags.map((t) => (/^kelas gabungan$/i.test(t)
+            ? '<span class="jw-tag is-gab"' + kAttr('kt', 'jadwal.s.gab') + '>' + esc(t) + '</span>'
+            : '<span class="jw-tag">' + esc(t) + '</span>')).join('') +
+          (s.online ? kHTML('jadwal.s.online', null, 'span', 'jw-online') : s.blok.loc ? '<span class="jw-loc">' + esc(s.blok.loc) + '</span>' : '') +
+          kHTML('jadwal.live', null, 'span', 'jw-now-tag') + '</p>' +
         '<h4 class="jw-s-t">' + esc(s.title) + '</h4>' +
-        (s.cancelled && s.cancelReason ? '<p class="jw-s-why">' + esc(s.cancelReason) + '</p>' : '') +
+        // the label sits beside the reason, so .jw-s-why holds the reason alone
+        (s.cancelled && s.cancelReason ? '<div class="jw-why">' + kHTML('jadwal.s.why', null, 'span', 'jw-why-k') + '<p class="jw-s-why">' + esc(s.cancelReason) + '</p></div>' : '') +
         (s.note ? '<p class="jw-s-note">' + esc(s.note) + '</p>' : '') +
         peopleHTML(s) +
         '<div class="jw-s-add">' +
           // the meeting link of an online session; not offered once it is cancelled
-          (s.online && /^https:\/\//i.test(s.link) && !s.cancelled ? '<a class="jw-mini jw-join" href="' + esc(s.link) + '" target="_blank" rel="noopener noreferrer">Gabung online<span class="jw-sr"> ke ' + esc(s.title) + '</span></a>' : '') +
-          '<button type="button" class="jw-mini" data-add aria-expanded="false" aria-controls="' + menuId + '">+ Kalender</button>' +
+          (s.online && /^https:\/\//i.test(s.link) && !s.cancelled ? '<a class="jw-mini jw-join" href="' + esc(s.link) + '" target="_blank" rel="noopener noreferrer">' + kHTML('jadwal.s.join') + '<span class="jw-sr"> ke ' + esc(s.title) + '</span></a>' : '') +
+          '<button type="button" class="jw-mini" data-add aria-expanded="false" aria-controls="' + menuId + '">' + kHTML('jadwal.s.add') + '</button>' +
           '<span class="jw-s-addm" id="' + menuId + '" hidden>' +
-            '<a class="jw-mini" href="' + esc(googleCalendarUrl(s)) + '" target="_blank" rel="noopener">Google Calendar</a>' +
-            '<button type="button" class="jw-mini" data-ics="session" data-uid="' + esc(s.uid) + '">File .ics</button>' +
+            '<a class="jw-mini" href="' + esc(googleCalendarUrl(s)) + '" target="_blank" rel="noopener">' + kHTML('jadwal.s.gcal') + '</a>' +
+            '<button type="button" class="jw-mini" data-ics="session" data-uid="' + esc(s.uid) + '">' + kHTML('jadwal.s.ics') + '</button>' +
           '</span>' +
         '</div>' +
       '</div>' +
@@ -292,20 +331,21 @@ export function mountJadwal(root, { schedule, dosen, now } = {}) {
   }
 
   // The red tape across a cancelled session. Purely decorative; the "Dibatalkan" tag says it in words.
+  // Its word follows the tag's text; inert keeps it out of reach, so edit mode never makes it typable.
   function slashHTML() {
-    const run = '<span>Dibatalkan</span><i></i>'.repeat(6);
-    return '<div class="jw-x" aria-hidden="true"><div class="jw-x-tilt"><div class="jw-x-bar">' +
+    const run = (kHTML('jadwal.s.batal') + '<i></i>').repeat(6);
+    return '<div class="jw-x" aria-hidden="true" inert><div class="jw-x-tilt"><div class="jw-x-bar">' +
       '<div class="jw-x-face"><div class="jw-x-run">' + run + run + '</div></div>' +
       '<div class="jw-x-edge"></div></div></div></div>';
   }
 
   function peopleHTML(s) {
-    if (s.tim) return '<p class="jw-tim"><strong>Tim</strong> dosennya per kelompok</p>';
+    if (s.tim) return kHTML('jadwal.s.tim', null, 'p', 'jw-tim');
     if (!s.lecturers.length) return '';
-    const pj = s.pj ? '<span class="jw-pj">PJ<span class="jw-sr">, penanggung jawab</span></span>' : '';
+    const pj = s.pj ? '<span class="jw-pj">' + kHTML('jadwal.pj.badge') + '<span class="jw-sr">, penanggung jawab</span></span>' : '';
     return '<ul class="jw-ppl">' + s.lecturers.map((l) => {
       if (!l.dosen) {
-        return '<li class="jw-p"><p class="jw-p-top"><span class="jw-p-n is-code">Kode ' + esc(l.code) + '</span>' + pj + '</p></li>';
+        return '<li class="jw-p"><p class="jw-p-top">' + kHTML('jadwal.s.code', { code: l.code }, 'span', 'jw-p-n is-code') + pj + '</p></li>';
       }
       return '<li class="jw-p"><p class="jw-p-top">' +
         '<button type="button" class="jw-p-n" data-dosen="' + esc(l.id) + '">' + esc(l.dosen.name) + '</button>' + pj + '</p>' +
@@ -319,31 +359,36 @@ export function mountJadwal(root, { schedule, dosen, now } = {}) {
     const isToday = d === state.today;
     const next = model.nextDate(d);
     const prev = model.prevDate(d);
-    const title = isToday ? 'Hari ini <em>nggak ada kelas.</em>' : 'Tanggal ini <em>kosong.</em>';
-    let why = '';
-    if (info.libur) why = 'Libur ' + esc(info.libur) + '.';
-    else if (!model.firstDate) why = 'Jadwalnya belum masuk.';
-    else if (d < model.firstDate) why = esc(model.bloks[0]?.name || 'Blok') + ' baru mulai ' + formatDate(model.firstDate, 'medium') + '.';
-    else if (!next) why = 'Jadwal setelah ' + esc(model.bloks[model.bloks.length - 1]?.name || 'blok ini') + ' belum masuk.';
-    else if (!info.blok) why = 'Di luar masa blok.';
-    else if (weekdayOf(d) === 0 || weekdayOf(d) === 6) why = 'Weekend.';
+    // 'Hari ini <em>nggak ada kelas.</em>': one text for each part, like the section heading
+    const title = isToday
+      ? kHTML('jadwal.empty.t1') + ' ' + kHTML('jadwal.empty.t2', null, 'em')
+      : kHTML('jadwal.blank.t1') + ' ' + kHTML('jadwal.blank.t2', null, 'em');
+    // once there is a first date there is a blok, so the fallback names never show
+    let why = null;
+    if (info.libur) why = ['jadwal.why.libur', { libur: info.libur }];
+    else if (!model.firstDate) why = ['jadwal.why.none'];
+    else if (d < model.firstDate) why = ['jadwal.why.before', { blok: model.bloks[0]?.name || 'Blok', date: formatDate(model.firstDate, 'medium') }];
+    else if (!next) why = ['jadwal.after', { blok: model.bloks[model.bloks.length - 1]?.name || 'blok ini' }];
+    else if (!info.blok) why = ['jadwal.why.out'];
+    else if (weekdayOf(d) === 0 || weekdayOf(d) === 6) why = ['jadwal.why.weekend'];
     const buttons = [];
-    if (next) buttons.push('<button type="button" class="jw-btn pri" data-go="' + next + '">Lompat ke ' + formatDate(next, 'medium') + '</button>');
-    if (prev && (!next || daysBetween(prev, d) <= 7)) buttons.push('<button type="button" class="jw-btn" data-go="' + prev + '">' + (next ? 'Balik ke ' : 'Lihat ') + formatDate(prev, 'medium') + '</button>');
-    return '<div class="jw-empty"><p class="jw-empty-t">' + title + '</p>' + (why ? '<p class="jw-empty-s">' + why + '</p>' : '') +
+    if (next) buttons.push('<button type="button" class="jw-btn pri" data-go="' + next + '">' + kHTML('jadwal.go.next', { date: formatDate(next, 'medium') }) + '</button>');
+    if (prev && (!next || daysBetween(prev, d) <= 7)) buttons.push('<button type="button" class="jw-btn" data-go="' + prev + '">' + kHTML(next ? 'jadwal.go.back' : 'jadwal.go.last', { date: formatDate(prev, 'medium') }) + '</button>');
+    return '<div class="jw-empty"><p class="jw-empty-t">' + title + '</p>' + (why ? kHTML(why[0], why[1], 'p', 'jw-empty-s') : '') +
       (buttons.length ? '<div class="jw-empty-b">' + buttons.join('') + '</div>' : '') + '</div>';
   }
 
   function footHTML(info) {
     const parts = [];
     if (info.sessions.some((s) => s.pj)) {
-      parts.push('<p class="jw-note"><span class="jw-pj" aria-hidden="true">PJ</span> penanggung jawab. Yang ngajar di kelas bisa dosen lain.</p>');
+      parts.push('<p class="jw-note"><span class="jw-pj" aria-hidden="true">' + kHTML('jadwal.pj.badge') + '</span> ' + kHTML('jadwal.pj.note') + '</p>');
     }
     const blokSessions = info.blok ? model.sessions.filter((s) => s.blokId === info.blok.id) : [];
     if (info.sessions.length || blokSessions.length) {
-      parts.push('<div class="jw-save"><span class="jw-save-l">Simpan ke kalender</span>' +
-        (info.sessions.length ? '<button type="button" class="jw-btn" data-ics="day">' + (info.date === state.today ? 'Hari ini' : formatDate(info.date, 'short')) + ' <span class="jw-ext">.ics</span></button>' : '') +
-        (blokSessions.length ? '<button type="button" class="jw-btn" data-ics="blok">Semua ' + esc(info.blok.name) + ' <span class="jw-ext">.ics</span></button>' : '') +
+      const ext = kHTML('jadwal.save.ext', null, 'span', 'jw-ext');
+      parts.push('<div class="jw-save">' + kHTML('jadwal.save.label', null, 'span', 'jw-save-l') +
+        (info.sessions.length ? '<button type="button" class="jw-btn" data-ics="day">' + (info.date === state.today ? kHTML('jadwal.save.today') : '<span class="jw-dt">' + formatDate(info.date, 'short') + '</span>') + ' ' + ext + '</button>' : '') +
+        (blokSessions.length ? '<button type="button" class="jw-btn" data-ics="blok">' + kHTML('jadwal.save.blok', { blok: info.blok.name }) + ' ' + ext + '</button>' : '') +
         '</div>');
     }
     return parts.join('');
@@ -380,26 +425,26 @@ export function mountJadwal(root, { schedule, dosen, now } = {}) {
     state.statusKey = key;
     countdowns = [];
 
+    // Rebuilt only when what runs or comes next changes; the clock digits tick in place (updateCountdowns).
     let a;
     if (running.length) {
       const s = running[0];
-      const after = next && next.date === s.date ? '<p class="jw-ro-x">habis ini ' + esc(next.title) + ', ' + startLabel(next) + '</p>' : '';
-      a = readout('now', 'Lagi jalan', s, timeRange(s) + (running.length > 1 ? ', barengan ' + (running.length - 1) + ' sesi lain' : ''),
-        s.openEnd ? '<p class="jw-ro-n is-words">sampai selesai</p>' : countdownHTML(s.endAt, 'sisa'), after);
+      const after = next && next.date === s.date ? kHTML('jadwal.mon.after', { title: next.title, time: startLabel(next) }, 'p', 'jw-ro-x') : '';
+      a = readout('now', 'jadwal.mon.now', s, rangeHTML(s) + (running.length > 1 ? ', ' + kHTML('jadwal.mon.also', { n: running.length - 1 }) : ''),
+        s.openEnd ? kHTML('jadwal.mon.open', null, 'p', 'jw-ro-n is-words') : countdownHTML(s.endAt, 'jadwal.mon.left'), after);
     } else if (next) {
       // no time yet, so no clock to count down: the days until it instead
-      a = readout('next', 'Berikutnya', next, whenLabel(next, today), next.tba ? daysHTML(daysUntilLabel(next.date, today)) : countdownHTML(next.startAt, 'lagi'), '');
+      a = readout('next', 'jadwal.mon.next', next, whenHTML(next, today), next.tba ? daysHTML(next.date, today) : countdownHTML(next.startAt, 'jadwal.mon.until'), '');
     } else {
-      a = '<div class="jw-ro" data-state="none"><p class="jw-ro-k">Berikutnya</p><p class="jw-ro-e">Belum ada jadwal lagi.</p></div>';
+      a = '<div class="jw-ro" data-state="none">' + kHTML('jadwal.mon.next', null, 'p', 'jw-ro-k') + kHTML('jadwal.mon.nonext', null, 'p', 'jw-ro-e') + '</div>';
     }
 
     let b;
     if (ujian) {
       const going = !ujian.tba && ujian.startAt <= t;
-      const label = going ? 'lagi jalan' : daysUntilLabel(ujian.date, today);
-      b = readout('exam', 'Ujian berikutnya', ujian, whenLabel(ujian, today), daysHTML(label), '');
+      b = readout('exam', 'jadwal.mon.exam', ujian, whenHTML(ujian, today), going ? kHTML('jadwal.live', null, 'p', 'jw-ro-n is-words') : daysHTML(ujian.date, today), '');
     } else {
-      b = '<div class="jw-ro" data-state="none"><p class="jw-ro-k">Ujian berikutnya</p><p class="jw-ro-e">Belum ada ujian di jadwal.</p></div>';
+      b = '<div class="jw-ro" data-state="none">' + kHTML('jadwal.mon.exam', null, 'p', 'jw-ro-k') + kHTML('jadwal.mon.noexam', null, 'p', 'jw-ro-e') + '</div>';
     }
     el.mon.innerHTML = a + b;
     for (const node of el.mon.querySelectorAll('[data-until]')) countdowns.push({ node, at: +node.dataset.until });
@@ -417,15 +462,17 @@ export function mountJadwal(root, { schedule, dosen, now } = {}) {
     return true;
   }
 
-  function readout(kind, label, s, sub, big, extra) {
+  // subHTML is markup: dates and times, with their words as page texts
+  function readout(kind, labelKey, s, subHTML, big, extra) {
     return '<div class="jw-ro" data-state="' + kind + '">' +
-      '<p class="jw-ro-k">' + label + '</p>' +
+      kHTML(labelKey, null, 'p', 'jw-ro-k') +
       '<button type="button" class="jw-ro-t" data-go="' + s.date + '" data-uid="' + esc(s.uid) + '">' + esc(s.title) + '</button>' +
-      '<p class="jw-ro-s">' + esc(sub) + '</p>' + big + extra + '</div>';
+      '<p class="jw-ro-s">' + subHTML + '</p>' + big + extra + '</div>';
   }
 
-  function countdownHTML(at, word) {
-    return '<p class="jw-ro-n" role="timer"><span data-until="' + at + '"></span> <small>' + word + '</small></p>';
+  // the digits are formatting and tick on their own; only the word beside them is a page text
+  function countdownHTML(at, wordKey) {
+    return '<p class="jw-ro-n" role="timer"><span data-until="' + at + '"></span> ' + kHTML(wordKey, null, 'small') + '</p>';
   }
 
   function updateCountdowns(t) {
@@ -730,16 +777,21 @@ export function mountJadwal(root, { schedule, dosen, now } = {}) {
     state.query = q;
     if (!q) {
       el.hits.innerHTML = '';
+      // no count, no key: apply() would otherwise put the last count back
+      delete el.hitsCount.dataset.k;
+      delete el.hitsCount.dataset.kv;
       el.hitsCount.textContent = '';
       return;
     }
     const all = model.search(q);
     const shown = all.slice(0, 12);
-    el.hitsCount.textContent = all.length ? all.length + ' sesi ketemu' + (all.length > shown.length ? ', ini 12 yang pertama' : '') : 'Nggak ketemu.';
+    if (!all.length) kSet(el.hitsCount, 'jadwal.find.none');
+    else if (all.length > shown.length) kSet(el.hitsCount, 'jadwal.find.many', { n: all.length, max: shown.length });
+    else kSet(el.hitsCount, 'jadwal.find.n', { n: all.length });
     el.hits.innerHTML = shown.map((s) =>
       '<li><button type="button" class="jw-hit" data-go="' + s.date + '" data-uid="' + esc(s.uid) + '">' +
         '<span class="jw-hit-t">' + esc(s.title) + '</span>' +
-        '<span class="jw-hit-m">' + formatDate(s.date, 'short') + ', ' + startLabel(s) + ', ' + esc(s.kindLabel) + '</span>' +
+        '<span class="jw-hit-m"><span class="jw-dt">' + formatDate(s.date, 'short') + '</span>, ' + startHTML(s) + ', ' + kindHTML(s) + '</span>' +
       '</button></li>'
     ).join('');
   }
@@ -864,7 +916,11 @@ function shellHTML(uid) {
   const weekdays = [1, 2, 3, 4, 5, 6, 0].map((w) => '<th scope="col" abbr="' + DAYS[w] + '">' + DAYS_SHORT[w] + '</th>').join('');
   return '<div class="jw-in">' +
     '<header class="jw-head">' +
-      '<h2 class="jw-h" id="' + uid + '-h"><span data-k="jadwal.h1">hari ini</span> <em data-k="jadwal.h2">kuliah apa?</em></h2>' +
+      // the heading and the admin's note under it (hidden while the note is empty) move as one
+      '<div class="jw-title">' +
+        '<h2 class="jw-h" id="' + uid + '-h">' + kHTML('jadwal.h1') + ' ' + kHTML('jadwal.h2', null, 'em') + '</h2>' +
+        kHTML('jadwal.note', null, 'p', 'k-note') +
+      '</div>' +
       '<div class="jw-bloks" role="group" aria-label="Pilih blok"></div>' +
     '</header>' +
     '<div class="jw-grid">' +
@@ -878,8 +934,8 @@ function shellHTML(uid) {
           '</div>' +
           '<div class="jw-bar">' +
             '<button type="button" class="jw-ic" data-act="prev" aria-label="Hari kuliah sebelumnya">' + ICON.prev + '</button>' +
-            '<button type="button" class="jw-btn jw-calbtn" data-act="cal" aria-haspopup="dialog">' + ICON.cal + '<span class="jw-calbtn-t">Kalender</span></button>' +
-            '<button type="button" class="jw-btn" data-act="today">Hari ini</button>' +
+            '<button type="button" class="jw-btn jw-calbtn" data-act="cal" aria-haspopup="dialog">' + ICON.cal + kHTML('jadwal.bar.cal', null, 'span', 'jw-calbtn-t') + '</button>' +
+            '<button type="button" class="jw-btn" data-act="today">' + kHTML('jadwal.today') + '</button>' +
             '<button type="button" class="jw-ic" data-act="next" aria-label="Hari kuliah berikutnya">' + ICON.next + '</button>' +
           '</div>' +
         '</div>' +
@@ -888,8 +944,8 @@ function shellHTML(uid) {
         '<div class="jw-list"></div>' +
         '<div class="jw-foot"></div>' +
         '<div class="jw-find">' +
-          '<label class="jw-find-l" for="' + uid + '-q">Cari materi atau dosen</label>' +
-          '<input class="jw-q" id="' + uid + '-q" type="search" autocomplete="off" spellcheck="false" enterkeyhint="search" placeholder="pedigree, ziske, OSPE">' +
+          '<label class="jw-find-l" for="' + uid + '-q"' + kAttrs('jadwal.find.label') + '>' + kText('jadwal.find.label') + '</label>' +
+          '<input class="jw-q" id="' + uid + '-q" type="search" autocomplete="off" spellcheck="false" enterkeyhint="search"' + kAttr('kp', 'jadwal.find.ph') + '>' +
           '<p class="jw-hitc" aria-live="polite"></p>' +
           '<ol class="jw-hits"></ol>' +
         '</div>' +
@@ -903,10 +959,10 @@ function shellHTML(uid) {
           '<button type="button" class="jw-ic" data-cal="next" aria-label="Bulan berikutnya">' + ICON.next + '</button>' +
         '</div>' +
         '<table class="jw-cal-g" role="grid" aria-labelledby="' + uid + '-calh"><thead><tr>' + weekdays + '</tr></thead><tbody></tbody></table>' +
-        '<p class="jw-cal-key" aria-hidden="true"><span class="k-has">ada kelas</span><span class="k-exam">ujian</span><span class="k-blok">masa blok</span></p>' +
+        '<p class="jw-cal-key" aria-hidden="true">' + kHTML('jadwal.cal.has', null, 'span', 'k-has') + kHTML('jadwal.cal.exam', null, 'span', 'k-exam') + kHTML('jadwal.cal.blok', null, 'span', 'k-blok') + '</p>' +
         '<div class="jw-cal-foot">' +
-          '<button type="button" class="jw-btn" data-cal="today">Hari ini</button>' +
-          '<button type="button" class="jw-btn pri" data-cal="close">Tutup</button>' +
+          '<button type="button" class="jw-btn" data-cal="today">' + kHTML('jadwal.today') + '</button>' +
+          '<button type="button" class="jw-btn pri" data-cal="close">' + kHTML('jadwal.cal.close') + '</button>' +
         '</div>' +
       '</div>' +
     '</dialog>' +

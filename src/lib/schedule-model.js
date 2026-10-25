@@ -1,6 +1,14 @@
 // Schedule model for Class Alpha. Pure functions only: no DOM, no storage, no clock reads.
 // Every function that cares about "now" takes it as an argument (ms since epoch or a Date),
 // so the UI and the tests decide what time it is.
+// The words it puts on screen ("besok", "jam menyusul", "Praktikum") are page texts the admin
+// can change (src/copy/jadwal.js); they are read through tx() and ship as they always were.
+// relativeDayKey(), daysUntilText() and kindKey() name the key behind a word, so a page can mark
+// the element that shows it.
+import { KIND_LABELS } from '../copy/jadwal.js';
+import { tx } from './texts.js';
+
+export { KIND_LABELS };
 
 // Palembang runs on WIB. Indonesia has had no daylight saving since 1964, so a fixed
 // +07:00 offset is exact and avoids depending on the device's time zone or its ICU data.
@@ -12,24 +20,19 @@ export const DAY_MS = 24 * 60 * 60 * 1000;
 // that do have an end time run four to four and a half hours).
 export const OPEN_END_MINUTES = 240;
 
-export const KIND_LABELS = {
-  kuliah: 'Kuliah',
-  praktikum: 'Praktikum',
-  skilllab: 'Skill Lab',
-  tutorial: 'Tutorial',
-  ujian: 'Ujian',
-  pleno: 'Pleno',
-  mkdu: 'MKDU',
-  intro: 'Pengantar blok',
-};
-
 export const DAYS = ['Minggu', 'Senin', 'Selasa', 'Rabu', 'Kamis', 'Jumat', 'Sabtu'];
 export const DAYS_SHORT = ['Min', 'Sen', 'Sel', 'Rab', 'Kam', 'Jum', 'Sab'];
 export const MONTHS = ['Januari', 'Februari', 'Maret', 'April', 'Mei', 'Juni', 'Juli', 'Agustus', 'September', 'Oktober', 'November', 'Desember'];
 export const MONTHS_SHORT = ['Jan', 'Feb', 'Mar', 'Apr', 'Mei', 'Jun', 'Jul', 'Agu', 'Sep', 'Okt', 'Nov', 'Des'];
 
+/** The page-text key of a kind's label ('jadwal.kind.praktikum'), or null for a kind the site does not know. */
+export function kindKey(kind) {
+  return Object.prototype.hasOwnProperty.call(KIND_LABELS, kind) ? 'jadwal.kind.' + kind : null;
+}
+
 export function kindLabel(kind) {
-  return KIND_LABELS[kind] || (kind ? kind.charAt(0).toUpperCase() + kind.slice(1) : 'Sesi');
+  const key = kindKey(kind);
+  return key ? tx(key) : kind ? kind.charAt(0).toUpperCase() + kind.slice(1) : 'Sesi';
 }
 
 // ---------- calendar dates as 'YYYY-MM-DD' strings ----------
@@ -171,14 +174,17 @@ export function formatDate(iso, style = 'long') {
   }
 }
 
+const RELATIVE_KEYS = new Map([[0, 'jadwal.day.today'], [1, 'jadwal.day.tomorrow'], [2, 'jadwal.day.lusa'], [-1, 'jadwal.day.yesterday']]);
+
+/** The key of 'hari ini', 'besok', 'lusa' or 'kemarin' for iso relative to today, or null for other days. */
+export function relativeDayKey(iso, today) {
+  return RELATIVE_KEYS.get(daysBetween(today, iso)) || null;
+}
+
 /** 'hari ini', 'besok', 'kemarin', 'lusa' or '' relative to today (both ISO dates). */
 export function relativeDay(iso, today) {
-  const diff = daysBetween(today, iso);
-  if (diff === 0) return 'hari ini';
-  if (diff === 1) return 'besok';
-  if (diff === 2) return 'lusa';
-  if (diff === -1) return 'kemarin';
-  return '';
+  const key = relativeDayKey(iso, today);
+  return key ? tx(key) : '';
 }
 
 export function countdownParts(ms) {
@@ -199,13 +205,19 @@ export function formatCountdown(ms) {
   return pad(p.hours) + ':' + pad(p.minutes) + ':' + pad(p.seconds);
 }
 
+/** The key and vars behind daysUntilLabel(): { key } for 'hari ini' and 'besok', { key, vars: { n } } otherwise. */
+export function daysUntilText(iso, today) {
+  const diff = daysBetween(today, iso);
+  if (diff === 0) return { key: 'jadwal.day.today' };
+  if (diff === 1) return { key: 'jadwal.day.tomorrow' };
+  if (diff < 0) return { key: 'jadwal.day.ago', vars: { n: Math.abs(diff) } };
+  return { key: 'jadwal.day.in', vars: { n: diff } };
+}
+
 /** Whole calendar days until a date, phrased the way people say it. */
 export function daysUntilLabel(iso, today) {
-  const diff = daysBetween(today, iso);
-  if (diff === 0) return 'hari ini';
-  if (diff === 1) return 'besok';
-  if (diff < 0) return Math.abs(diff) + ' hari lalu';
-  return diff + ' hari lagi';
+  const { key, vars } = daysUntilText(iso, today);
+  return tx(key, vars);
 }
 
 // ---------- text matching ----------
@@ -294,13 +306,13 @@ function sessionHaystack(s) {
 
 /** '08.00 - 09.40', '08.00 - selesai', or 'jam menyusul' when the schedule has no time yet. */
 export function timeRange(s) {
-  if (s.tba) return 'jam menyusul';
-  return formatTime(s.start) + ' - ' + (s.end ? formatTime(s.end) : 'selesai');
+  if (s.tba) return tx('jadwal.time.tba');
+  return formatTime(s.start) + ' - ' + (s.end ? formatTime(s.end) : tx('jadwal.time.end'));
 }
 
 /** The start time for a short line ('08.00'), or 'jam menyusul'. */
 export function startLabel(s) {
-  return s.tba ? 'jam menyusul' : formatTime(s.start);
+  return s.tba ? tx('jadwal.time.tba') : formatTime(s.start);
 }
 
 /**

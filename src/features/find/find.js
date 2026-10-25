@@ -1,15 +1,20 @@
 // Site-wide search (Ctrl/Cmd K or the "Cari" button): channels, sessions, lecturers and parts
 // of the heart in one list. Loaded the first time someone opens it.
+// Its fixed words are page texts the admin can change (src/copy/find.js); what it finds is data.
 import './find.css';
-import { createModel, queryTokens, compact, formatDate, startLabel, todayWIB } from '../../lib/schedule-model.js';
+import '../../copy/find.js';
+import { kSet, kHTML, kAttrs, kText, tx, onTexts } from '../../lib/texts.js';
+import { createModel, queryTokens, compact, formatDate, formatTime, kindKey, todayWIB } from '../../lib/schedule-model.js';
 
 const LIMIT = { channel: 5, session: 6, dosen: 6, heart: 5 };
-const GROUP = { section: 'Lompat ke', channel: 'Channel', session: 'Jadwal', dosen: 'Dosen', heart: 'Jantung 3D' };
+// group headings, by result type
+const GROUP = { section: 'find.g.section', channel: 'find.g.channel', session: 'find.g.session', dosen: 'find.g.dosen', heart: 'find.g.heart' };
+// the parts of the page offered before anything is typed; k + '.t' is the name, k + '.s' the line under it
 const SECTIONS = [
-  { id: 'jadwal', name: 'Jadwal kuliah', sub: 'Hari ini, kalender, ujian berikutnya' },
-  { id: 'menu', name: 'Drive dan channel', sub: 'Semua folder kelas' },
-  { id: 'dosen', name: 'Daftar dosen', sub: 'Nama, spesialis, nomor HP' },
-  { id: 'anatomi', name: 'Jantung 3D', sub: 'Model yang bisa dibongkar' },
+  { id: 'jadwal', k: 'find.sec.jadwal' },
+  { id: 'menu', k: 'find.sec.menu' },
+  { id: 'dosen', k: 'find.sec.dosen' },
+  { id: 'anatomi', k: 'find.sec.anatomi' },
 ];
 
 function el(tag, cls, text) {
@@ -17,6 +22,32 @@ function el(tag, cls, text) {
   if (cls) n.className = cls;
   if (text != null) n.textContent = text;
   return n;
+}
+
+/** An element showing a page text. */
+function k(tag, cls, key, vars) {
+  return kSet(el(tag, cls), key, vars);
+}
+
+/** A result's name. */
+function nameEl(r) {
+  return r.type === 'section' ? k('span', 'fd-n', r.k + '.t') : el('span', 'fd-n', r.name);
+}
+
+/** The line under a result: a session's day, time, kind and blok, or the data line of the others. */
+function subEl(r) {
+  if (r.type === 'section') return k('span', 'fd-s', r.k + '.s');
+  if (r.type === 'dosen' && !r.sub) return k('span', 'fd-s', 'find.dosen');
+  if (r.type !== 'session') return el('span', 'fd-s', r.sub);
+  const s = r.s;
+  const line = el('span', 'fd-s');
+  const kind = kindKey(s.kind);
+  line.append(
+    s.date === r.today ? k('span', null, 'find.today') : el('span', 'fd-dt', formatDate(s.date, 'short')), ', ',
+    s.tba ? k('span', null, 'jadwal.time.tba') : formatTime(s.start), ' · ',
+    kind ? k('span', null, kind) : s.kindLabel, ' · ',
+    el('span', 'fd-blok', s.blok.name));
+  return line;
 }
 
 /** Scores a haystack against query tokens: every token must appear; earlier and word-start hits rank higher. */
@@ -70,14 +101,16 @@ export function createFind({ load, ensure, jump }) {
   icon.setAttribute('aria-hidden', 'true');
   icon.innerHTML = '<circle cx="10.5" cy="10.5" r="6"/><path d="m15 15 5 5"/>';
   const input = el('input', 'fd-q');
-  Object.assign(input, { type: 'search', placeholder: 'Cari materi, dosen, channel, bagian jantung', autocomplete: 'off', spellcheck: false });
+  Object.assign(input, { type: 'search', placeholder: tx('find.ph'), autocomplete: 'off', spellcheck: false });
+  input.dataset.kp = 'find.ph';
   input.setAttribute('enterkeyhint', 'go');
   input.setAttribute('role', 'combobox');
   input.setAttribute('aria-expanded', 'true');
   input.setAttribute('aria-controls', 'fdList');
   input.setAttribute('aria-autocomplete', 'list');
   input.setAttribute('aria-label', 'Cari');
-  const esc = el('button', 'fd-esc', 'Esc');
+  const esc = el('button', 'fd-esc');
+  esc.append(k('span', null, 'find.close'));
   esc.type = 'button';
   esc.setAttribute('aria-label', 'Tutup pencarian');
   bar.append(icon, input, esc);
@@ -87,7 +120,9 @@ export function createFind({ load, ensure, jump }) {
   list.setAttribute('aria-label', 'Hasil');
   const foot = el('p', 'fd-foot');
   foot.setAttribute('aria-hidden', 'true');
-  foot.innerHTML = '<span><kbd>↑</kbd><kbd>↓</kbd> pilih</span><span><kbd>Enter</kbd> buka</span><span><kbd>Esc</kbd> tutup</span>';
+  foot.innerHTML = '<span><kbd>↑</kbd><kbd>↓</kbd> ' + kHTML('find.k.pick') + '</span>' +
+    '<span><kbd' + kAttrs('find.k.enter') + '>' + kText('find.k.enter') + '</kbd> ' + kHTML('find.k.open') + '</span>' +
+    '<span><kbd' + kAttrs('find.k.esc') + '>' + kText('find.k.esc') + '</kbd> ' + kHTML('find.k.close') + '</span>';
   const live = el('p', 'fd-sr');
   live.setAttribute('aria-live', 'polite');
   box.append(bar, list, foot, live);
@@ -103,7 +138,8 @@ export function createFind({ load, ensure, jump }) {
       model,
       sessions: (model?.sessions || []).map((s) => ({ s, hay: fold(sessionKeys(s).join('|')), words: sessionKeys(s).flatMap(wordsOf), tHay: fold(s.title), tWords: wordsOf(s.title) })),
       channel: prep((links?.channels || []).map((c) => ({ type: 'channel', id: c.id, name: c.name, sub: c.sub || c.tag || '', keys: [c.name, c.tag, c.sub, c.id] }))),
-      dosen: prep((dosen?.list || []).map((p) => ({ type: 'dosen', id: p.id, name: p.name, sub: p.spec || 'Dosen', keys: [p.name, p.spec, ...(p.phones || []).map((x) => (typeof x === 'string' ? x : (x.n || '') + ' ' + (x.f || '')))] }))),
+      // without a specialty the line under the name is the page text 'find.dosen'
+      dosen: prep((dosen?.list || []).map((p) => ({ type: 'dosen', id: p.id, name: p.name, sub: p.spec || '', keys: [p.name, p.spec, ...(p.phones || []).map((x) => (typeof x === 'string' ? x : (x.n || '') + ' ' + (x.f || '')))] }))),
       heart: prep((heart?.parts || []).map((p) => ({ type: 'heart', id: p.id, name: p.name, sub: [p.latin, p.en].filter(Boolean).join(' · '), keys: [p.name, p.latin, p.en, p.id] }))),
     };
   }
@@ -112,6 +148,8 @@ export function createFind({ load, ensure, jump }) {
     if (!indexing) indexing = buildIndex().then((ix) => { index = ix; return ix; });
     return indexing;
   }
+  // the session kinds it searches are page texts: renamed ones count from the next opening on
+  onTexts(() => { indexing = null; });
 
   function rank(items, tokens, limit) {
     return items
@@ -139,7 +177,9 @@ export function createFind({ load, ensure, jump }) {
       id: s.uid,
       date: s.date,
       name: s.title,
-      sub: (s.date === today ? 'Hari ini' : formatDate(s.date, 'short')) + ', ' + startLabel(s) + ' · ' + s.kindLabel + ' · ' + s.blok.name,
+      // drawn by subEl(): 'Hari ini, 08.00 · Kuliah · Blok 4'
+      s,
+      today,
       past: s.endAt < now,
       // a hit on the title counts like a name hit; a hit only on the lecturer counts less
       score: titleScore.get(s),
@@ -173,7 +213,7 @@ export function createFind({ load, ensure, jump }) {
         group = r.type;
         wrap = el('div', 'fd-g');
         wrap.setAttribute('role', 'group');
-        const h = el('p', 'fd-gh', GROUP[r.type]);
+        const h = k('p', 'fd-gh', GROUP[r.type]);
         h.id = 'fdG-' + r.type;
         wrap.setAttribute('aria-labelledby', h.id);
         wrap.append(h);
@@ -183,14 +223,11 @@ export function createFind({ load, ensure, jump }) {
       o.id = 'fdO-' + i;
       o.setAttribute('role', 'option');
       o.dataset.i = i;
-      o.append(el('span', 'fd-n', r.name), el('span', 'fd-s', r.sub));
+      o.append(nameEl(r), subEl(r));
       wrap.append(o);
     });
-    if (!results.length) {
-      const none = el('p', 'fd-none');
-      none.append(el('b', null, 'Nggak ketemu.'), document.createTextNode(' Coba kata lain, misalnya nama dosen, judul kuliah, atau "mitral".'));
-      list.append(none);
-    }
+    // '**Nggak ketemu.** Coba kata lain, ...': the bold part is written with ** in the text
+    if (!results.length) list.append(k('p', 'fd-none', 'find.none'));
     setActive(results.length ? 0 : -1);
     if (q.trim()) live.textContent = results.length ? results.length + ' hasil.' : 'Nggak ketemu.';
   }
@@ -268,7 +305,7 @@ export function createFind({ load, ensure, jump }) {
       input.value = '';
       render();
       input.focus();
-      if (!index) ensureIndex().then(() => { if (dlg.open) render(); }, () => {});
+      if (!index || !indexing) ensureIndex().then(() => { if (dlg.open) render(); }, () => {});
     },
     close,
     preload: ensureIndex,

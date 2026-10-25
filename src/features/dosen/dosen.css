@@ -154,7 +154,7 @@
 .dz-dlg-ph{margin-top:18px}
 .dz-dlg-sub{margin-top:28px;display:flex;align-items:baseline;justify-content:space-between;gap:10px;font-family:var(--mono);font-weight:400;font-size:10.5px;
   letter-spacing:.2em;text-transform:uppercase;color:var(--mut)}
-.dz-dlg-sub span{color:var(--grx)}
+.dz-dlg-cnt{color:var(--grx)}
 .dz-dlg-none{margin-top:12px;color:var(--mut)}
 .dz-se{margin-top:10px;border-top:1px solid var(--line)}
 .dz-se-b{display:grid;grid-template-columns:118px minmax(0,1fr);gap:2px 16px;width:100%;padding:12px 4px;border-bottom:1px solid var(--line);text-align:left;
