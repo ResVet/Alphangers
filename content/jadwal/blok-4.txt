@@ -111,7 +111,7 @@ jam menyusul | Ujian CBT Blok 4 | - | Jamnya belum ada di jadwal resmi. Tunggu i
 08.00-09.40 | Her Dini Blok 4 | -
 
 = 2026-12-04
-jam menyusul | Her OSPE Blok 4 | TIM | Jamnya belum ada di jadwal resmi. Tunggu info dari koorta.
+jam menyusul | Her OSPE Blok 4 | - | Jamnya belum ada di jadwal resmi. Tunggu info dari koorta.
 
 [dosen]
 WAR | dr. Wardiansah, M.Biomed | 08197862426
@@ -125,6 +125,6 @@ LEG | Dr. dr. Legiran, M.Kes | 08127811705
 RLN | dr. Msy. Rulan Adnindya, M.Biomed | 08117102488
 SOI | dr. Soilia Fertilita, M.Imun | 081374379005
 MRO | dr. M. Ramadhandie Odista, Sp.N | 082186413666
-SIM | Ftr. Sima Asmara Dewa Marya Mahardika Putri, S.Kes., M.KM | 082140354882
+SIM | Ftr. Sima Asmara Dewa Marya Mahardika Putri, S.Kes., M.K.M. | 082140354882
 AIE | dr. Ajeng Intan Estri Amanda, M.Biomed | 085273231305
 RDI | Rosada Dwi Iswari, M.Psi., Psikolog | 082281359331

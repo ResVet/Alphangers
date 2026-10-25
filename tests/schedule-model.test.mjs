@@ -349,7 +349,7 @@ describe('blok 4', () => {
       ['13:00', '14:40', 'KH1. Jaringan Epitel', 'VST'],
     ]);
     assert.equal(day[0].kind, 'intro');
-    assert.equal(day[0].lecturers[0].dosen.name, 'Ftr. Sima Asmara Dewa Marya Mahardika Putri, S.Kes., M.KM');
+    assert.equal(day[0].lecturers[0].dosen.name, 'Ftr. Sima Asmara Dewa Marya Mahardika Putri, S.Kes., M.K.M.');
     assert.ok(inB4.every((s) => s.lecturers.every((l) => l.dosen)), 'every code has a lecturer');
   });
 
