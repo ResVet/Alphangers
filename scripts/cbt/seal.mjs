@@ -3,8 +3,10 @@
 //   banks/<id>.json    a question bank in the site format; pictures as paths in the folder, or
 //                      an empty path for img/<bank id>/<picture id>.<ext>. "kind" says which try
 //                      out channel shows it (CHANNEL_KINDS: tryout, the default, or ospe); an
-//                      explanation ("e") is optional. Other files there (working files, notes)
-//                      are skipped.
+//                      explanation ("e") is optional. "tags" maps tag keys to labels, like
+//                      "topics", and a question lists its tags in "tg" (the "herdini" tag
+//                      gives the bank a Her Dini mode). Other files there (working files,
+//                      notes) are skipped.
 //   img/...            those pictures
 //   secret.txt         the master secret, unless CBT_SECRET is set
 // It checks everything first and writes nothing if anything is wrong. Then it writes:
@@ -147,7 +149,7 @@ function checkBank(file) {
   const b = readJson(join(dir, 'banks', file), where);
   if (b === undefined) return;
   if (!isObj(b)) return bad(where, 'not a JSON object');
-  onlyKeys(b, ['id', 'kv', 'kind', 'new', 'name', 'title', 'sem', 'by', 'refs', 'topics', 'q'], where);
+  onlyKeys(b, ['id', 'kv', 'kind', 'new', 'name', 'title', 'sem', 'by', 'refs', 'topics', 'tags', 'q'], where);
   if (b.id !== id) bad(where, `id must be "${id}", like the file name`);
   const kv = b.kv ?? 1;
   if (!Number.isInteger(kv) || kv < 1 || kv > 9999) bad(where, 'kv must be a whole number from 1');
@@ -179,18 +181,28 @@ function checkBank(file) {
       if (!/^[a-z0-9][a-z0-9_-]{0,31}$/.test(k)) bad(where, `topic key "${k}" must be lowercase letters, digits, _ or -`);
       text(v, where, `topic ${k}`, { max: 80 });
     }
+  const tags = b.tags === undefined ? {} : isObj(b.tags) && Object.keys(b.tags).length && Object.keys(b.tags).length <= 20 ? b.tags : null;
+  if (!tags) bad(where, 'tags must map 1 to 20 keys to labels');
+  else
+    for (const [k, v] of Object.entries(tags)) {
+      if (!/^[a-z0-9][a-z0-9_-]{0,31}$/.test(k)) bad(where, `tag key "${k}" must be lowercase letters, digits, _ or -`);
+      text(v, where, `tag ${k}`, { max: 80 });
+    }
   if (!Array.isArray(b.q) || !b.q.length || b.q.length > 5000) return bad(where, 'q must be a list of questions');
   const ids = new Set();
   const pics = new Map();
   b.q.forEach((q, i) => {
     const w = `${where} q[${i}]${typeof q?.id === 'string' ? ` (${q.id})` : ''}`;
     if (!isObj(q)) return bad(w, 'not an object');
-    onlyKeys(q, ['id', 't', 'tp', 'q', 'o', 'a', 'e', 'n', 'ns', 'img', 'ei', 'src'], w);
+    onlyKeys(q, ['id', 't', 'tp', 'tg', 'q', 'o', 'a', 'e', 'n', 'ns', 'img', 'ei', 'src'], w);
     if (typeof q.id !== 'string' || !/^[A-Za-z0-9_-]{1,40}$/.test(q.id)) bad(w, 'id must be letters, digits, _ or -');
     else if (ids.has(q.id)) bad(w, 'an id already used in this bank');
     ids.add(q.id);
     if (q.t !== 'mc' && q.t !== 'tf') bad(w, 't must be "mc" or "tf"');
     if (!topics || typeof q.tp !== 'string' || !Object.hasOwn(topics, q.tp)) bad(w, 'tp must be one of the topic keys');
+    if (q.tg !== undefined && (!Array.isArray(q.tg) || !q.tg.length || q.tg.length > 5 || new Set(q.tg).size !== q.tg.length || q.tg.some((k) => typeof k !== 'string' || !tags || !Object.hasOwn(tags, k)))) {
+      bad(w, 'tg must list 1 to 5 of the tag keys, each once');
+    }
     text(q.q, w, 'q', { max: 10000 });
     const n = Array.isArray(q.o) ? q.o.length : 0;
     if (!Array.isArray(q.o)) bad(w, 'o must be a list of options');

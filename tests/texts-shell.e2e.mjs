@@ -57,7 +57,7 @@ const TRYOUT_SKIP = [
   ['.to-k', 'answer letters'],
   ['kbd', 'keyboard key names'],
   ['[data-act="tp"]:not([data-v="*"]), .to-tp-n', 'topic names from the question bank'],
-  ['.to-tag:not([data-k])', 'topic name or question number from the question bank'],
+  ['.to-tag:not([data-k])', 'topic name, tag (Soal Herdini) or question number from the question bank'],
   ['.to-refl', 'reference titles from the question bank'],
   ['.to-hr-m small, .to-dt', 'dates, durations and the label a session was saved with'],
   ['.to-pass-n:not([data-k]), .to-pass-e:not([data-k]), .to-pv-q b', 'the student\'s name and email: data'],
@@ -278,6 +278,8 @@ for (const [w, h] of SIZES) {
     assert.match(await s.ev(() => document.querySelector('.to-start [data-k]').textContent), /^Mulai latihan · \d+ soal$/);
     await s.page.click('[data-act="mode"][data-v="ujian"]');
     await at('setup-sim');
+    await s.page.click('[data-act="mode"][data-v="herdini"]');
+    await at('setup-hd');
     await s.page.click('[data-act="mode"][data-v="latihan"]');
     await s.page.click('.to-start');
     await s.page.waitForSelector('#toQ');

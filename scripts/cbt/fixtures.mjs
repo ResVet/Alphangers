@@ -93,7 +93,7 @@ const b2 = {
 };
 
 // Blok 3: credit, references, one topic, only multiple choice, pictures under the stem and
-// under the explanation.
+// under the explanation, and two questions tagged Soal Herdini (Mode Her Dini).
 const b3 = {
   id: 'b3', name: 'Blok 3', title: 'Karakter Biologi Tubuh Manusia', sem: 'Semester 1',
   by: 'Batu Alphangers',
@@ -103,17 +103,18 @@ const b3 = {
     { name: 'Ringkasan praktikum (contoh)', url: 'javascript:alert(1)' },
   ],
   topics: { sel: 'Sel & genetika' },
+  tags: { herdini: 'Soal Herdini' },
   q: [
     { id: 'g01', t: 'mc', tp: 'sel', q: 'Perhatikan gambar sel hewan berikut. Organel yang ditunjuk huruf B adalah…', o: ['Nukleus', 'Mitokondria', 'Retikulum endoplasma kasar', 'Aparatus Golgi', 'Lisosom'], a: [1],
       img: [{ id: 'i01', svg: CELL, enc: png, type: 'image/png' }],
       e: 'B menunjuk organel lonjong dengan krista di dalamnya. Itu mitokondria, tempat sebagian besar ATP sel dibuat.',
       ei: [{ id: 'e01', svg: MITO, enc: webp, type: 'image/webp' }] },
-    { id: 'g02', t: 'mc', tp: 'sel', q: 'Seorang anak laki-laki menderita hemofilia. Kedua orang tuanya sehat, dan kakek dari pihak ibu juga menderita hemofilia.\n\nPola pewarisan yang paling mungkin adalah…', o: ['Autosomal dominan', 'Autosomal resesif', 'Terpaut X resesif', 'Mitokondrial'], a: [2],
+    { id: 'g02', t: 'mc', tp: 'sel', q: 'Seorang anak laki-laki menderita hemofilia. Kedua orang tuanya sehat, dan kakek dari pihak ibu juga menderita hemofilia.\n\nPola pewarisan yang paling mungkin adalah…', o: ['Autosomal dominan', 'Autosomal resesif', 'Terpaut X resesif', 'Mitokondrial'], a: [2], tg: ['herdini'],
       e: 'Ibu yang sehat membawa alel dari ayahnya, lalu menurunkannya ke anak laki-lakinya.',
       n: 'Ayah tidak menurunkan kromosom X ke anak laki-lakinya.' },
     { id: 'g03', t: 'mc', tp: 'sel', q: 'Fase mitosis saat kromosom berjajar di bidang ekuator adalah…', o: ['Profase', 'Metafase', 'Anafase', 'Telofase'], a: [1],
       e: 'Pada metafase, kinetokor tiap kromosom terikat benang spindel dari dua kutub sehingga kromosom berjajar di tengah.' },
-    { id: 'g04', t: 'mc', tp: 'sel', q: 'Kodon awal (start) pada mRNA adalah…', o: ['UAA', 'AUG', 'UGA', 'UAG', 'GUA'], a: [1],
+    { id: 'g04', t: 'mc', tp: 'sel', q: 'Kodon awal (start) pada mRNA adalah…', o: ['UAA', 'AUG', 'UGA', 'UAG', 'GUA'], a: [1], tg: ['herdini'],
       e: 'AUG mengode metionin dan menjadi tempat ribosom mulai menerjemahkan. UAA, UGA dan UAG adalah kodon stop.' },
   ],
 };

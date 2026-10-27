@@ -1047,6 +1047,24 @@ test('the seal script lists a bank under its kind of try out, and an explanation
   rmSync(out, { recursive: true });
 });
 
+test('the seal script keeps the tags of a bank and of its questions', async () => {
+  const dir = privateDir((f) => {
+    f.b3.tags = { herdini: 'Soal Herdini' };
+    f.b3.q[1].tg = ['herdini'];
+  });
+  const out = mkdtempSync(join(tmpdir(), 'cbt-out-'));
+  const r = sealRun(dir, out);
+  assert.equal(r.code, 0, r.text);
+  const b3 = JSON.parse(readFileSync(join(out, 'src/data/cbt.json'), 'utf8')).banks[1];
+  assert.equal('tags' in b3, false, 'the public bank list does not name them');
+  const bank = await openJson(await derive(fromB64u(SECRET), LABEL.bankKey('b3', 2)), new Uint8Array(readFileSync(join(out, 'public', b3.file))), LABEL.bankAad('b3', 2));
+  assert.deepEqual(bank.tags, { herdini: 'Soal Herdini' });
+  assert.deepEqual(bank.q[1].tg, ['herdini']);
+  assert.equal('tg' in bank.q[0], false, 'a question without tags has none');
+  rmSync(dir, { recursive: true });
+  rmSync(out, { recursive: true });
+});
+
 test('the seal script refuses bad input and then writes nothing', () => {
   const q = (f, i = 0) => f.b3.q[i];
   const cases = {
@@ -1073,6 +1091,13 @@ test('the seal script refuses bad input and then writes nothing', () => {
     'id unlike the file name': (f) => (f.b3.id = 'b4'),
     'bad kv': (f) => (f.b3.kv = 0),
     'bad topic key': (f) => (f.b3.topics = { 'Sel Organel': 'x' }),
+    'tag the bank does not have': (f) => (q(f).tg = ['herdini']),
+    'bad tag key': (f) => (f.b3.tags = { 'Her Dini': 'Soal Herdini' }),
+    'no tags in the tags map': (f) => (f.b3.tags = {}),
+    'empty tag label': (f) => (f.b3.tags = { herdini: ' ' }),
+    'repeated tag': (f) => { f.b3.tags = { herdini: 'Soal Herdini' }; q(f).tg = ['herdini', 'herdini']; },
+    'empty tag list': (f) => { f.b3.tags = { herdini: 'Soal Herdini' }; q(f).tg = []; },
+    'tags as text': (f) => { f.b3.tags = { herdini: 'Soal Herdini' }; q(f).tg = 'herdini'; },
     'no title': (f) => delete f.b3.title,
     'bidi override in a stem': (f) => (q(f).q = 'abc\u202edef'),
     'repeated NIM': (f) => (f.roster.people[1].nim = f.roster.people[0].nim),

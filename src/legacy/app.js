@@ -739,12 +739,22 @@ function makeTry(KIND){
   function M(id){ var l = MAN.banks; for(var i = 0; i < l.length; i++){ if(l[i] && l[i].id === id) return l[i]; } return null; }
   // an opened bank, indexed for the views; null until the access module opens it. The bank's
   // own "by" is its credit line; the views use "by" for the question index, so it moves to "credit".
+  // A question's tags (tg) are keys of the bank's tags map; hd counts the ones tagged HD.
+  var HD = 'herdini';
   function B(id){
     var b = BK[id];
     if(!b && ACC && M(id)){
       b = ACC.bank(id);
       if(b){
-        if(!b.ix){ b.ix = 1; b.id = id; b.credit = typeof b.by === 'string' ? b.by : ''; b.by = {}; b.q.forEach(function(q, i){ q.i = i; b.by[q.id] = q; }); }
+        if(!b.ix){
+          b.ix = 1; b.id = id; b.credit = typeof b.by === 'string' ? b.by : ''; b.by = {}; b.hd = 0;
+          b.tags = b.tags && typeof b.tags === 'object' ? b.tags : {};
+          b.q.forEach(function(q, i){
+            q.i = i; b.by[q.id] = q;
+            q.tg = Array.isArray(q.tg) ? q.tg.filter(function(k){ return Object.prototype.hasOwnProperty.call(b.tags, k) && typeof b.tags[k] === 'string'; }) : [];
+            if(q.tg.indexOf(HD) >= 0) b.hd++;
+          });
+        }
         BK[id] = b;
       }
     }
@@ -779,9 +789,19 @@ function makeTry(KIND){
     if(!PREF.tps || typeof PREF.tps !== 'object') PREF.tps = PREF.tp && PREF.tp.length ? { b2: PREF.tp.slice() } : {};
     return PREF;
   }
-  function typesOf(b){ var t = {}; b.q.forEach(function(q){ t[q.t] = 1; }); return Object.keys(t); }
-  function tpOf(bid){ var l = pref().tps[bid], b = B(bid); l = Array.isArray(l) ? l : []; return b ? l.filter(function(k){ return b.topics[k] !== undefined; }) : l; }
-  function tyOf(bid){ var b = B(bid); return !b || typesOf(b).length < 2 ? 'all' : pref().ty; }
+  // Mode Her Dini is Latihan over the questions tagged HD only, with its own pick of topics. A bank
+  // without such questions has just the two modes, and there the stored choice counts as Latihan.
+  function modeOf(bid){ var m = pref().mode, b = B(bid); return m === HD && !(b && b.hd) ? 'latihan' : m; }
+  function scopeOf(bid){ var b = B(bid); return modeOf(bid) === HD ? b.q.filter(function(q){ return q.tg.indexOf(HD) >= 0; }) : b.q; }
+  function tpKey(bid){ return modeOf(bid) === HD ? bid + '.' + HD : bid; }
+  function typesOf(l){ var t = {}; l.forEach(function(q){ t[q.t] = 1; }); return Object.keys(t); }
+  function tpOf(bid){
+    var l = pref().tps[tpKey(bid)], b = B(bid), have = {}; l = Array.isArray(l) ? l : [];
+    if(!b) return l;
+    scopeOf(bid).forEach(function(q){ have[q.tp] = 1; });
+    return l.filter(function(k){ return b.topics[k] !== undefined && have[k]; });
+  }
+  function tyOf(bid){ var b = B(bid); return !b || typesOf(scopeOf(bid)).length < 2 ? 'all' : pref().ty; }
   function savePref(){ put(K.pref, PREF); }
 
   function shuffle(a){ for(var i = a.length - 1; i > 0; i--){ var j = Math.floor(Math.random() * (i + 1)), t = a[i]; a[i] = a[j]; a[j] = t; } return a; }
@@ -1027,12 +1047,12 @@ function makeTry(KIND){
     return '<button class="to-sw" type="button" role="switch" aria-checked="' + (on ? 'true' : 'false') + '" data-act="' + act + '"><span class="to-sw-t">' + kHTML(label) + (sub || '') + '</span><i aria-hidden="true"></i></button>';
   }
   function poolCount(bid, pool){
-    var b = B(bid), st = stats(bid), sr = {}; stars(bid).forEach(function(id){ sr[id] = 1; });
-    return b.q.filter(function(q){ var r = st[q.id]; if(pool === 'new') return !r || !r[0]; if(pool === 'wrong') return r && r[0] && !r[2]; if(pool === 'star') return !!sr[q.id]; return true; }).length;
+    var st = stats(bid), sr = {}; stars(bid).forEach(function(id){ sr[id] = 1; });
+    return scopeOf(bid).filter(function(q){ var r = st[q.id]; if(pool === 'new') return !r || !r[0]; if(pool === 'wrong') return r && r[0] && !r[2]; if(pool === 'star') return !!sr[q.id]; return true; }).length;
   }
   function candidates(bid){
-    var P = pref(), b = B(bid), st = stats(bid), sr = {}, tp = tpOf(bid), ty = tyOf(bid); stars(bid).forEach(function(id){ sr[id] = 1; });
-    return b.q.filter(function(q){
+    var P = pref(), st = stats(bid), sr = {}, tp = tpOf(bid), ty = tyOf(bid); stars(bid).forEach(function(id){ sr[id] = 1; });
+    return scopeOf(bid).filter(function(q){
       if(tp.length && tp.indexOf(q.tp) < 0) return false;
       if(ty !== 'all' && q.t !== ty) return false;
       var r = st[q.id];
@@ -1044,10 +1064,10 @@ function makeTry(KIND){
   }
   function planN(avail){ var P = pref(); return P.n === 0 ? avail : Math.min(P.n, avail); }
   function vSetup(){
-    var b = B(V.bid), P = pref(), s = blokStats(V.bid), live = sessOf(V.bid), h = hist(V.bid), tp = tpOf(V.bid), ty = tyOf(V.bid);
+    var b = B(V.bid), P = pref(), s = blokStats(V.bid), live = sessOf(V.bid), h = hist(V.bid), tp = tpOf(V.bid), ty = tyOf(V.bid), mode = modeOf(V.bid);
     var key = 'to.' + V.bid + '.';
     setBar('<span class="p-crumb">' + kHTML(K.crumb) + ' · ' + bt(V.bid, 'name', b.name) + '</span>'); progSet(0);
-    var tpCount = {}, tyCount = {}; b.q.forEach(function(q){ tpCount[q.tp] = (tpCount[q.tp] || 0) + 1; tyCount[q.t] = (tyCount[q.t] || 0) + 1; });
+    var tpCount = {}, tyCount = {}; scopeOf(V.bid).forEach(function(q){ tpCount[q.tp] = (tpCount[q.tp] || 0) + 1; tyCount[q.t] = (tyCount[q.t] || 0) + 1; });
     // a filter that would match nothing in this bank is not offered
     var tpKeys = Object.keys(b.topics).filter(function(k){ return tpCount[k]; }), nTypes = Object.keys(tyCount).length;
     var avail = candidates(V.bid).length, n = planN(avail);
@@ -1085,9 +1105,10 @@ function makeTry(KIND){
         '<div class="to-kpis"><div><b>' + s.n + '</b>' + kHTML('to.kpi.total') + '</div><div><b>' + s.seen + '</b>' + kHTML('to.kpi.seen') + '</div>' +
         '<div><b>' + s.ok + '</b>' + kHTML('to.kpi.ok') + '</div><div><b>' + (s.best != null ? fmtScore(s.best) : '-') + '</b>' + kHTML('to.kpi.best') + '</div></div></div>' +
       (live ? resumeCard(live) : '') +
-      '<section class="to-sec">' + sec('to.sec.mode') + '<div class="to-modes" role="radiogroup" aria-label="Mode try out">' +
-        '<button class="to-mode" type="button" role="radio" aria-checked="' + (P.mode === 'latihan') + '" data-act="mode" data-v="latihan">' + kHTML('to.lat', null, 'b') + kHTML('to.lat.d') + '</button>' +
-        '<button class="to-mode" type="button" role="radio" aria-checked="' + (P.mode === 'ujian') + '" data-act="mode" data-v="ujian">' + kHTML(K.sim, null, 'b') + kHTML('to.sim.d') + '</button>' +
+      '<section class="to-sec">' + sec('to.sec.mode') + '<div class="to-modes' + (b.hd ? ' three' : '') + '" role="radiogroup" aria-label="Mode try out">' +
+        '<button class="to-mode" type="button" role="radio" aria-checked="' + (mode === 'latihan') + '" data-act="mode" data-v="latihan">' + kHTML('to.lat', null, 'b') + kHTML('to.lat.d') + '</button>' +
+        '<button class="to-mode" type="button" role="radio" aria-checked="' + (mode === 'ujian') + '" data-act="mode" data-v="ujian">' + kHTML(K.sim, null, 'b') + kHTML('to.sim.d') + '</button>' +
+        (b.hd ? '<button class="to-mode" type="button" role="radio" aria-checked="' + (mode === HD) + '" data-act="mode" data-v="' + HD + '">' + kHTML('to.hd', null, 'b') + kHTML('to.hd.d', { n: b.hd }) + '</button>' : '') +
       '</div></section>' +
       (tpKeys.length > 1 ? '<section class="to-sec">' + sec('to.sec.topic') + '<div class="to-chips">' + tps + '</div></section>' : '') +
       (nTypes > 1 ? '<section class="to-sec">' + sec('to.sec.type') + '<div class="to-chips">' + tys + '</div></section>' : '') +
@@ -1095,9 +1116,9 @@ function makeTry(KIND){
       '<section class="to-sec">' + sec('to.sec.n', kHTML('to.avail', { n: avail }, 'span', 'lbl')) + '<div class="to-chips">' + ns + '</div></section>' +
       '<section class="to-sec">' + sec('to.sec.set') + '<div class="to-sws">' +
         sw('sq', P.sq, 'to.sw.sq') + sw('so', P.so, 'to.sw.so', kHTML('to.sw.so.d', null, 'small')) +
-        (P.mode === 'ujian' ? sw('tm', P.tm, 'to.sw.tm', n ? kHTML('to.sw.tm.d', { dur: fmtDur(mins * 60), n: n }, 'small') : '') : '') + '</div></section>' +
+        (mode === 'ujian' ? sw('tm', P.tm, 'to.sw.tm', n ? kHTML('to.sw.tm.d', { dur: fmtDur(mins * 60), n: n }, 'small') : '') : '') + '</div></section>' +
       '<div class="to-go"><button class="to-start" type="button" data-act="start" data-cur="mulai"' + (n ? '' : ' disabled') + '>' +
-        (n ? kHTML(P.mode === 'ujian' ? 'to.start.sim' : 'to.start.lat', { n: n }) : kHTML('to.start.none')) + ' <b aria-hidden="true">→</b></button>' +
+        (n ? kHTML(mode === 'ujian' ? 'to.start.sim' : mode === HD ? 'to.start.hd' : 'to.start.lat', { n: n }) : kHTML('to.start.none')) + ' <b aria-hidden="true">→</b></button>' +
         (n ? '' : kHTML('to.start.hint', null, 'p', 'to-hint')) + '</div>' +
       hl + refsHtml(b) +
       '<div class="to-foot-links"><button type="button" class="to-link" data-act="reset">' + kHTML('to.reset') + ' ' + bt(V.bid, 'name', b.name) + '</button></div>' +
@@ -1131,17 +1152,18 @@ function makeTry(KIND){
     else go('run', 'replace');
   }
   function startFromSetup(){
-    var P = pref(), b = B(V.bid), ids = candidates(V.bid), tp = tpOf(V.bid), ty = tyOf(V.bid);
+    var P = pref(), b = B(V.bid), ids = candidates(V.bid), tp = tpOf(V.bid), ty = tyOf(V.bid), mode = modeOf(V.bid);
     if(!ids.length) return;
     shuffle(ids);
     ids = ids.slice(0, planN(ids.length));
     ids.sort(function(x, y){ return b.by[x].i - b.by[y].i; });
-    // the session's label in the history, made of the filters it started with
-    var parts = [];
+    // the session's label in the history, made of the filters it started with; a Her Dini run is
+    // a Latihan run that says so in its label
+    var parts = mode === HD ? [tx('to.lb.hd')] : [];
     if(tp.length === 1) parts.push(b.topics[tp[0]]); else if(tp.length) parts.push(tx('to.lb.tps', { n: tp.length }));
     if(ty !== 'all') parts.push(tx(ty === 'mc' ? 'to.lb.mc' : 'to.lb.tf'));
     if(P.pool !== 'all' && copyEntry('to.lb.' + P.pool)) parts.push(tx('to.lb.' + P.pool));
-    var go2 = function(){ start(ids, P.mode, parts.join(', ')); };
+    var go2 = function(){ start(ids, mode === 'ujian' ? 'ujian' : 'latihan', parts.join(', ')); };
     if(sessOf(V.bid)) confirmBox({ title: 'to.dlg.swap.h', body: 'to.dlg.swap.p', ok: 'to.dlg.swap.ok', danger: true }, function(){ del('sess.' + V.bid); S = null; go2(); });
     else go2();
   }
@@ -1233,11 +1255,13 @@ function makeTry(KIND){
     return '<div class="to-fb ' + (ok ? 'ok' : 'no') + '"><p class="to-vd">' + v + kHTML(q.a.length > 1 ? 'to.fb.ans2' : 'to.fb.ans', { a: keys.join(' / ') }) + '</p>' +
       (q.e ? '<p class="to-ex">' + esc(q.e) + '</p>' : '') + figsHtml(bid, q, 'ei') + (q.n ? '<p class="to-nt">' + kHTML('to.fb.note') + esc(q.n) + '</p>' : '') + '</div>';
   }
+  // a question's own tags, such as Soal Herdini, named as its bank names them
+  function tagsHtml(b, q){ return q.tg.map(function(k){ return '<span class="to-tag' + (k === HD ? ' hd' : '') + '">' + esc(b.tags[k]) + '</span>'; }).join(''); }
   function renderQ(focus){
     var b = B(S.blok), i = S.cur, id = S.ids[i], q = b.by[id], order = qOrder(id), a = S.ans[id];
     var chk = S.mode === 'latihan' && !!S.chk[id], st = stars(S.blok), starred = st.indexOf(id) >= 0;
     var qEl = $('#toQ', panel);
-    qEl.innerHTML = '<div class="to-qm"><span class="to-tag">' + esc(b.topics[q.tp]) + '</span>' + kHTML(q.t === 'tf' ? 'to.qt.tf' : 'to.qt.mc', null, 'span', 'to-tag dim') +
+    qEl.innerHTML = '<div class="to-qm"><span class="to-tag">' + esc(b.topics[q.tp]) + '</span>' + tagsHtml(b, q) + kHTML(q.t === 'tf' ? 'to.qt.tf' : 'to.qt.mc', null, 'span', 'to-tag dim') +
       '<span class="to-qa"><button class="to-ib sm' + (S.flag[id] ? ' on-f' : '') + '" type="button" data-act="flag" aria-pressed="' + (!!S.flag[id]) + '"' + kAttr('kt', 'to.run.flag.t') + '><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 21V4M6 4h10l-2 4 2 4H6"/></svg>' + kHTML('to.run.flag') + '</button>' +
       '<button class="to-ib sm' + (starred ? ' on-s' : '') + '" type="button" data-act="star" aria-pressed="' + starred + '"' + kAttr('kt', 'to.run.star.t') + '><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3.5l2.6 5.3 5.9.9-4.3 4.1 1 5.8L12 16.9l-5.2 2.7 1-5.8-4.3-4.1 5.9-.9z"/></svg>' + kHTML('to.run.star') + '</button></span></div>' +
       kHTML('to.run.no', { n: i + 1, total: S.ids.length }, 'p', 'lbl to-no') +
@@ -1435,7 +1459,7 @@ function makeTry(KIND){
       '<div class="to-chips to-rf">' + fl + '</div>' +
       (show2.length ? '<ol class="to-rl">' + show2.map(function(x){
         var order = (res.perm && res.perm[x.id]) || x.q.o.map(function(o, k){ return k; });
-        return '<li class="to-rc ' + (x.blank ? 'blank' : x.ok ? 'ok' : 'no') + '"><div class="to-qm"><span class="to-tag">' + (x.k + 1) + '</span><span class="to-tag">' + esc(b.topics[x.q.tp]) + '</span>' +
+        return '<li class="to-rc ' + (x.blank ? 'blank' : x.ok ? 'ok' : 'no') + '"><div class="to-qm"><span class="to-tag">' + (x.k + 1) + '</span><span class="to-tag">' + esc(b.topics[x.q.tp]) + '</span>' + tagsHtml(b, x.q) +
           (x.fl ? kHTML('to.c.flag', null, 'span', 'to-tag amb') : '') + '<span class="to-qa"><button class="to-ib sm' + (sr[x.id] ? ' on-s' : '') + '" type="button" data-act="rstar" data-id="' + x.id + '" aria-pressed="' + !!sr[x.id] + '" aria-label="Simpan soal ' + (x.k + 1) + '"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3.5l2.6 5.3 5.9.9-4.3 4.1 1 5.8L12 16.9l-5.2 2.7 1-5.8-4.3-4.1 5.9-.9z"/></svg></button></span></div>' +
           '<p class="to-qt sm">' + esc(x.q.q) + '</p>' + figsHtml(res.blok, x.q, 'img') + optsHtml(x.q, order, x.a, true, 'none') + fbHtml(x.q, order, x.a, x.blank, res.blok) + '</li>';
       }).join('') + '</ol>' : kHTML('to.rev.empty', null, 'p', 'to-empty')) +
@@ -1799,9 +1823,9 @@ function makeTry(KIND){
       case 'mode': P.mode = t.getAttribute('data-v'); savePref(); keepScroll(vSetup); break;
       case 'tp':
         var v = t.getAttribute('data-v'), cur = tpOf(V.bid).slice(), have = {};
-        B(V.bid).q.forEach(function(q){ have[q.tp] = 1; });
+        scopeOf(V.bid).forEach(function(q){ have[q.tp] = 1; });
         if(v === '*') cur = []; else { var k = cur.indexOf(v); if(k >= 0) cur.splice(k, 1); else cur.push(v); if(cur.length >= Object.keys(have).length) cur = []; }
-        P.tps[V.bid] = cur; savePref(); keepScroll(vSetup); break;
+        P.tps[tpKey(V.bid)] = cur; savePref(); keepScroll(vSetup); break;
       case 'ty': P.ty = t.getAttribute('data-v'); savePref(); keepScroll(vSetup); break;
       case 'pool': P.pool = t.getAttribute('data-v'); savePref(); keepScroll(vSetup); break;
       case 'n': P.n = +t.getAttribute('data-v'); savePref(); keepScroll(vSetup); break;

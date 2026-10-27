@@ -415,3 +415,77 @@ for (const [w, h] of [[390, 844], [1280, 800]]) {
     await done(s);
   });
 }
+
+for (const [w, h] of [[390, 844], [1280, 800]]) {
+  test(`Mode Her Dini: Latihan over the Soal Herdini questions only, tagged in the run and the review (${w}x${h})`, async () => {
+    const s = await open({ cbt: 'ok', w, h });
+    await s.page.click('.to-blk.on[data-b="b3"]');
+    await gate(s, 'masuk');
+    await s.page.click('[data-act="gin"]');
+    await s.page.waitForSelector('.to-start', { timeout: 10000 });
+
+    // Blok 3 has a third mode, with the number of its questions; Latihan stays the default
+    const modes = () => s.ev(() => [...document.querySelectorAll('[data-act="mode"]')].map((b) => [b.dataset.v, b.querySelector('b').textContent, b.getAttribute('aria-checked')]));
+    assert.deepEqual(await modes(), [['latihan', 'Latihan', 'true'], ['ujian', 'Simulasi CBT', 'false'], ['herdini', 'Her Dini', 'false']]);
+    assert.equal(await s.ev(() => document.querySelector('[data-act="mode"][data-v="herdini"] span').textContent), 'Khusus 2 soal Her Dini, dicek tiap soal kayak latihan.');
+    assert.match(await s.ev(() => document.querySelector('.to-start').textContent), /^Mulai latihan · 4 soal/);
+    await s.page.click('[data-act="mode"][data-v="herdini"]');
+    assert.deepEqual((await modes()).map((m) => m[2]), ['false', 'false', 'true']);
+    assert.match(await s.ev(() => document.querySelector('.to-start').textContent), /^Mulai Her Dini · 2 soal/);
+    assert.equal(await s.ev(() => document.querySelector('[data-act="pool"][data-v="all"] em').textContent), '2', 'the pools count the Her Dini questions');
+    assert.equal(await s.ev(() => !!document.querySelector('[data-act="tm"]')), false, 'no timer: it is practice');
+    assert.equal(await s.ev(() => JSON.parse(localStorage.getItem('alpha.to.v1.pref')).mode), 'herdini');
+    const cols = await s.ev(() => getComputedStyle(document.querySelector('.to-modes')).gridTemplateColumns.split(' ').length);
+    assert.equal(cols, w < 761 ? 1 : 3);
+    assert.ok(await fits(s), 'three modes fit');
+    await words(s, 'setup with Her Dini');
+    await axe(s, 'setup with Her Dini');
+    await shot(s, 'herdini-setup');
+
+    // the two tagged questions in bank order, each checked like in Latihan, each with the tag
+    await s.page.click('[data-act="sq"]');
+    await s.page.click('[data-act="so"]');
+    await s.page.click('.to-start');
+    await s.page.waitForSelector('#toQ .to-o');
+    assert.match(await s.ev(() => document.getElementById('toQt').textContent), /hemofilia/);
+    assert.equal(await s.ev(() => document.getElementById('toCnt').textContent), '1/2');
+    assert.deepEqual(await s.ev(() => [...document.querySelectorAll('#toQ .to-qm .to-tag')].map((t) => [t.textContent, t.classList.contains('hd')])),
+      [['Sel & genetika', false], ['Soal Herdini', true], ['Pilihan ganda', false]]);
+    await s.page.click('.to-o[data-o="2"]');
+    await s.page.click('[data-act="check"]');
+    await s.page.waitForSelector('.to-fb.ok');
+    await axe(s, 'Her Dini question');
+    await shot(s, 'herdini-run');
+    await s.page.click('#toFoot [data-act="next"]');
+    await s.page.waitForFunction(() => /Kodon awal/.test(document.getElementById('toQt').textContent));
+    assert.equal(await s.ev(() => !!document.querySelector('#toQ .to-tag.hd')), true);
+    await s.page.click('.to-o[data-o="0"]');
+    await s.page.click('[data-act="check"]');
+    await s.page.waitForSelector('.to-fb.no');
+    await s.page.click('#toFoot [data-act="finish"]');
+    await s.page.click('.to-dlg [data-dok]');
+    await s.page.waitForSelector('#toScore');
+    assert.match(await s.ev(() => document.querySelector('.to-result .lbl').textContent), /^Latihan · Blok 3 · Her Dini$/);
+
+    // the review tags them too
+    await s.page.click('[data-act="review"]');
+    await s.page.waitForSelector('.to-review');
+    await s.page.click('[data-act="rf"][data-v="all"]');
+    assert.deepEqual(await s.ev(() => [...document.querySelectorAll('.to-rc')].map((li) => li.querySelector('.to-tag.hd')?.textContent)), ['Soal Herdini', 'Soal Herdini']);
+    assert.ok(await fits(s), 'review fits');
+    await shot(s, 'herdini-review');
+
+    // the history names the run; the choice stays on Blok 3, and Blok 2 has just the two modes
+    await s.page.goBack(); await s.page.waitForSelector('#toScore');
+    await s.page.goBack(); await s.page.waitForSelector('.to-start');
+    assert.match(await s.ev(() => document.querySelector('.to-hr-m small').textContent), / · Her Dini$/);
+    assert.equal(await s.ev(() => document.querySelector('[data-act="mode"][data-v="herdini"]').getAttribute('aria-checked')), 'true');
+    await s.page.goBack(); await s.page.waitForSelector('.to-blk.on[data-b="b2"]');
+    await s.page.click('.to-blk.on[data-b="b2"]');
+    await s.page.waitForSelector('.to-start', { timeout: 10000 });
+    assert.deepEqual((await modes()).map((m) => [m[0], m[2]]), [['latihan', 'true'], ['ujian', 'false']]);
+    assert.equal(await s.ev(() => !!document.querySelector('.to-modes.three, .to-tag.hd')), false);
+    assert.match(await s.ev(() => document.querySelector('.to-start').textContent), /^Mulai latihan · 6 soal/);
+    await done(s);
+  });
+}
