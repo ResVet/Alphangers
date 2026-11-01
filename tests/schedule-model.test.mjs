@@ -347,6 +347,7 @@ describe('blok 4', () => {
       ['08:30', '10:10', 'KA2. Introduction to Bones, Muscles, and Joints', 'SIM'],
       ['10:20', '12:00', 'KA5. Anatomy of the Lower Limb, Part 1 (Bones)', 'TSA'],
       ['13:00', '14:40', 'KH1. Jaringan Epitel', 'VST'],
+      ['15:00', '16:40', 'KA3. Anatomy of the Upper Limb, Part 1 (Bones)', 'SIM'],
     ]);
     assert.equal(day[0].kind, 'intro');
     assert.equal(day[0].lecturers[0].dosen.name, 'Ftr. Sima Asmara Dewa Marya Mahardika Putri, S.Kes., M.K.M.');
@@ -358,12 +359,43 @@ describe('blok 4', () => {
     assert.equal(pa1.kind, 'praktikum');
     assert.equal(pa1.pj, true);
     assert.deepEqual(pa1.lecturers.map((l) => l.id), ['msy-rulan-adnindya']);
-    const ph1 = model.sessionsOn('2026-11-11')[1];
+    const ph1 = model.sessionsOn('2026-11-11')[0];
     assert.equal(ph1.title, 'PH1. Jaringan Epitel dan Sistem Respirasi');
     assert.equal(ph1.tim, true);
-    assert.deepEqual(model.sessionsOn('2026-11-25')[2].lecturers.map((l) => l.code), ['RLN', 'TSA', 'SIM']);
+    assert.deepEqual(model.sessionsOn('2026-11-27')[0].lecturers.map((l) => l.code), ['RLN', 'TSA', 'SIM']);
     assert.equal(model.sessionsOn('2026-11-10')[2].lecturers[0].dosen.name, 'Rosada Dwi Iswari, M.Psi., Psikolog');
     assert.equal(model.sessionsByDosen('wardiansah').length, 5);
+  });
+
+  test('the FIX 26 Okt sheet: the sessions it moved', () => {
+    const on = (d) => model.sessionsOn(d).map((s) => [s.start, s.end, s.title, s.lecturers.map((l) => l.code).join(','), !!s.pj, !!s.tim]);
+    assert.deepEqual(on('2026-11-03'), [['13:00', '14:40', 'KH2. Jaringan Ikat', 'RSP', false, false]]);
+    assert.deepEqual(on('2026-11-04'), [
+      ['07:30', '10:00', 'PA1. Pengantar Praktikum Anatomi dan Osteologi Umum', 'RLN', true, false],
+      ['10:00', '12:30', 'PA3. Skeletal of Lower Limb', 'ISS', true, false],
+    ]);
+    assert.deepEqual(on('2026-11-09')[0], ['07:30', '10:00', 'PA2. Skeletal of Upper Limb', 'SIM', true, false]);
+    assert.deepEqual(on('2026-11-11'), [
+      ['07:30', '10:00', 'PH1. Jaringan Epitel dan Sistem Respirasi', '', false, true],
+      ['10:00', '12:30', 'PA4. Muscle of Upper Limb', 'TSA', true, false],
+    ]);
+    assert.deepEqual(on('2026-11-18'), [
+      ['07:30', '10:00', 'PH3. Jaringan Syaraf dan Sistem Kardiovaskuler', '', false, true],
+      ['10:00', '12:30', 'PA6. Cavitas Thoracis, Upper & Lower Respiratory Organs', 'WAR,RLN', true, false],
+    ]);
+    assert.deepEqual(on('2026-11-25'), [
+      ['07:30', '10:00', 'PH5. Inhall Histologi', '', false, true],
+      ['10:00', '12:30', 'PA8. Innervasi dan Vaskularisasi', 'MRO', true, false],
+    ]);
+    assert.deepEqual(on('2026-11-26'), [
+      ['07:30', '09:10', 'KA14. Applied Anatomy in Musculoskeletal Disorders (Lower Limb)', 'ISS,TSA,MRO', false, false],
+      ['09:30', '12:00', 'PA9. Inhall Anatomi', '', false, true],
+    ]);
+    assert.deepEqual(on('2026-11-27'), [
+      ['08:00', '09:40', 'KA13. Applied Anatomy in Musculoskeletal Disorders (Upper Limb)', 'RLN,TSA,SIM', false, false],
+      ['13:00', '16:30', 'MKDU', '', false, false],
+    ]);
+    assert.deepEqual(model.sessionsByDosen('sima-asmara-dewa').map((s) => s.date), ['2026-11-02', '2026-11-02', '2026-11-02', '2026-11-09', '2026-11-27']);
   });
 
   test('exams: two OSPEs, a CBT and a Her OSPE without a time yet, Her Dini', () => {

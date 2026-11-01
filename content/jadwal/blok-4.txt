@@ -1,7 +1,8 @@
 # Jadwal Kuliah Blok 4, Kelas Alpha, Angkatan 2026
-# Sumber: JADWAL KULIAH BLOK 4 TAHUN 2026 (PSPD FK Unsri), kolom Kelas Alpha. Format: jam | materi | kode dosen | catatan
+# Sumber: JADWAL KULIAH BLOK 4 TAHUN 2026 (PSPD FK Unsri), versi FIX 26 Okt, kolom Kelas Alpha. Format: jam | materi | kode dosen | catatan
 # Slot kosong dan ISHOMA tidak ditulis. "jam menyusul" = jadwal resmi belum mencantumkan jamnya.
 # Kode di jadwal resmi: ZHF (di tabel kode tertulis ZH) = Dr. dr. Zen Hafy. "TIM (PJ: X)" ditulis PJ:X.
+# 25 Nov 13.00-14.40 di versi FIX 26 Okt cuma berisi kode RLN/TSA/SIM tanpa materi: sisa KA13 yang dipindah ke Jumat 27 Nov, jadi tidak ditulis.
 @blok b4
 @nama Blok 4
 @judul Struktur Jaringan dan Organ Tubuh Manusia I
@@ -13,14 +14,14 @@
 08.30-10.10 | KA2. Introduction to Bones, Muscles, and Joints | SIM
 10.20-12.00 | KA5. Anatomy of the Lower Limb, Part 1 (Bones) | TSA
 13.00-14.40 | KH1. Jaringan Epitel | VST
+15.00-16.40 | KA3. Anatomy of the Upper Limb, Part 1 (Bones) | SIM
 
 = 2026-11-03
-09.50-11.30 | KH2. Jaringan Ikat | RSP
-13.00-14.40 | KA3. Anatomy of the Upper Limb, Part 1 (Bones) | SIM
+13.00-14.40 | KH2. Jaringan Ikat | RSP
 
 = 2026-11-04
 07.30-10.00 | PA1. Pengantar Praktikum Anatomi dan Osteologi Umum | PJ:RLN
-10.00-12.30 | PA2. Skeletal of Upper Limb | PJ:SIM
+10.00-12.30 | PA3. Skeletal of Lower Limb | PJ:ISS
 
 = 2026-11-05
 08.00-09.40 | KA7. Blood Vessels and Innervation of the Upper Limb | MRO
@@ -33,7 +34,7 @@
 13.00-16.30 | MKDU | -
 
 = 2026-11-09
-07.30-10.00 | PA3. Skeletal of Lower Limb | PJ:ISS
+07.30-10.00 | PA2. Skeletal of Upper Limb | PJ:SIM
 10.00-12.30 | KH3. Jaringan Otot | RSP
 13.00-14.40 | KH9. Histologi Sistem Respirasi | VST
 
@@ -43,8 +44,8 @@
 13.00-14.40 | Mekanisme Koping Bagi Mahasiswa Kedokteran | RDI
 
 = 2026-11-11
-07.30-10.00 | PA4. Muscle of Upper Limb | PJ:TSA
-10.00-12.30 | PH1. Jaringan Epitel dan Sistem Respirasi | TIM
+07.30-10.00 | PH1. Jaringan Epitel dan Sistem Respirasi | TIM
+10.00-12.30 | PA4. Muscle of Upper Limb | PJ:TSA
 
 = 2026-11-12
 08.00-09.40 | KA9. Structures of the Upper and Lower Airways | RLN
@@ -66,8 +67,8 @@
 10.00-12.30 | Tutorial 1 Skenario B | TIM
 
 = 2026-11-18
-07.30-10.00 | PA6. Cavitas Thoracis, Upper & Lower Respiratory Organs | PJ:WAR,RLN
-10.00-12.30 | PH3. Jaringan Syaraf dan Sistem Kardiovaskuler | TIM
+07.30-10.00 | PH3. Jaringan Syaraf dan Sistem Kardiovaskuler | TIM
+10.00-12.30 | PA6. Cavitas Thoracis, Upper & Lower Respiratory Organs | PJ:WAR,RLN
 
 = 2026-11-19
 08.00-09.40 | KH7. Sistem Imun dan Organ Limfoid | SOI
@@ -87,15 +88,15 @@
 10.30-12.10 | KA15. Clinical Anatomy in Cardiorespiratory Disorders (Team Teaching) | LEG,WAR
 
 = 2026-11-25
-07.30-10.00 | PA8. Innervasi dan Vaskularisasi | PJ:MRO
-10.00-12.30 | PH5. Inhall Histologi | TIM
-13.00-14.40 | KA13. Applied Anatomy in Musculoskeletal Disorders (Upper Limb) | RLN,TSA,SIM
+07.30-10.00 | PH5. Inhall Histologi | TIM
+10.00-12.30 | PA8. Innervasi dan Vaskularisasi | PJ:MRO
 
 = 2026-11-26
 07.30-09.10 | KA14. Applied Anatomy in Musculoskeletal Disorders (Lower Limb) | ISS,TSA,MRO
-10.00-12.00 | PA9. Inhall Anatomi | TIM
+09.30-12.00 | PA9. Inhall Anatomi | TIM
 
 = 2026-11-27
+08.00-09.40 | KA13. Applied Anatomy in Musculoskeletal Disorders (Upper Limb) | RLN,TSA,SIM
 13.00-16.30 | MKDU | -
 
 = 2026-11-30

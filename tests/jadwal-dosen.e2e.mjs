@@ -145,7 +145,7 @@ describe('jadwal', () => {
     assert.equal(await dateText(page), 'Senin, 2 November 2026');
     assert.match(await text(page, '.jw-blokline'), /Struktur Jaringan dan Organ Tubuh Manusia I.*ketua dr\. Veny Larasati/);
     assert.deepEqual((await page.locator('.jw-s .jw-s-t').allTextContents()).map((t) => t.trim()),
-      ['Introduction of Blok 4', 'KA2. Introduction to Bones, Muscles, and Joints', 'KA5. Anatomy of the Lower Limb, Part 1 (Bones)', 'KH1. Jaringan Epitel']);
+      ['Introduction of Blok 4', 'KA2. Introduction to Bones, Muscles, and Joints', 'KA5. Anatomy of the Lower Limb, Part 1 (Bones)', 'KH1. Jaringan Epitel', 'KA3. Anatomy of the Upper Limb, Part 1 (Bones)']);
     await page.evaluate(() => window.jadwal.go('2026-12-02'));
     assert.equal(await page.locator('.jw-s[data-tba]').count(), 1);
     assert.equal(await text(page, '.jw-s[data-tba] .jw-s-t'), 'Ujian CBT Blok 4');

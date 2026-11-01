@@ -107,7 +107,8 @@ test('edit mode: cancel a session, type a page text, undo, redo, publish', async
 });
 
 test('lecturer, session with that lecturer, channel, announcement, heart note', async () => {
-  const { page, context, errors } = await open();
+  // a day inside a blok: "+ Sesi" adds to the date on screen, and a day between two bloks has no blok
+  const { page, context, errors } = await open({ time: TUESDAY });
   await page.waitForSelector('.ed-dock.is-admin');
   await page.click('.ed-seg:has-text("Edit")');
 
@@ -332,6 +333,50 @@ test('a schedule published before Blok 4 shows it, and the next publish keeps it
   assert.deepEqual([b3.batal, b3.alasan], [true, 'Dosen dinas luar'], 'the Blok 3 edit is kept');
   const b4 = saved.bloks[3].days.find((d) => d.d === '2026-11-02').s[1];
   assert.deepEqual([b4.t, b4.batal, b4.alasan], ['KA2. Introduction to Bones, Muscles, and Joints', true, 'Pindah ke minggu depan']);
+  assert.deepEqual(errors, []);
+  await context.close();
+});
+
+// The schedule as published since the first Blok 4 (22 October) went in: that Blok 4 untouched,
+// and an edit the admin made in Blok 3. The shipped Blok 4 is the FIX 26 Okt revision.
+function publishedWithFirstBlok4() {
+  const old = publishedBeforeBlok4();
+  old.base = '2026-10-22T02:14:36Z';
+  old.bloks.push(JSON.parse(readFileSync(join(ROOT, 'tests/fixtures/schedule/blok4-2026-10-22.json'), 'utf8')));
+  return old;
+}
+
+test('a schedule published with the first Blok 4 shows the revised one, and the next publish saves it', async () => {
+  const { page, context, errors } = await open({ time: '2026-11-02T08:00:00+07:00' });
+  await page.waitForFunction(() => !!window.__alphaMock);
+  await page.evaluate((json) => window.__alphaMock.docs.set('schedule', { json, rev: 22, updatedAt: new Date('2026-10-30T05:56:40Z'), updatedBy: 'admin-K3hal1dUidExample0' }), JSON.stringify(publishedWithFirstBlok4()));
+  await page.waitForSelector('.ed-dock.is-admin');
+  await page.waitForFunction(() => /tersimpan/i.test(document.querySelector('.ed-count')?.textContent || ''));
+  assert.equal(await page.locator('.ed-pub').isDisabled(), true, 'the revision coming in is not a change of its own');
+  assert.equal((await page.locator('.jw-date').textContent()).replace(/\s+/g, ' ').trim(), 'Senin, 2 November 2026');
+  await page.waitForFunction(() => document.querySelectorAll('.jw-s[data-ref]').length === 5);
+  assert.equal((await page.locator('.jw-s[data-ref] .jw-s-t').last().textContent()).trim(), 'KA3. Anatomy of the Upper Limb, Part 1 (Bones)');
+  await page.click('.ed-seg:has-text("Edit")');
+  const sess = page.locator('.jw-s[data-ref]').nth(4);
+  await sess.scrollIntoViewIfNeeded();
+  await sess.click({ position: { x: 300, y: 30 } });
+  await page.click('.ed-bar-b:has-text("Batalkan")');
+  await page.fill('.ed-sheet input', 'Ruangan dipakai');
+  await submit(page);
+  await page.waitForSelector('.jw-s.is-batal');
+  await page.click('.ed-pub');
+  await page.click('.ed-ask .ed-btn.is-pri');
+  await page.waitForFunction(() => /tersimpan/i.test(document.querySelector('.ed-count').textContent));
+  const saved = await page.evaluate(() => JSON.parse(window.__alphaMock.docs.get('schedule').json));
+  const shipped = JSON.parse(readFileSync(join(ROOT, 'src/data/schedule.json'), 'utf8'));
+  assert.equal(saved.base, shipped.base);
+  const b3 = saved.bloks[2].days.find((d) => d.d === '2026-10-27').s[0];
+  assert.deepEqual([b3.batal, b3.alasan], [true, 'Dosen dinas luar'], 'the Blok 3 edit is kept');
+  const day = saved.bloks[3].days.find((d) => d.d === '2026-11-02').s;
+  assert.deepEqual(day.map((s) => s.s), ['07:30', '08:30', '10:20', '13:00', '15:00']);
+  assert.deepEqual([day[4].t, day[4].batal, day[4].alasan], ['KA3. Anatomy of the Upper Limb, Part 1 (Bones)', true, 'Ruangan dipakai']);
+  assert.deepEqual(saved.bloks[3].days.find((d) => d.d === '2026-11-27').s.map((s) => s.s), ['08:00', '13:00']);
+  assert.equal(saved.bloks[3].days.find((d) => d.d === '2026-12-04').s[0].tim, undefined);
   assert.deepEqual(errors, []);
   await context.close();
 });

@@ -9,14 +9,21 @@
 // that blok in yet, and gets it here without anything the admin changed being touched:
 //   schedule  the blok is appended, unless the copy already has a blok with the same id or with
 //             dates that overlap it; then the admin's own blok stands.
-//   dosen     people teaching in such a blok are added when the list lacks them, and people it
-//             has get that blok and their code in it. Names, phones and everyone else stay.
+//   dosen     people teaching in such a blok (or in one revised since with a lecturer or code the
+//             last build lacked, see below) are added when the list lacks them, and people it has
+//             get that blok and their code in it. Names, phones and everyone else stay.
 //   links     the same for channels (the Try Out OSPE channel): a channel with a newer `added`
 //             goes in right after the channel it follows in the shipped list, or at the end,
 //             unless the copy already has a channel with that id.
 // The merged copy carries the shipped `base`, and the editors start from the merged copy, so the
 // next publish saves the blok together with that `base`. A blok the admin deletes after that
 // stays deleted.
+//
+// The faculty can also revise a blok's schedule after it shipped (Blok 4's "FIX 26 Okt" sheet).
+// build_data.py then gives that blok a `revised` time and `replaces`, the fingerprints of the
+// versions that shipped before it. A published copy older than `revised` whose blok of the same id
+// is still exactly one of those versions (the admin never changed it) gets the new version in its
+// place. A blok the admin has changed in any way stays as the admin left it.
 //
 // Pure: no DOM, no storage, no network. Inputs are never changed.
 
@@ -36,14 +43,50 @@ export function isNewer(stamp, base) {
 
 const clone = (x) => JSON.parse(JSON.stringify(x));
 
+// The blok's own fields, not when it shipped
+const BOOKKEEPING = new Set(['added', 'revised', 'replaces']);
+
+// JSON with every object's keys sorted, the way Python's json.dumps(sort_keys=True,
+// ensure_ascii=False, separators=(',', ':')) writes it.
+function canonical(v, top = false) {
+  if (Array.isArray(v)) return `[${v.map((x) => canonical(x)).join(',')}]`;
+  if (v && typeof v === 'object') {
+    const keys = Object.keys(v).filter((k) => v[k] !== undefined && !(top && BOOKKEEPING.has(k))).sort();
+    return `{${keys.map((k) => `${JSON.stringify(k)}:${canonical(v[k])}`).join(',')}}`;
+  }
+  return JSON.stringify(v);
+}
+
+/**
+ * Fingerprint of a blok's content, its bookkeeping stamps left out: the length of its canonical
+ * JSON in UTF-8 bytes and the FNV-1a hash of those bytes, both in hex ("5cc6-1a2b3c4d").
+ * scripts/build_data.py computes the same for the versions a revised blok replaces.
+ */
+export function fingerprint(blok) {
+  const bytes = new TextEncoder().encode(canonical(blok, true));
+  let h = 0x811c9dc5;
+  for (const byte of bytes) h = Math.imul(h ^ byte, 0x01000193) >>> 0;
+  return `${bytes.length.toString(16)}-${h.toString(16).padStart(8, '0')}`;
+}
+
 export function mergeSchedule(remote, bundled) {
   if (!remote || !bundled || !Array.isArray(remote.bloks) || !Array.isArray(bundled.bloks)) return remote;
   if (!isNewer(bundled.base, remote.base)) return remote;
   const bloks = remote.bloks.slice();
   for (const b of bundled.bloks) {
-    if (!b || !isNewer(b.added, remote.base)) continue;
-    const taken = bloks.some((r) => r && (r.id === b.id || (r.start <= b.end && b.start <= r.end)));
-    if (!taken) bloks.push(clone(b));
+    if (!b) continue;
+    const fresh = isNewer(b.added, remote.base);
+    const revised = isNewer(b.revised, remote.base);
+    if (!fresh && !revised) continue;
+    const i = bloks.findIndex((r) => r && r.id === b.id);
+    if (i >= 0) {
+      // the copy has this blok: only a version that shipped before, untouched, makes way
+      if (revised && Array.isArray(b.replaces) && b.replaces.includes(fingerprint(bloks[i]))) bloks[i] = clone(b);
+      continue;
+    }
+    // taken in before and deleted since: it stays deleted
+    if (!fresh) continue;
+    if (!bloks.some((r) => r && r.start <= b.end && b.start <= r.end)) bloks.push(clone(b));
   }
   return { ...remote, base: bundled.base, bloks };
 }

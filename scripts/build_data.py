@@ -11,6 +11,11 @@ refreshed from the transcripts.
 A blok that was not in the last build gets an `added` time, and both files get
 `base`, the newest of those times. The portal uses them to show a new blok even
 where the admin has published an older copy of the schedule (src/lib/bundled.js).
+
+A blok whose schedule changed since the last build (the faculty revised it) gets a
+`revised` time instead, and `replaces`, the fingerprints of the versions shipped
+before it. A published copy that still has one of those versions, untouched by
+the admin, then shows the new one in its place.
 """
 import datetime, json, os, re, sys, unicodedata
 
@@ -229,6 +234,39 @@ def load_json(path):
 def utc_now():
     return datetime.datetime.now(datetime.timezone.utc).replace(microsecond=0).strftime('%Y-%m-%dT%H:%M:%SZ')
 
+BOOKKEEPING = ('added', 'revised', 'replaces')
+MAX_REPLACES = 16   # LIMITS.replaces in src/lib/validate.js
+
+def fingerprint(blok):
+    """fingerprint() in src/lib/bundled.js: the blok without its bookkeeping as JSON with sorted
+    keys, then the length of that in UTF-8 bytes and its FNV-1a hash, both in hex."""
+    core = {k: v for k, v in blok.items() if k not in BOOKKEEPING}
+    data = json.dumps(core, sort_keys=True, ensure_ascii=False, separators=(',', ':')).encode('utf-8')
+    h = 0x811c9dc5
+    for byte in data:
+        h = ((h ^ byte) * 0x01000193) & 0xffffffff
+    return '%x-%08x' % (len(data), h)
+
+def stamped(blok, prev, now):
+    """The blok with its bookkeeping, in the order the validator writes a blok's keys."""
+    added = prev.get('added') if prev else now      # the bloks of the very first build have none
+    revised, replaces = None, []
+    if prev:
+        revised, replaces = prev.get('revised'), list(prev.get('replaces') or [])
+        old = fingerprint(prev)
+        if old != fingerprint(blok):
+            revised = now
+            if old not in replaces: replaces.append(old)
+    mine = fingerprint(blok)
+    replaces = [x for x in replaces if x != mine][-MAX_REPLACES:]
+    out = {k: blok[k] for k in ('id', 'name', 'title', 'loc', 'ketua', 'start', 'end')}
+    if added: out['added'] = added
+    if revised: out['revised'] = revised
+    if replaces: out['replaces'] = replaces
+    out['days'] = blok['days']
+    out['codes'] = blok['codes']
+    return out
+
 def main():
     contacts_xlsx = sys.argv[1] if len(sys.argv) > 1 else None
     prev_schedule = load_json(os.path.join(OUT, 'schedule.json')) or {}
@@ -253,9 +291,6 @@ def main():
             codes[code] = key
         blok = {'id': bid, 'name': meta['nama'], 'title': meta['judul'], 'loc': meta['lokasi'],
                 'ketua': meta.get('ketua'), 'start': days[0]['d'], 'end': days[-1]['d']}
-        # first built now, or the time it was first built; the bloks of the very first build have none
-        added = prev_bloks[bid].get('added') if bid in prev_bloks else now
-        if added: blok['added'] = added
         blok['days'] = days
         blok['codes'] = codes
         bloks.append(blok)
@@ -317,15 +352,29 @@ def main():
     for b in bloks:
         b['codes'] = {c: key_id[k] for c, k in b['codes'].items()}
         if b['ketua']: b['ketua'] = b['codes'][b['ketua']]
+    # first built now, or when it was first built; revised now when it differs from the last build
+    bloks = [stamped(b, prev_bloks.get(b['id']), now) for b in bloks]
 
-    stamps = {b['id']: b['added'] for b in bloks if b.get('added')}
-    base = max(stamps.values()) if stamps else None
+    times = [t for b in bloks for t in (b.get('added'), b.get('revised')) if t]
+    base = max(times) if times else None
+    # per blok, when it last brought in a lecturer: when first built, or a revision with a lecturer or
+    # code the last build lacked. A published lecturer list older than that takes in the blok's people,
+    # so a revision that only moves sessions leaves the admin's list alone.
+    prev_taught = prev_dosen.get('added') or {}
+    taught = {}
+    for b in bloks:
+        prev = prev_bloks.get(b['id'])
+        if prev and set(b['codes'].items()) <= set((prev.get('codes') or {}).items()):
+            t = prev_taught.get(b['id'], prev.get('added'))
+        else:
+            t = b.get('revised') or b.get('added')
+        if t: taught[b['id']] = t
     schedule = {'v': 1, 'cls': 'Alpha'}
     if base: schedule['base'] = base
     schedule['bloks'] = bloks
     dosen = {'v': 1}
-    if base: dosen['base'] = base
-    if stamps: dosen['added'] = stamps
+    if taught: dosen['base'] = max(taught.values())
+    if taught: dosen['added'] = taught
     dosen['list'] = lst
 
     os.makedirs(OUT, exist_ok=True)

@@ -5,7 +5,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 import { validate } from '../src/lib/validate.js';
-import { mergeSchedule, mergeDosen, mergeLinks, withBundled, isNewer } from '../src/lib/bundled.js';
+import { mergeSchedule, mergeDosen, mergeLinks, withBundled, isNewer, fingerprint } from '../src/lib/bundled.js';
 import { createContentStore } from '../src/lib/content.js';
 import { createModel } from '../src/lib/schedule-model.js';
 import { DocState } from '../src/admin/doc-state.js';
@@ -40,32 +40,91 @@ function dosenBefore() {
   return validate('dosen', d).data;
 }
 
-test('the shipped data marks Blok 4 as added and carries its base', () => {
+// Blok 4 as it first shipped (22 October), exactly as the schedule published on Firestore holds it,
+// and as it shipped on 25 October, when the Her OSPE stopped naming a team.
+const FIRST_B4 = JSON.parse(readFileSync(new URL('./fixtures/schedule/blok4-2026-10-22.json', import.meta.url), 'utf8'));
+function secondB4() {
+  const b = structuredClone(FIRST_B4);
+  delete b.days.find((d) => d.d === '2026-12-04').s[0].tim;
+  return b;
+}
+// What Firestore holds since the admin published with the first Blok 4 in: Blok 4 untouched, and
+// an edit of the admin's own in Blok 3.
+function publishedWith(b4 = FIRST_B4) {
+  const s = structuredClone(publishedBefore());
+  s.base = FIRST_B4.added;
+  s.bloks.push(structuredClone(b4));
+  return validate('schedule', s).data;
+}
+
+test('the shipped data marks Blok 4 as added, then revised, and carries its base', () => {
   assert.deepEqual(NEW, ['b4']);
-  assert.equal(schedule.base, schedule.bloks[3].added);
-  assert.equal(dosen.base, schedule.base);
-  assert.deepEqual(dosen.added, { b4: schedule.base });
+  const b4 = schedule.bloks[3];
+  assert.equal(b4.added, '2026-10-22T02:14:36Z', 'when Blok 4 first shipped');
+  assert.equal(schedule.base, b4.revised, 'the FIX 26 Okt sheet');
+  assert.ok(b4.revised > b4.added);
+  // the sheet moved sessions and brought in no lecturer, so the lecturer list keeps Blok 4's first time
+  assert.equal(dosen.base, b4.added);
+  assert.deepEqual(dosen.added, { b4: b4.added });
   assert.match(schedule.base, /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}Z$/);
+  // build_data.py's fingerprints are the ones bundled.js computes, for both earlier versions
+  assert.deepEqual(b4.replaces, [fingerprint(FIRST_B4), fingerprint(secondB4())]);
+  assert.equal(schedule.bloks.slice(0, 3).some((b) => b.revised || b.replaces), false);
 });
 
-test('validator: menyusul, base and added are kept; broken stamps are dropped with a warning only', () => {
+test('fingerprint: the content only, whatever the key order or the bookkeeping', () => {
+  const b4 = schedule.bloks[3];
+  assert.match(fingerprint(b4), /^[0-9a-f]{1,8}-[0-9a-f]{8}$/);
+  assert.equal(fingerprint(FIRST_B4), '19a0-a8531c19');
+  const bare = structuredClone(b4);
+  delete bare.added; delete bare.revised; delete bare.replaces;
+  assert.equal(fingerprint(bare), fingerprint(b4), 'stamps are not content');
+  const shuffled = Object.fromEntries(Object.entries(structuredClone(b4)).reverse());
+  shuffled.days[0].s[0] = Object.fromEntries(Object.entries(shuffled.days[0].s[0]).reverse());
+  assert.equal(fingerprint(shuffled), fingerprint(b4));
+  const link = structuredClone(b4);
+  link.days[0].s[1].tautan = 'https://zoom.us/j/1';
+  assert.notEqual(fingerprint(link), fingerprint(b4), 'an edit is a different version');
+  const titled = structuredClone(b4);
+  titled.days[0].s[0].t += 'é';
+  assert.notEqual(fingerprint(titled), fingerprint(b4));
+  assert.notEqual(fingerprint(secondB4()), fingerprint(FIRST_B4));
+});
+
+test('validator: menyusul, base, added, revised and replaces are kept; broken bookkeeping is dropped with a warning only', () => {
   const s = structuredClone(schedule);
   const r = validate('schedule', s);
   assert.equal(r.ok, true);
+  assert.deepEqual(r.warnings.filter((w) => /^(base|bloks\.\d+\.(added|revised|replaces))/.test(w.path.join('.'))), []);
   const cbt = r.data.bloks[3].days.find((d) => d.d === '2026-12-02').s[0];
   assert.equal(cbt.menyusul, true);
   assert.equal(r.data.base, schedule.base);
-  assert.equal(r.data.bloks[3].added, schedule.base);
+  assert.equal(r.data.bloks[3].added, schedule.bloks[3].added);
+  assert.equal(r.data.bloks[3].revised, schedule.bloks[3].revised);
+  assert.deepEqual(r.data.bloks[3].replaces, schedule.bloks[3].replaces);
+  assert.equal(JSON.stringify(r.data), JSON.stringify(schedule), 'the shipped copy is in validated form');
   s.base = 'kemarin';
   s.bloks[3].added = '2026-13-40T99:00:00Z';
+  s.bloks[3].revised = 'besok';
+  s.bloks[3].replaces = 'abc';
   s.bloks[3].days[0].s[0].menyusul = false;
   const bad = validate('schedule', s);
   assert.equal(bad.ok, true, 'bookkeeping never blocks a save');
   assert.equal('base' in bad.data, false);
   assert.equal('added' in bad.data.bloks[3], false);
+  assert.equal('revised' in bad.data.bloks[3], false);
+  assert.equal('replaces' in bad.data.bloks[3], false);
   assert.equal('menyusul' in bad.data.bloks[3].days[0].s[0], false);
   assert.ok(bad.warnings.some((w) => w.path.join('.') === 'base'));
   assert.ok(bad.warnings.some((w) => w.path.join('.') === 'bloks.3.added'));
+  assert.ok(bad.warnings.some((w) => w.path.join('.') === 'bloks.3.revised'));
+  assert.ok(bad.warnings.some((w) => w.path.join('.') === 'bloks.3.replaces'));
+  s.bloks[3].replaces = ['19a0-a8531c19', 'nope', 7, '19a0-a8531c19', ...Array.from({ length: 20 }, (_, i) => `1-${String(i).padStart(8, '0')}`)];
+  const some = validate('schedule', s);
+  assert.equal(some.ok, true);
+  assert.equal(some.data.bloks[3].replaces.length, 16, 'at most 16, each once');
+  assert.equal(some.data.bloks[3].replaces[0], '19a0-a8531c19');
+  assert.ok(some.warnings.some((w) => w.path.join('.') === 'bloks.3.replaces.1'));
   s.bloks[3].days[0].s[0].menyusul = 'ya';
   assert.equal(validate('schedule', s).ok, false, 'menyusul must be a real boolean');
   const d = structuredClone(dosen);
@@ -122,6 +181,67 @@ test('schedule: nothing changes once the copy has taken the blok in, or when the
   assert.equal(withBundled('schedule', sameId, schedule).bloks.filter((b) => b.id === 'b4').length, 1, 'same id: the admin\'s one');
   assert.equal(mergeSchedule(null, schedule), null);
   assert.equal(withBundled('links', { v: 1, channels: [] }, schedule).channels.length, 0, 'other keys pass through');
+});
+
+// ---------- a blok revised after it shipped: Blok 4 from the FIX 26 Okt sheet
+
+test('schedule: a published copy with the first Blok 4 gets the revised one, and keeps every edit of its own', () => {
+  const remote = publishedWith();
+  const before = JSON.stringify(remote);
+  const merged = withBundled('schedule', remote, schedule);
+  assert.equal(JSON.stringify(remote), before, 'the published copy is not changed');
+  assert.deepEqual(merged.bloks.map((b) => b.id), ['b1', 'b2', 'b3', 'b4']);
+  assert.deepEqual(merged.bloks[3], schedule.bloks[3], 'the revised Blok 4, in the same place');
+  assert.equal(merged.base, schedule.base);
+  assert.equal(merged.bloks[2].days[0].s[0].alasan, 'Dosen dinas luar', 'the Blok 3 edit stays');
+  assert.deepEqual(merged.bloks.slice(0, 3), remote.bloks.slice(0, 3));
+  const herOspe = merged.bloks[3].days.find((d) => d.d === '2026-12-04').s[0];
+  assert.equal(herOspe.tim, undefined, 'the Her OSPE names no team, as the sheet has it');
+  assert.equal(JSON.stringify(validate('schedule', merged).data), JSON.stringify(merged), 'already in validated form');
+  // the second version (25 October) makes way too
+  assert.deepEqual(withBundled('schedule', publishedWith(secondB4()), schedule).bloks[3], schedule.bloks[3]);
+  // the model sees the new sessions with every lecturer resolved
+  const m = createModel(merged, dosen);
+  assert.deepEqual(m.sessionsOn('2026-11-02').map((s) => s.start), ['07:30', '08:30', '10:20', '13:00', '15:00']);
+  assert.ok(m.sessions.filter((s) => s.blokId === 'b4').every((s) => s.lecturers.every((l) => l.dosen)));
+});
+
+test('schedule: a Blok 4 the admin changed stays as the admin left it', () => {
+  for (const edit of [
+    (b) => { b.days[0].s[1].tautan = 'https://zoom.us/j/123456789'; },
+    (b) => { Object.assign(b.days[1].s[0], { batal: true, alasan: 'Dosen sakit' }); },
+    (b) => { b.days.find((d) => d.d === '2026-12-02').s[0] = { s: '08:00', e: '10:00', t: 'Ujian CBT Blok 4', k: 'ujian', dz: [] }; },
+    (b) => { b.title = 'Blok Empat'; },
+  ]) {
+    const own = structuredClone(FIRST_B4);
+    edit(own);
+    const remote = publishedWith(own);
+    const merged = withBundled('schedule', remote, schedule);
+    assert.deepEqual(merged.bloks[3], remote.bloks[3]);
+    assert.equal(merged.base, schedule.base, 'taken in: the next publish will not ask again');
+    assert.equal(withBundled('schedule', merged, schedule), merged);
+  }
+});
+
+test('schedule: once the revised Blok 4 is in, or after the admin deleted Blok 4, nothing changes', () => {
+  const taken = withBundled('schedule', publishedWith(), schedule);
+  assert.equal(withBundled('schedule', taken, schedule), taken, 'same base: same object back');
+  // edited after it was taken in, then published: the admin's edit stays
+  const edited = structuredClone(taken);
+  edited.bloks[3].days[0].s[4].tautan = 'https://zoom.us/j/987654321';
+  assert.equal(withBundled('schedule', edited, schedule), edited);
+  // deleted after the first Blok 4 was taken in: the revision does not bring it back
+  const deleted = publishedWith();
+  deleted.bloks = deleted.bloks.slice(0, 3);
+  assert.deepEqual(withBundled('schedule', deleted, schedule).bloks.map((b) => b.id), ['b1', 'b2', 'b3']);
+  // a copy from before Blok 4 at all gets the revised one
+  assert.deepEqual(withBundled('schedule', publishedBefore(), schedule).bloks[3], schedule.bloks[3]);
+  // a blok the shipped copy never revised is never swapped, even if it matches
+  const plain = structuredClone(schedule);
+  delete plain.bloks[3].revised;
+  delete plain.bloks[3].replaces;
+  plain.base = '2026-11-01T00:00:00Z';
+  assert.deepEqual(withBundled('schedule', publishedWith(), plain).bloks[3], publishedWith().bloks[3]);
 });
 
 test('dosen: Blok 4 lecturers join an older published list without touching anything else', () => {
@@ -232,6 +352,70 @@ test('editors: the base is the published copy plus Blok 4, not a draft, and savi
   } finally {
     delete globalThis.localStorage;
   }
+});
+
+// ---------- the revised Blok 4 in the portal, the editors and the lecturer list
+
+test('portal: the published copy with the first Blok 4 shows the revised one; the cache keeps what was published', async () => {
+  const storage = memoryStorage();
+  const published = publishedWith();
+  const store = createContentStore({ config: CONFIG, fetchImpl: async () => respond(200, firestoreDoc(published, 22)), storage, bundled: BUNDLED, log: quiet });
+  await store.load('schedule');
+  const got = [];
+  store.subscribe('schedule', (d) => got.push(d));
+  await tick(); await tick(); await tick();
+  const last = got.at(-1);
+  assert.deepEqual(last.bloks[3], schedule.bloks[3]);
+  assert.equal(last.bloks[2].days[0].s[0].alasan, 'Dosen dinas luar');
+  const cached = JSON.parse(JSON.parse(storage.get('alpha.c.v1.schedule')).json);
+  assert.deepEqual(cached.bloks[3], FIRST_B4, 'cache holds what Firestore has');
+  // next visit from the cache: shown revised right away
+  const head = { fields: { rev: { integerValue: '22' } }, updateTime: '2026-10-22T00:45:10.945353Z' };
+  const store2 = createContentStore({ config: CONFIG, fetchImpl: async () => respond(200, head), storage, bundled: BUNDLED, log: quiet });
+  assert.deepEqual((await store2.load('schedule')).bloks[3], schedule.bloks[3]);
+});
+
+test('editors: the base is the published copy with the revised Blok 4, not a draft, and saving keeps both', () => {
+  const mem = new Map();
+  globalThis.localStorage = { getItem: (k) => (mem.has(k) ? mem.get(k) : null), setItem: (k, v) => mem.set(k, String(v)), removeItem: (k) => mem.delete(k) };
+  try {
+    const doc = new DocState('schedule', schedule);
+    doc.setBase({ exists: true, rev: 22, json: JSON.stringify(publishedWith()), updatedAt: new Date(), updatedBy: 'admin' });
+    assert.equal(doc.dirty, false, 'the revision coming in is not a change of its own');
+    assert.deepEqual(doc.base.data.bloks[3], schedule.bloks[3]);
+    assert.equal(doc.result.ok, true);
+    doc.draft.bloks[2].days[1].s[0].n = 'Bawa laptop';
+    doc.refresh();
+    const saved = doc.clean();
+    assert.equal(saved.base, schedule.base);
+    assert.deepEqual(saved.bloks[3], schedule.bloks[3], 'the revised Blok 4 is saved with it');
+    assert.equal(saved.bloks[2].days[0].s[0].alasan, 'Dosen dinas luar');
+    assert.equal(saved.bloks[2].days[1].s[0].n, 'Bawa laptop');
+    doc.setBase({ exists: true, rev: 23, json: JSON.stringify(saved), updatedAt: new Date(), updatedBy: 'admin' });
+    assert.equal(doc.dirty, false);
+    assert.equal(withBundled('schedule', doc.base.data, schedule), doc.base.data, 'not merged a second time');
+  } finally {
+    delete globalThis.localStorage;
+  }
+});
+
+test('dosen: a revision that brings in no lecturer leaves a list published since Blok 4 came in as it is', () => {
+  // published after Blok 4 came in, with one of its lecturers taken out and another one's Blok 4 code removed
+  const own = structuredClone(dosen);
+  own.list = own.list.filter((p) => p.id !== 'rosada-dwi-iswari');
+  const sima = own.list.find((p) => p.id === 'sima-asmara-dewa');
+  sima.bloks = sima.bloks.filter((b) => b !== 'b4');
+  delete sima.codes.b4;
+  const remote = validate('dosen', own).data;
+  assert.equal(remote.base, FIRST_B4.added);
+  assert.equal(withBundled('dosen', remote, dosen), remote);
+  // a revision that does bring in a lecturer brings in the blok's people again, as a new blok does
+  const grown = structuredClone(dosen);
+  grown.base = grown.added.b4 = schedule.bloks[3].revised;
+  const merged = withBundled('dosen', remote, grown);
+  assert.deepEqual(merged.list.find((p) => p.id === 'rosada-dwi-iswari'), dosen.list.find((p) => p.id === 'rosada-dwi-iswari'));
+  assert.deepEqual(merged.list.find((p) => p.id === 'sima-asmara-dewa').codes, { b4: 'SIM' });
+  assert.equal(merged.base, grown.base);
 });
 
 // ---------- channels: the Try Out OSPE channel, shipped after the admin published the links

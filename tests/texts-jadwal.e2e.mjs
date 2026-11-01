@@ -203,7 +203,7 @@ for (const width of WIDTHS) {
     await page.waitForSelector(J + ' [data-k="jadwal.mon.also"]');
     await page.locator(J + ' .jw-head').scrollIntoViewIfNeeded();
     assert.equal(await text(page, '.jw-ro[data-state="now"] .jw-ro-s'), '07.30 - 10.00, barengan 1 sesi lain');
-    assert.match(await text(page, '.jw-ro-x'), /^habis ini PA2\..*, 10\.00$/);
+    assert.match(await text(page, '.jw-ro-x'), /^habis ini PA3\..*, 10\.00$/);
     // the note under the heading is empty: hidden, and the heading block is only the heading
     assert.equal(await page.locator(J + ' .jw-title .k-note').isVisible(), false);
     const [hTitle, hHead] = await page.evaluate(() => [document.querySelector('.jw-title').getBoundingClientRect().height, document.querySelector('.jw-h').getBoundingClientRect().height]);
@@ -267,7 +267,7 @@ for (const width of WIDTHS) {
     await page.waitForSelector('.fd-o');
     await audit(page, 'dialog.fd', SKIP.find, 'search, empty');
     await assertDefaults(page, 'dialog.fd', 'search, empty');
-    await findFor(page, 'PA2');
+    await findFor(page, 'PA3');
     await page.waitForSelector('.fd-o [data-k="find.today"]');
     assert.equal(await text(page, '[aria-labelledby="fdG-session"] .fd-o .fd-s'), 'Hari ini, 10.00 · Praktikum · Blok 4');
     await audit(page, 'dialog.fd', SKIP.find, 'search, a session today');

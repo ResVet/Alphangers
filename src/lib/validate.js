@@ -39,7 +39,7 @@ export const HEART_IDS = [
 // Upper bounds. They sit well above what the real data uses, so they only bite
 // on a broken or hostile document.
 export const LIMITS = {
-  channels: 40, announcements: 100, bloks: 20, days: 120, sessions: 30, codes: 80, tags: 4,
+  channels: 40, announcements: 100, bloks: 20, days: 120, sessions: 30, codes: 80, tags: 4, replaces: 16,
   dosen: 1500, phones: 4, dosenBloks: 20, heartList: 16, heartRelated: 10,
   siteTexts: 600, divisi: 16, photos: 40, srcset: 6,
 };
@@ -57,9 +57,11 @@ export const MEDIA_RE = /^\/(?:img|media)(?:\/[A-Za-z0-9][A-Za-z0-9._-]{0,120}){
 // A tiny blurred preview kept inline; a few hundred bytes in practice.
 const LQIP_RE = /^data:image\/(?:webp|jpeg|png);base64,[A-Za-z0-9+/]{8,4000}={0,2}$/;
 const HEX_RE = /^#[0-9a-f]{6}$/;
-// When a blok joined the copy that ships with the site, and the newest such time a document has
-// taken in (src/lib/bundled.js). UTC, e.g. 2026-10-22T02:14:36Z.
+// When a blok joined the copy that ships with the site (or a revised version of it did), and the
+// newest such time a document has taken in (src/lib/bundled.js). UTC, e.g. 2026-10-22T02:14:36Z.
 const STAMP_RE = /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}(?::\d{2}(?:\.\d{1,3})?)?Z$/;
+// A blok version's fingerprint: its length and FNV-1a hash in hex (bundled.js fingerprint()).
+const PRINT_RE = /^[0-9a-f]{1,8}-[0-9a-f]{8}$/;
 
 // C0 and C1 controls except tab and newline, the bidi overrides that can make text read
 // differently from how it is stored, and the invisible characters a copy and paste brings
@@ -213,6 +215,22 @@ function stamp(ctx, path, v) {
     return '';
   }
   return v;
+}
+
+// Fingerprints of the versions of a blok that shipped before this one (src/lib/bundled.js).
+// Bookkeeping too: anything broken is dropped with a warning.
+function prints(ctx, path, v) {
+  if (v === undefined || v === null) return [];
+  if (!Array.isArray(v)) {
+    warn(ctx, path, 'Harus berupa daftar, dibuang.');
+    return [];
+  }
+  const out = [];
+  v.forEach((x, i) => {
+    if (typeof x !== 'string' || !PRINT_RE.test(x) || out.length >= LIMITS.replaces) warn(ctx, path.concat(i), 'Sidik versi tidak valid, dibuang.');
+    else if (!out.includes(x)) out.push(x);
+  });
+  return out;
 }
 
 function id(ctx, path, v) {
@@ -582,7 +600,7 @@ function validateBlok(ctx, p, b) {
     err(ctx, p, 'Blok harus berupa objek.');
     return null;
   }
-  noteUnknown(ctx, p, b, ['id', 'name', 'title', 'loc', 'ketua', 'start', 'end', 'added', 'days', 'codes']);
+  noteUnknown(ctx, p, b, ['id', 'name', 'title', 'loc', 'ketua', 'start', 'end', 'added', 'revised', 'replaces', 'days', 'codes']);
   const out = {
     id: id(ctx, p.concat('id'), b.id),
     name: text(ctx, p.concat('name'), b.name, { max: 40, required: true }),
@@ -594,6 +612,10 @@ function validateBlok(ctx, p, b) {
   };
   const added = stamp(ctx, p.concat('added'), b.added);
   if (added) out.added = added;
+  const revised = stamp(ctx, p.concat('revised'), b.revised);
+  if (revised) out.revised = revised;
+  const replaces = prints(ctx, p.concat('replaces'), b.replaces);
+  if (replaces.length) out.replaces = replaces;
   out.days = [];
   out.codes = {};
   if (b.ketua !== null && b.ketua !== undefined && b.ketua !== '') out.ketua = id(ctx, p.concat('ketua'), b.ketua) || null;
