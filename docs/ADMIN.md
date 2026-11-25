@@ -161,7 +161,7 @@ Teks untuk tiap bagian model jantung. Pilih bagian dari daftar atau pakai tombol
 
 ## Peserta try out
 
-Tab **Peserta try out** di Panel mengatur siapa yang boleh membuka soal try out kelas: Try Out CBT (Blok 2, Blok 3) dan Try Out OSPE (Blok 3), serta blok berikutnya. Di sini tidak ada tombol Simpan: setiap tindakan langsung dikirim ke server dan berlaku saat itu juga.
+Tab **Peserta try out** di Panel mengatur siapa yang boleh membuka soal try out kelas: Try Out CBT (Blok 2, Blok 3) dan Try Out OSPE (Blok 3, Blok 4), serta blok berikutnya. Di sini tidak ada tombol Simpan: setiap tindakan langsung dikirim ke server dan berlaku saat itu juga.
 
 Teman sekelas membuka try out dengan masuk pakai akun Google, lalu mencocokkan NIM sekali. Yang bisa masuk hanya orang yang ada di daftar kelas (dari absen tutor Kelas Alfa).
 

@@ -208,7 +208,7 @@ function checkBank(file) {
     if (!Array.isArray(q.o)) bad(w, 'o must be a list of options');
     else {
       if (q.t === 'tf' && n !== 2) bad(w, 'a tf question has 2 options');
-      if (q.t === 'mc' && (n < 4 || n > 5)) bad(w, 'an mc question has 4 or 5 options');
+      if (q.t === 'mc' && (n < 3 || n > 5)) bad(w, 'an mc question has 3 to 5 options');
       q.o.forEach((o, j) => text(o, w, `o[${j}]`, { max: 2000 }));
     }
     if (!Array.isArray(q.a) || !q.a.length || q.a.some((x) => !Number.isInteger(x) || x < 0 || x >= n) || new Set(q.a).size !== q.a.length) {

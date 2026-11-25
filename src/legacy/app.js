@@ -1272,7 +1272,7 @@ function makeTry(KIND){
     $('#toCnt', panel).innerHTML = (i + 1) + '<small>/' + S.ids.length + '</small>';
     progSet(Object.keys(S.ans).length / S.ids.length);
     renderFoot(); navSync(); hydrate(qEl);
-    var kh = $('#toKeys', panel); if(kh) kh.innerHTML = (q.t === 'tf' ? '<kbd>B</kbd> / <kbd>S</kbd> ' : '<kbd>A</kbd>-<kbd>E</kbd> ') + kHTML('to.keys.pick') + ' · <kbd>Enter</kbd> ' + kHTML(S.mode === 'latihan' ? 'to.keys.chk' : 'to.keys.next') + ' · <kbd>←</kbd> <kbd>→</kbd> ' + kHTML('to.keys.move') + ' · <kbd>F</kbd> ' + kHTML('to.keys.flag');
+    var kh = $('#toKeys', panel); if(kh) kh.innerHTML = (q.t === 'tf' ? '<kbd>B</kbd> / <kbd>S</kbd> ' : '<kbd>A</kbd>-<kbd>' + MCK[Math.min(order.length, MCK.length) - 1] + '</kbd> ') + kHTML('to.keys.pick') + ' · <kbd>Enter</kbd> ' + kHTML(S.mode === 'latihan' ? 'to.keys.chk' : 'to.keys.next') + ' · <kbd>←</kbd> <kbd>→</kbd> ' + kHTML('to.keys.move') + ' · <kbd>F</kbd> ' + kHTML('to.keys.flag');
     if(focus){ try{ $('#toQt', panel).focus({ preventScroll: true }); }catch(e){} }
     curReset(); bindCursor(panel);
   }

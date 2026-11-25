@@ -1028,7 +1028,10 @@ test('the seal script lists a bank under its kind of try out, and an explanation
     f.o3 = {
       id: 'o3', kind: 'ospe', name: 'Blok 3', title: 'Karakter Biologi Tubuh Manusia', sem: 'Semester 1', by: 'Praktikum Alphangers',
       topics: { sel: 'Morfologi sel' },
-      q: [{ id: 'd1-03', t: 'mc', tp: 'sel', q: 'Epitel pada alveolus paru-paru adalah', o: ['Kubus selapis', 'Silindris selapis', 'Pipih selapis', 'Transisional'], a: [2] }],
+      q: [
+        { id: 'd1-03', t: 'mc', tp: 'sel', q: 'Epitel pada alveolus paru-paru adalah', o: ['Kubus selapis', 'Silindris selapis', 'Pipih selapis', 'Transisional'], a: [2] },
+        { id: 'post34-01', t: 'mc', tp: 'sel', q: 'Otot yang terdapat pada regio antebrachii posterior', o: ['Flexor carpi radialis', 'Supinator', 'Pronator quadratus'], a: [1] },
+      ],
     };
   });
   const out = mkdtempSync(join(tmpdir(), 'cbt-out-'));
@@ -1043,6 +1046,7 @@ test('the seal script lists a bank under its kind of try out, and an explanation
   assert.equal('kind' in bank, false, 'the kind stays out of the bank');
   assert.equal('e' in bank.q[0], false);
   assert.equal(bank.q[0].a[0], 2);
+  assert.deepEqual(bank.q[1].o, ['Flexor carpi radialis', 'Supinator', 'Pronator quadratus'], 'a question may have three options');
   rmSync(dir, { recursive: true });
   rmSync(out, { recursive: true });
 });
@@ -1073,7 +1077,8 @@ test('the seal script refuses bad input and then writes nothing', () => {
     'no answer': (f) => (q(f).a = []),
     'unknown topic': (f) => (q(f).tp = 'nope'),
     'repeated question id': (f) => (q(f, 1).id = 'q001'),
-    'three options': (f) => (q(f).o = ['a', 'b', 'c']),
+    'two options': (f) => (q(f).o = ['a', 'b']),
+    'six options': (f) => (q(f).o = ['a', 'b', 'c', 'd', 'e', 'f']),
     'true/false with three': (f) => (f.b2.q[1].o = ['Benar', 'Salah', 'Mungkin']),
     'empty option': (f) => (q(f).o[2] = ' '),
     'unknown type': (f) => (q(f).t = 'essay'),
