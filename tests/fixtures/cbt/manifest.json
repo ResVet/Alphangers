@@ -39,6 +39,18 @@
       "bytes": 838,
       "by": "Praktikum Alphangers",
       "kind": "ospe"
+    },
+    {
+      "id": "o4",
+      "kv": 1,
+      "name": "Blok 4",
+      "title": "Struktur Jaringan dan Organ Tubuh Manusia I",
+      "sem": "Semester 1",
+      "n": 4,
+      "topics": 3,
+      "file": "/cbt/o4.01ad8c5d8b.bin",
+      "bytes": 970,
+      "kind": "ospe"
     }
   ]
 }

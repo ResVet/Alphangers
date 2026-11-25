@@ -134,6 +134,23 @@ const o3 = {
   ],
 };
 
+// OSPE Blok 4: questions answered by typing ("sa") next to one with three options. The keys are
+// text: two things in any order, an "atau" key, two accepted spellings under a picture, and a
+// note for answers only the student can judge (the key names two of the four chewing muscles).
+const o4 = {
+  id: 'o4', kind: 'ospe', name: 'Blok 4', title: 'Struktur Jaringan dan Organ Tubuh Manusia I', sem: 'Semester 1',
+  topics: { tulang: 'Tulang & sendi', otot: 'Otot', jar: 'Sel & jaringan' },
+  q: [
+    { id: 'r01', t: 'mc', tp: 'tulang', q: 'Tulang yang membentuk dahi adalah…', o: ['Os frontale', 'Os parietale', 'Os occipitale'], a: [0] },
+    { id: 'r02', t: 'sa', tp: 'tulang', q: 'Sebutkan dua tulang pendengaran selain stapes.', a: ['Malleus dan incus'],
+      e: 'Malleus menempel pada membran timpani, incus ada di antara malleus dan stapes.' },
+    { id: 'r03', t: 'sa', tp: 'otot', q: 'Sebutkan satu otot pengunyah.', a: ['Temporalis atau masseter'],
+      n: 'Otot pengunyah ada empat: masseter, temporalis, pterygoideus medialis dan pterygoideus lateralis.' },
+    { id: 'r04', t: 'sa', tp: 'jar', q: 'Pada gambar, organel yang ditunjuk huruf B adalah…', a: ['Mitokondria', 'Mitochondria'],
+      img: [{ id: 'i01', svg: CELL, enc: png, type: 'image/png' }] },
+  ],
+};
+
 const meta = { b3: { new: true } };
 const master = parseSecret(SECRET);
 
@@ -174,7 +191,7 @@ async function sealBank(src, kv = 1) {
 
 await mkdir(OUT, { recursive: true });
 for (const f of await readdir(OUT)) if (f.endsWith('.bin')) await rm(join(OUT, f));
-const banks = [await sealBank(b2), await sealBank(b3), await sealBank(o3)];
+const banks = [await sealBank(b2), await sealBank(b3), await sealBank(o3), await sealBank(o4)];
 const manifest = { v: 1, note: 'Fake banks for tests and the mock build. Made by scripts/cbt/fixtures.mjs.', secret: SECRET, banks };
 await writeFile(join(OUT, 'manifest.json'), JSON.stringify(manifest, null, 2) + '\n');
 console.log(banks.map((b) => `${b.file} ${b.bytes} B, ${b.n} soal`).join('\n'));

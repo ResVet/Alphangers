@@ -1030,7 +1030,7 @@ test('the seal script lists a bank under its kind of try out, and an explanation
       topics: { sel: 'Morfologi sel' },
       q: [
         { id: 'd1-03', t: 'mc', tp: 'sel', q: 'Epitel pada alveolus paru-paru adalah', o: ['Kubus selapis', 'Silindris selapis', 'Pipih selapis', 'Transisional'], a: [2] },
-        { id: 'post34-01', t: 'mc', tp: 'sel', q: 'Otot yang terdapat pada regio antebrachii posterior', o: ['Flexor carpi radialis', 'Supinator', 'Pronator quadratus'], a: [1] },
+        { id: 'post34-01', t: 'mc', tp: 'sel', q: 'Otot yang menutup rahang adalah', o: ['Buccinator', 'Masseter', 'Orbicularis oris'], a: [1] },
       ],
     };
   });
@@ -1046,7 +1046,7 @@ test('the seal script lists a bank under its kind of try out, and an explanation
   assert.equal('kind' in bank, false, 'the kind stays out of the bank');
   assert.equal('e' in bank.q[0], false);
   assert.equal(bank.q[0].a[0], 2);
-  assert.deepEqual(bank.q[1].o, ['Flexor carpi radialis', 'Supinator', 'Pronator quadratus'], 'a question may have three options');
+  assert.deepEqual(bank.q[1].o, ['Buccinator', 'Masseter', 'Orbicularis oris'], 'a question may have three options');
   rmSync(dir, { recursive: true });
   rmSync(out, { recursive: true });
 });
@@ -1069,8 +1069,36 @@ test('the seal script keeps the tags of a bank and of its questions', async () =
   rmSync(out, { recursive: true });
 });
 
+test('the seal script takes questions answered by typing, with their keys as text', async () => {
+  const dir = privateDir((f) => {
+    f.o4 = {
+      id: 'o4', kind: 'ospe', name: 'Blok 4', title: 'Struktur Jaringan dan Organ Tubuh Manusia I', sem: 'Semester 1',
+      topics: { otot: 'Otot', tulang: 'Tulang' },
+      q: [
+        { id: 'pre12-01', t: 'sa', tp: 'tulang', q: 'Sebutkan dua tulang pendengaran selain stapes.', a: ['Malleus dan incus'] },
+        { id: 'pre34-01', t: 'sa', tp: 'otot', q: 'Sebutkan satu otot pengunyah.', a: ['Temporalis atau masseter', 'Pterygoideus lateralis'], n: 'Ada empat.' },
+        { id: 'post34-01', t: 'mc', tp: 'otot', q: 'Otot yang menutup rahang adalah', o: ['Buccinator', 'Masseter', 'Orbicularis oris'], a: [1] },
+      ],
+    };
+  });
+  const out = mkdtempSync(join(tmpdir(), 'cbt-out-'));
+  const r = sealRun(dir, out);
+  assert.equal(r.code, 0, r.text);
+  const o4 = JSON.parse(readFileSync(join(out, 'src/data/cbt.json'), 'utf8')).banks.find((b) => b.id === 'o4');
+  assert.equal(o4.n, 3);
+  const bank = await openJson(await derive(fromB64u(SECRET), LABEL.bankKey('o4', 1)), new Uint8Array(readFileSync(join(out, 'public', o4.file))), LABEL.bankAad('o4', 1));
+  assert.deepEqual(bank.q[0], { id: 'pre12-01', t: 'sa', tp: 'tulang', q: 'Sebutkan dua tulang pendengaran selain stapes.', a: ['Malleus dan incus'] });
+  assert.deepEqual(bank.q[1].a, ['Temporalis atau masseter', 'Pterygoideus lateralis'], 'the keys as written, in order');
+  assert.equal('o' in bank.q[1], false);
+  assert.deepEqual(bank.q[2].a, [1]);
+  rmSync(dir, { recursive: true });
+  rmSync(out, { recursive: true });
+});
+
 test('the seal script refuses bad input and then writes nothing', () => {
   const q = (f, i = 0) => f.b3.q[i];
+  // the first question as one answered by typing, with these keys
+  const sa = (f, a, more = {}) => { const x = q(f); x.t = 'sa'; delete x.o; x.a = a; Object.assign(x, more); };
   const cases = {
     'answer out of range': (f) => (q(f).a = [5]),
     'repeated answer': (f) => (q(f).a = [0, 0]),
@@ -1082,6 +1110,15 @@ test('the seal script refuses bad input and then writes nothing', () => {
     'true/false with three': (f) => (f.b2.q[1].o = ['Benar', 'Salah', 'Mungkin']),
     'empty option': (f) => (q(f).o[2] = ' '),
     'unknown type': (f) => (q(f).t = 'essay'),
+    'typed answer with options': (f) => (q(f).t = 'sa'),
+    'typed answer keyed by index': (f) => sa(f, [0]),
+    'typed answer without keys': (f) => sa(f, []),
+    'typed answer keys as text': (f) => sa(f, 'Mitokondria'),
+    'typed answer key with nothing to compare': (f) => sa(f, ['?!']),
+    'typed answer key given twice': (f) => sa(f, ['M. masseter', 'masseter']),
+    'typed answer key over 300 characters': (f) => sa(f, ['x'.repeat(301)]),
+    'eleven typed answer keys': (f) => sa(f, Array.from({ length: 11 }, (_, i) => 'kunci ' + i)),
+    'typed answer kept in order': (f) => sa(f, ['Mitokondria'], { ns: 1 }),
     'unknown kind of try out': (f) => (f.b3.kind = 'osce'),
     'unknown field': (f) => (q(f).jawaban = 'A'),
     'missing picture': (f) => (q(f).img[0].f = 'img/b3/none.webp'),

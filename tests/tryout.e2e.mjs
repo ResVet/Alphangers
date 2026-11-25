@@ -327,7 +327,7 @@ for (const [w, h] of [[390, 844], [1280, 800]]) {
     assert.equal(await s.ev(() => document.title), 'Try Out OSPE · ALPHANGERS');
     assert.equal(await s.ev(() => document.querySelector('.p-ttl').textContent.replace(/\s+/g, ' ').trim()), 'Try Out OSPE');
 
-    // home: its four bloks, only Blok 3 has a bank, the OSPE credit, its own page note key
+    // home: its four bloks, Blok 3 and Blok 4 have banks, the OSPE credit, its own page note key
     assert.deepEqual(await s.ev(() => [...document.querySelectorAll('.to-blk')].map((b) => b.dataset.b)), ['o1', 'o2', 'o3', 'o4']);
     const card = await s.ev(() => { const b = document.querySelector('.to-blk.on'); return [b.dataset.b, b.querySelector('.to-bm').textContent, b.querySelector('.to-bby').textContent]; });
     assert.deepEqual([card[0], card[2]], ['o3', 'Disusun Praktikum Alphangers']);
@@ -412,6 +412,181 @@ for (const [w, h] of [[390, 844], [1280, 800]]) {
     await s.page.waitForSelector('.to-start', { timeout: 10000 });
     assert.equal(await s.ev(() => document.querySelector('[data-act="mode"][data-v="ujian"] b').textContent), 'Simulasi CBT');
     assert.match(await s.ev(() => document.querySelector('.p-crumb').textContent), /^Try Out · Blok 3/);
+    await done(s);
+  });
+}
+
+for (const [w, h] of [[390, 844], [1280, 800]]) {
+  test(`Try Out OSPE, answered by typing: keys matched as written, counting an answer right, Simulasi and the review (${w}x${h})`, async () => {
+    const s = await open({ cbt: 'ok', w, h, ch: 'tryout-ospe', ready: '.to-blk.on[data-b="o4"]' });
+    assert.match(await s.ev(() => document.querySelector('.to-blk.on[data-b="o4"] .to-bm').textContent), /^4 soal · 3 topik/);
+    await s.page.click('.to-blk.on[data-b="o4"]');
+    await gate(s, 'masuk');
+    await s.page.click('[data-act="gin"]');
+    await s.page.waitForSelector('.to-start', { timeout: 10000 });
+    const stat = (id) => s.ev((k) => JSON.parse(localStorage.getItem('alpha.to.v1.stat.o4') || '{}')[k], id);
+    const verdict = () => s.ev(() => document.querySelector('.to-fb .to-vd').textContent);
+    const grid = () => s.ev(() => [...document.querySelectorAll('#toGrid .to-gi')].map((b) => ['ok', 'no'].find((c) => b.classList.contains(c)) || ''));
+
+    // the typed questions are a kind of their own in the setup
+    assert.deepEqual(await s.ev(() => [...document.querySelectorAll('[data-act="ty"]')].map((b) => b.textContent.replace(/\s+/g, ' ').trim())), ['Semua', 'Pilihan ganda 1', 'Isian 3']);
+    await s.page.click('[data-act="sq"]');
+    await s.page.click('[data-act="so"]');
+    await s.page.click('[data-act="ty"][data-v="sa"]');
+    assert.match(await s.ev(() => document.querySelector('.to-start').textContent), /^Mulai latihan · 3 soal/);
+    await s.page.click('.to-start');
+    await s.page.waitForSelector('#toSa');
+
+    // a box to type in instead of options; nothing to check until something is typed
+    assert.deepEqual(await s.ev(() => [...document.querySelectorAll('#toQ .to-qm .to-tag')].map((t) => t.textContent)), ['Tulang & sendi', 'Isian']);
+    assert.equal(await s.ev(() => document.querySelectorAll('#toQ .to-o').length), 0);
+    assert.equal(await s.ev(() => document.querySelector('label[for="toSa"]').textContent), 'Jawabanmu');
+    assert.equal(await s.ev(() => document.querySelector('#toFoot [data-act="check"]').disabled), true);
+    if (w >= 900) assert.match(await s.ev(() => document.getElementById('toKeys').textContent), /^ketik jawaban · Enter cek/);
+    await s.page.click('#toSa');
+    await s.page.keyboard.type('incus & malleus');
+    assert.equal(await s.ev(() => document.querySelector('#toFoot [data-act="check"]').disabled), false);
+    // an answer typed and not yet checked is still there after leaving the run and coming back
+    await s.page.click('#toBack');
+    await s.page.waitForSelector('.to-resume');
+    assert.match(await s.ev(() => document.querySelector('.to-rs-m').textContent), /^1 dijawab/);
+    await s.page.click('[data-act="resume"]');
+    await s.page.waitForSelector('#toSa');
+    assert.equal(await s.page.inputValue('#toSa'), 'incus & malleus');
+    assert.ok(await fits(s), 'typed question fits');
+    await axe(s, 'typed question');
+
+    // Enter checks; the two bones in the other order, with & for dan, match the key
+    await s.page.focus('#toSa');
+    await s.page.keyboard.press('End');
+    await s.page.keyboard.press('Enter');
+    await s.page.waitForSelector('.to-fb.ok');
+    assert.equal(await verdict(), 'Benar. Jawaban: Malleus dan incus');
+    assert.equal(await s.ev(() => document.querySelector('.to-sa').className), 'to-sa ok');
+    assert.equal(await s.ev(() => document.getElementById('toSa').readOnly), true);
+    assert.equal(await s.ev(() => !!document.querySelector('.to-sa-own')), false, 'nothing to count by hand when it matches');
+    assert.equal(await s.page.inputValue('#toSa'), 'incus & malleus', 'Enter did not add a line');
+    assert.match(await s.ev(() => document.getElementById('toLive').textContent), /^Benar\. Jawaban: Malleus dan incus\./);
+    await shot(s, 'typed-ok');
+    // the checked box, drawn again read-only, still takes Escape back to the question
+    await s.page.click('#toSa');
+    await s.page.keyboard.press('Escape');
+    assert.equal(await s.ev(() => document.activeElement && document.activeElement.id), 'toQt');
+    assert.equal(await s.ev(() => document.getElementById('toCnt').textContent), '1/3', 'still in the run');
+
+    // typing goes into the box: k, f and j are letters there, not shortcuts
+    await s.page.click('#toFoot [data-act="next"]');
+    await s.page.waitForFunction(() => /otot pengunyah/.test(document.getElementById('toQt').textContent));
+    await s.page.click('#toSa');
+    await s.page.keyboard.type('kfj');
+    assert.equal(await s.ev(() => document.getElementById('toCnt').textContent), '2/3');
+    assert.equal(await s.ev(() => document.querySelector('#toQ [data-act="flag"]').getAttribute('aria-pressed')), 'false');
+    // Escape leaves the box, not the run; out of the box, F flags again
+    await s.page.keyboard.press('Escape');
+    assert.equal(await s.ev(() => document.activeElement && document.activeElement.id), 'toQt');
+    assert.equal(await s.page.inputValue('#toSa'), 'kfj');
+    await s.page.keyboard.press('f');
+    assert.equal(await s.ev(() => document.querySelector('#toQ [data-act="flag"]').getAttribute('aria-pressed')), 'true');
+    await s.page.keyboard.press('f');
+    assert.equal(await s.ev(() => document.querySelector('#toQ [data-act="flag"]').getAttribute('aria-pressed')), 'false');
+    await s.page.fill('#toSa', '');
+    assert.equal(await s.ev(() => document.querySelector('#toFoot [data-act="check"]').disabled), true, 'an emptied box is no answer');
+    // a chewing muscle the key does not name: not the key as written, so the student judges it
+    await s.page.keyboard.type('m. pterygoideus lateralis');
+    await s.page.keyboard.press('Enter');
+    await s.page.waitForSelector('.to-fb.no');
+    assert.equal(await verdict(), 'Belum cocok dengan kunci. Jawaban: Temporalis atau masseter');
+    assert.match(await s.ev(() => document.querySelector('.to-sa-own').textContent), /^Maksud jawabanmu sama dengan kunci\? Hitung benar$/);
+    assert.match(await s.ev(() => document.querySelector('.to-fb .to-nt').textContent), /pterygoideus medialis dan pterygoideus lateralis/);
+    assert.deepEqual(await grid(), ['ok', 'no', '']);
+    const t0 = (await stat('r03'))[3];
+    assert.deepEqual(await stat('r03'), [1, 1, 0, t0]);
+    await axe(s, 'typed answer that does not match');
+    await shot(s, 'typed-no');
+    await s.page.click('[data-act="self"]');
+    await s.page.waitForSelector('.to-fb.ok');
+    assert.equal(await verdict(), 'Dihitung benar. Jawaban: Temporalis atau masseter');
+    assert.deepEqual(await s.ev(() => { const b = document.querySelector('[data-act="self"]'); return [b.textContent, b.hasAttribute('aria-pressed'), document.activeElement === b]; }), ['Batalkan', false, true]);
+    assert.equal(await s.ev(() => document.querySelector('.to-sa').className), 'to-sa ok');
+    assert.equal(await s.ev(() => document.getElementById('toLive').textContent), 'Dihitung benar.');
+    assert.deepEqual(await grid(), ['ok', 'ok', '']);
+    assert.deepEqual(await stat('r03'), [1, 0, 1, t0], 'the stats count it right');
+    await axe(s, 'typed answer counted right');
+    // and taken back, and counted again
+    await s.page.click('[data-act="self"]');
+    await s.page.waitForSelector('.to-fb.no');
+    assert.deepEqual(await stat('r03'), [1, 1, 0, t0]);
+    assert.deepEqual(await grid(), ['ok', 'no', '']);
+    await s.page.click('[data-act="self"]');
+    await s.page.waitForSelector('.to-fb.ok');
+
+    // under a picture, the second spelling of the key; the box keeps the student's words
+    await s.page.click('#toFoot [data-act="next"]');
+    await picOk(s, '#toQ .to-fig img');
+    await s.page.click('#toSa');
+    await s.page.keyboard.type('Mitochondria');
+    await s.page.click('#toFoot [data-act="check"]');
+    await s.page.waitForSelector('.to-fb.ok');
+    assert.equal(await verdict(), 'Benar. Jawaban yang diterima: Mitokondria / Mitochondria');
+    assert.ok(await fits(s), 'picture and box fit');
+    await s.page.click('#toFoot [data-act="finish"]');
+    await s.page.click('.to-dlg [data-dok]');
+    await s.page.waitForSelector('#toScore');
+    assert.match(await s.ev(() => document.querySelector('.to-result .lbl').textContent), /^Latihan · Blok 4 · isian$/);
+    assert.equal(await s.ev(() => document.getElementById('toScore').textContent), '100,0');
+
+    // Simulasi: answers are only typed; Enter moves on, and on the last question it asks to finish
+    await s.page.click('[data-act="again"]');
+    await s.page.waitForSelector('.to-start');
+    await s.page.click('[data-act="mode"][data-v="ujian"]');
+    await s.page.click('.to-start');
+    await s.page.waitForSelector('#toSa');
+    await s.page.click('#toSa');
+    await s.page.keyboard.type('malleus');
+    await s.page.keyboard.press('Enter');
+    await s.page.waitForFunction(() => document.getElementById('toCnt').textContent === '2/3');
+    assert.equal(await s.ev(() => !!document.querySelector('.to-fb')), false, 'no feedback in Simulasi');
+    await s.page.click('#toFoot [data-act="next"]');
+    await s.page.waitForFunction(() => document.getElementById('toCnt').textContent === '3/3');
+    await s.page.click('#toSa');
+    await s.page.keyboard.type('mitokondria');
+    await s.page.keyboard.press('Enter');
+    await s.page.click('.to-dlg [data-dok]');
+    await s.page.waitForSelector('#toScore');
+    assert.equal(await s.ev(() => document.getElementById('toScore').textContent), '33,3');
+
+    // the review shows what was typed; an answer the key did not match can be counted right there
+    await s.page.click('[data-act="review"]');
+    await s.page.waitForSelector('.to-review');
+    await s.page.click('[data-act="rf"][data-v="all"]');
+    const cards = () => s.ev(() => [...document.querySelectorAll('.to-rc')].map((li) => [li.className.replace('to-rc ', ''), li.querySelector('.to-sa-v')?.textContent || '', li.querySelector('[data-act="rself"]')?.textContent || '']));
+    assert.deepEqual(await cards(), [['no', 'Jawabanmu: malleus', 'Hitung benar'], ['blank', '', ''], ['ok', 'Jawabanmu: mitokondria', '']]);
+    assert.equal(await s.ev(() => document.querySelector('.to-rv-s').textContent), 'Nilai 33,3 · 1/3 benar');
+    await axe(s, 'review of typed answers');
+    const r02 = (await stat('r02'))[3];
+    assert.deepEqual(await stat('r02'), [2, 1, 0, r02]);
+    await s.page.click('[data-act="rself"][data-id="r02"]');
+    await s.page.waitForFunction(() => document.querySelector('.to-rv-s').textContent === 'Nilai 66,7 · 2/3 benar');
+    assert.deepEqual(await cards(), [['ok', 'Jawabanmu: malleus', 'Batalkan'], ['blank', '', ''], ['ok', 'Jawabanmu: mitokondria', '']]);
+    assert.equal(await s.ev(() => document.activeElement.matches('[data-act="rself"][data-id="r02"]')), true, 'focus stays on the button');
+    assert.deepEqual(await stat('r02'), [2, 0, 1, r02], 'the stats of this attempt count it right');
+    // taken back under the Benar filter, the card leaves the list and focus goes to the heading
+    await s.page.click('[data-act="rf"][data-v="ok"]');
+    await s.page.click('[data-act="rself"][data-id="r02"]');
+    await s.page.waitForFunction(() => document.querySelector('.to-rv-s').textContent === 'Nilai 33,3 · 1/3 benar');
+    assert.deepEqual(await cards(), [['ok', 'Jawabanmu: mitokondria', '']]);
+    assert.equal(await s.ev(() => document.activeElement.matches('.to-review .to-h')), true);
+    assert.deepEqual(await stat('r02'), [2, 1, 0, r02]);
+    await s.page.click('[data-act="rf"][data-v="all"]');
+    await s.page.click('[data-act="rself"][data-id="r02"]');
+    await s.page.waitForFunction(() => document.querySelector('.to-rv-s').textContent === 'Nilai 66,7 · 2/3 benar');
+    const run = await s.ev(() => JSON.parse(localStorage.getItem('alpha.to.v1.hist.o4'))[0]);
+    assert.deepEqual([run.mode, run.score, run.benar, run.salah, run.kosong, run.ans.r02], ['ujian', 66.7, 2, 0, 1, { v: 'malleus', s: 1 }]);
+    assert.ok(await fits(s), 'review fits');
+    await shot(s, 'typed-review');
+    await s.page.goBack();
+    await s.page.waitForSelector('#toScore');
+    assert.equal(await s.ev(() => document.getElementById('toScore').textContent), '66,7', 'the result has the new score');
     await done(s);
   });
 }

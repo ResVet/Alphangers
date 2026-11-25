@@ -5,8 +5,10 @@
 //                      out channel shows it (CHANNEL_KINDS: tryout, the default, or ospe); an
 //                      explanation ("e") is optional. "tags" maps tag keys to labels, like
 //                      "topics", and a question lists its tags in "tg" (the "herdini" tag
-//                      gives the bank a Her Dini mode). Other files there (working files,
-//                      notes) are skipped.
+//                      gives the bank a Her Dini mode). A question is "mc" or "tf" (options
+//                      in "o", the right ones by index in "a") or "sa", answered by typing:
+//                      no "o", and "a" lists the keys as text (src/lib/answer.js compares
+//                      them). Other files there (working files, notes) are skipped.
 //   img/...            those pictures
 //   secret.txt         the master secret, unless CBT_SECRET is set
 // It checks everything first and writes nothing if anything is wrong. Then it writes:
@@ -30,6 +32,7 @@ import { LABEL, BANK_ID, IMG_ID, derive, seal, openJson, hashHex, parseSecret, t
 import { NIM_RE, cleanName } from '../../netlify/lib/cbt.mjs';
 import { sniff, TYPES, MAX_BYTES } from '../../netlify/lib/media.mjs';
 import { CHANNEL_KINDS } from '../../src/lib/validate.js';
+import { answerForm } from '../../src/lib/answer.js';
 
 function fail(message) {
   console.error(message);
@@ -198,25 +201,39 @@ function checkBank(file) {
     if (typeof q.id !== 'string' || !/^[A-Za-z0-9_-]{1,40}$/.test(q.id)) bad(w, 'id must be letters, digits, _ or -');
     else if (ids.has(q.id)) bad(w, 'an id already used in this bank');
     ids.add(q.id);
-    if (q.t !== 'mc' && q.t !== 'tf') bad(w, 't must be "mc" or "tf"');
+    if (q.t !== 'mc' && q.t !== 'tf' && q.t !== 'sa') bad(w, 't must be "mc", "tf" or "sa"');
     if (!topics || typeof q.tp !== 'string' || !Object.hasOwn(topics, q.tp)) bad(w, 'tp must be one of the topic keys');
     if (q.tg !== undefined && (!Array.isArray(q.tg) || !q.tg.length || q.tg.length > 5 || new Set(q.tg).size !== q.tg.length || q.tg.some((k) => typeof k !== 'string' || !tags || !Object.hasOwn(tags, k)))) {
       bad(w, 'tg must list 1 to 5 of the tag keys, each once');
     }
     text(q.q, w, 'q', { max: 10000 });
-    const n = Array.isArray(q.o) ? q.o.length : 0;
-    if (!Array.isArray(q.o)) bad(w, 'o must be a list of options');
-    else {
-      if (q.t === 'tf' && n !== 2) bad(w, 'a tf question has 2 options');
-      if (q.t === 'mc' && (n < 3 || n > 5)) bad(w, 'an mc question has 3 to 5 options');
-      q.o.forEach((o, j) => text(o, w, `o[${j}]`, { max: 2000 }));
-    }
-    if (!Array.isArray(q.a) || !q.a.length || q.a.some((x) => !Number.isInteger(x) || x < 0 || x >= n) || new Set(q.a).size !== q.a.length) {
-      bad(w, 'a must list the right options by index, each once');
+    if (q.t === 'sa') {
+      // typed: the keys are text, and each must say something once compared (answerForm)
+      if (q.o !== undefined) bad(w, 'an sa question has no options (o)');
+      if (q.ns !== undefined) bad(w, 'an sa question has no options to keep in order (ns)');
+      if (!Array.isArray(q.a) || !q.a.length || q.a.length > 10) bad(w, 'a must list 1 to 10 keys as text');
+      else {
+        q.a.forEach((k, j) => {
+          text(k, w, `a[${j}]`, { max: 300 });
+          if (typeof k === 'string' && k.trim() && !answerForm(k)) bad(w, `a[${j}] has no letters or digits to compare`);
+        });
+        if (new Set(q.a.map((k) => (typeof k === 'string' ? answerForm(k) : k))).size !== q.a.length) bad(w, 'a lists the same key twice');
+      }
+    } else {
+      const n = Array.isArray(q.o) ? q.o.length : 0;
+      if (!Array.isArray(q.o)) bad(w, 'o must be a list of options');
+      else {
+        if (q.t === 'tf' && n !== 2) bad(w, 'a tf question has 2 options');
+        if (q.t === 'mc' && (n < 3 || n > 5)) bad(w, 'an mc question has 3 to 5 options');
+        q.o.forEach((o, j) => text(o, w, `o[${j}]`, { max: 2000 }));
+      }
+      if (!Array.isArray(q.a) || !q.a.length || q.a.some((x) => !Number.isInteger(x) || x < 0 || x >= n) || new Set(q.a).size !== q.a.length) {
+        bad(w, 'a must list the right options by index, each once');
+      }
+      if (q.ns !== undefined && q.ns !== 1 && q.ns !== true) bad(w, 'ns must be 1');
     }
     text(q.e, w, 'e', { max: 10000, optional: true });
     text(q.n, w, 'n', { max: 5000, optional: true });
-    if (q.ns !== undefined && q.ns !== 1 && q.ns !== true) bad(w, 'ns must be 1');
     text(q.src, w, 'src', { max: 500, optional: true });
     for (const field of ['img', 'ei']) {
       if (q[field] === undefined) continue;

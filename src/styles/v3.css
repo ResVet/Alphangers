@@ -660,6 +660,21 @@ html.fine .to-o:not([aria-disabled="true"]):hover{border-color:rgba(134,242,94,.
 .to-mk{flex:none;font-size:17px;line-height:30px;font-weight:700}
 .to-o.ok .to-mk{color:var(--grx)}
 .to-o.no .to-mk{color:var(--red)}
+/* a typed-answer question: the box, then the feedback's "count it right" line */
+.to-sa{display:grid;gap:8px}
+.to-sa-l{font-family:var(--mono);font-size:10px;letter-spacing:.2em;text-transform:uppercase;color:var(--mut)}
+.to-sai{display:block;width:100%;min-height:92px;padding:14px 16px;border-radius:16px;border:1px solid var(--line2);background:rgba(238,242,232,.04);color:var(--ink);
+  font-family:var(--body);font-size:17px;line-height:1.5;resize:vertical;transition:border-color .2s,box-shadow .2s,background .2s}
+.to-sai::placeholder{color:var(--dim);opacity:1}
+.to-sai:focus{outline:none;border-color:var(--grx);box-shadow:0 0 0 3px rgba(134,242,94,.18)}
+.to-sai[readonly]{resize:none;cursor:default}
+.to-sa.ok .to-sai{border-color:var(--grx);background:rgba(63,174,42,.13)}
+.to-sa.no .to-sai{border-color:var(--red);background:rgba(255,122,107,.08)}
+.to-sa-own{display:flex;flex-wrap:wrap;align-items:center;gap:8px 12px;margin-top:10px;font-size:14px;line-height:1.5;color:var(--mut)}
+.to-btn.to-sa-b{min-height:38px;padding:0 16px;font-size:12px}
+.to-sa-v{padding:12px 14px;border-radius:14px;border:1px solid var(--line2);font-size:15px;line-height:1.5;white-space:pre-line;overflow-wrap:anywhere}
+.to-sa-v.ok{border-color:var(--grx);background:rgba(63,174,42,.13)}
+.to-sa-v.no{border-color:var(--red);background:rgba(255,122,107,.08)}
 .to-fbw:empty{display:none}
 .to-fb{margin-top:18px;padding:16px 18px;border-radius:16px;border:1px solid var(--line);border-left:3px solid var(--grx);background:rgba(63,174,42,.07)}
 .to-fb.no{border-left-color:var(--red);background:rgba(255,122,107,.06)}

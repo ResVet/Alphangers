@@ -95,6 +95,7 @@ Di halaman try out:
 - Kotak konfirmasi try out, misalnya **Selesaikan try out?** dan **Hapus sesi ini?**, juga bisa diketik langsung selama terbuka di mode Edit. Tombolnya dipilih dulu seperti tombol lain: **Ubah teks** untuk tulisannya, **Klik** untuk menjalankannya. Ketuk di luar kotak untuk menutupnya. Semua teks konfirmasi juga ada di **⋯ > Semua teks halaman**, kelompok Try out.
 - Ketuk judul halaman lalu **Ubah channel** untuk nama, label, dan keterangan channel Try Out CBT atau Try Out OSPE.
 - Try Out CBT dan Try Out OSPE masing-masing punya kartu Blok 1 sampai Blok 4 dan catatan halamannya sendiri. Akun Google dan NIM yang sama membuka keduanya.
+- Soal isian (10 soal pre test di Try Out OSPE Blok 4) dijawab dengan mengetik. Jawaban yang isinya sama dengan kunci langsung dihitung benar. Huruf besar kecil, tanda baca, dan awalan seperti os, m., n., a., v., atau regio tidak dipermasalahkan, dan kunci yang berisi beberapa nama boleh ditulis dengan urutan apa saja. Kalau tulisannya beda tapi maksudnya sama, teman sekelas bisa menekan **Hitung benar** setelah melihat kunci, baik saat latihan maupun di pembahasan.
 
 Untuk membuka halaman blok di mode Edit, kamu perlu masuk try out seperti teman sekelas (Google dan NIM), karena soalnya hanya terbuka untuk Kelas Alpha.
 

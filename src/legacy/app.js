@@ -10,6 +10,7 @@ import CBT from '../data/cbt.json';
 import '../copy/shell.js';
 import '../copy/tryout.js';
 import { tx, kHTML, kAttrs, kText, kSet, kAttr, copyEntry } from '../lib/texts.js';
+import { answerOk } from '../lib/answer.js';
 
 export function startPortal(boot){
 var H = document.documentElement, B = document.body;
@@ -805,7 +806,12 @@ function makeTry(KIND){
   function savePref(){ put(K.pref, PREF); }
 
   function shuffle(a){ for(var i = a.length - 1; i > 0; i--){ var j = Math.floor(Math.random() * (i + 1)), t = a[i]; a[i] = a[j]; a[j] = t; } return a; }
-  function isOk(q, a){ return a != null && q.a.indexOf(a) >= 0; }
+  // An answer is the index of the option picked, or for a typed-answer question ("sa") { v: the text
+  // typed, s: 1 once the student counted it right themselves }. A typed text that matches a key is
+  // right on its own (src/lib/answer.js).
+  function isOk(q, a){ return a != null && (q.t === 'sa' ? (a.s === 1 || saAuto(q, a)) : q.a.indexOf(a) >= 0); }
+  function saAuto(q, a){ return !!(a && answerOk(q.a, a.v)); }
+  function saText(a){ return a && typeof a.v === 'string' ? a.v : ''; }
   function fmtT(sec){
     sec = Math.max(0, Math.round(sec));
     var h = Math.floor(sec / 3600), m = Math.floor(sec % 3600 / 60), s = sec % 60;
@@ -1074,8 +1080,9 @@ function makeTry(KIND){
     var tps = chip('tp', '*', !tp.length, kHTML('to.f.alltp')) + tpKeys.map(function(k){
       return chip('tp', k, tp.indexOf(k) >= 0, esc(b.topics[k]) + ' <em>' + tpCount[k] + '</em>');
     }).join('');
-    var tys = chip('ty', 'all', ty === 'all', kHTML('to.f.all')) + (tyCount.mc ? chip('ty', 'mc', ty === 'mc', kHTML('to.qt.mc') + ' <em>' + tyCount.mc + '</em>') : '') +
-      (tyCount.tf ? chip('ty', 'tf', ty === 'tf', kHTML('to.qt.tf') + ' <em>' + tyCount.tf + '</em>') : '');
+    var tys = chip('ty', 'all', ty === 'all', kHTML('to.f.all')) + ['mc', 'tf', 'sa'].map(function(t){
+      return tyCount[t] ? chip('ty', t, ty === t, kHTML('to.qt.' + t) + ' <em>' + tyCount[t] + '</em>') : '';
+    }).join('');
     var pools = ['all', 'new', 'wrong', 'star'].map(function(p){
       var c = poolCount(V.bid, p); return chip('pool', p, P.pool === p, kHTML('to.pool.' + p) + ' <em>' + c + '</em>');
     }).join('');
@@ -1161,7 +1168,7 @@ function makeTry(KIND){
     // a Latihan run that says so in its label
     var parts = mode === HD ? [tx('to.lb.hd')] : [];
     if(tp.length === 1) parts.push(b.topics[tp[0]]); else if(tp.length) parts.push(tx('to.lb.tps', { n: tp.length }));
-    if(ty !== 'all') parts.push(tx(ty === 'mc' ? 'to.lb.mc' : 'to.lb.tf'));
+    if(ty !== 'all') parts.push(tx(ty === 'mc' ? 'to.lb.mc' : ty === 'sa' ? 'to.lb.sa' : 'to.lb.tf'));
     if(P.pool !== 'all' && copyEntry('to.lb.' + P.pool)) parts.push(tx('to.lb.' + P.pool));
     var go2 = function(){ start(ids, mode === 'ujian' ? 'ujian' : 'latihan', parts.join(', ')); };
     if(sessOf(V.bid)) confirmBox({ title: 'to.dlg.swap.h', body: 'to.dlg.swap.p', ok: 'to.dlg.swap.ok', danger: true }, function(){ del('sess.' + V.bid); S = null; go2(); });
@@ -1223,15 +1230,19 @@ function makeTry(KIND){
     '</div>';
     buildNav(); renderQ(false); startClock(); drawClock();
     var qEl = $('#toQ', panel), sx = 0, sy = 0, st0 = 0, sp = null;
-    qEl.addEventListener('pointerdown', function(e){ if(e.pointerType !== 'touch') return; sp = e.pointerId; sx = e.clientX; sy = e.clientY; st0 = performance.now(); }, { passive: true });
+    // a swipe moves to the next or previous question, but not one that starts in the answer box
+    qEl.addEventListener('pointerdown', function(e){ if(e.pointerType !== 'touch') return; if(e.target.closest && e.target.closest('.to-sai')){ sp = null; return; } sp = e.pointerId; sx = e.clientX; sy = e.clientY; st0 = performance.now(); }, { passive: true });
     qEl.addEventListener('pointerup', function(e){
       if(e.pointerId !== sp) return; sp = null;
       var dx = e.clientX - sx, dy = e.clientY - sy;
       if(Math.abs(dx) > 70 && Math.abs(dx) > Math.abs(dy) * 1.8 && performance.now() - st0 < 700){ if(dx < 0) nav(1); else nav(-1); }
     }, { passive: true });
     qEl.addEventListener('pointercancel', function(){ sp = null; });
+    // the answer box is drawn again when it is checked or counted right, so its typing is caught here
+    qEl.addEventListener('input', function(e){ if(e.target.id === 'toSa') saInput(e); });
+    qEl.addEventListener('keydown', function(e){ if(e.target.id === 'toSa') saKey(e); });
   }
-  function qOrder(id){ var q = B(S.blok).by[id]; return S.perm[id] || q.o.map(function(x, k){ return k; }); }
+  function qOrder(id){ var q = B(S.blok).by[id]; return S.perm[id] || (q.o || []).map(function(x, k){ return k; }); }
   function keyOf(q, d){ return q.t === 'tf' ? TFK[d] : MCK[d]; }
   function optsHtml(q, order, chosen, reveal, name){
     if(name === 'none') return '<ul class="to-opts' + (q.t === 'tf' ? ' tf' : '') + '" aria-label="Pilihan jawaban">' + order.map(function(o, d){
@@ -1249,7 +1260,25 @@ function makeTry(KIND){
         '<span class="to-k" aria-hidden="true">' + keyOf(q, d) + '</span><span class="to-ot">' + esc(q.o[o]) + '</span>' + (mark ? '<span class="to-mk" aria-hidden="true">' + mark + '</span>' : '') + '</button>';
     }).join('') + '</div>';
   }
-  function fbHtml(q, order, chosen, blank, bid){
+  // A typed-answer question: the box to type in, read-only once checked, green or red by then.
+  function saHtml(q, a, chk){
+    var cls = 'to-sa' + (chk ? (isOk(q, a) ? ' ok' : ' no') : '');
+    return '<div class="' + cls + '"><label class="to-sa-l" for="toSa"' + kAttrs('to.sa.l') + '>' + kText('to.sa.l') + '</label>' +
+      '<textarea class="to-sai" id="toSa" rows="2" maxlength="300" autocomplete="off" autocapitalize="none" autocorrect="off" spellcheck="false" enterkeyhint="' + (S && S.mode === 'latihan' ? 'done' : 'next') + '"' +
+      kAttr('kp', 'to.sa.ph') + (chk ? ' readonly' : '') + '>' + esc(saText(a)) + '</textarea></div>';
+  }
+  // the feedback on a typed answer: the key, and when the text does not match it, a button to count
+  // the answer right after all (rid: the question's id, on the review screen)
+  function fbSa(q, a, blank, bid, rid){
+    var auto = saAuto(q, a), self = !auto && !!a && a.s === 1, ok = auto || self;
+    var v = kHTML(blank ? 'to.fb.blank' : auto ? 'to.fb.ok' : self ? 'to.fb.self' : 'to.fb.sano', null, 'b') + ' ';
+    var own = !blank && !auto ? '<p class="to-sa-own">' + kHTML(self ? 'to.sa.selfd' : 'to.sa.ask') + ' <button class="to-btn line to-sa-b" type="button" data-act="' + (rid ? 'rself' : 'self') + '"' +
+      (rid ? ' data-id="' + esc(rid) + '"' : '') + '>' + kHTML(self ? 'to.sa.undo' : 'to.sa.self') + '</button></p>' : '';
+    return '<div class="to-fb ' + (ok ? 'ok' : 'no') + '"><p class="to-vd">' + v + kHTML(q.a.length > 1 ? 'to.fb.ans2' : 'to.fb.ans', { a: q.a.join(' / ') }) + '</p>' + own +
+      (q.e ? '<p class="to-ex">' + esc(q.e) + '</p>' : '') + figsHtml(bid, q, 'ei') + (q.n ? '<p class="to-nt">' + kHTML('to.fb.note') + esc(q.n) + '</p>' : '') + '</div>';
+  }
+  function fbHtml(q, order, chosen, blank, bid, rid){
+    if(q.t === 'sa') return fbSa(q, chosen, blank, bid, rid);
     var ok = isOk(q, chosen), keys = q.a.map(function(o){ var d = order.indexOf(o); return (q.t === 'tf' ? '' : keyOf(q, d) + '. ') + q.o[o]; });
     var v = kHTML(blank ? 'to.fb.blank' : (ok ? 'to.fb.ok' : 'to.fb.no'), null, 'b') + ' ';
     return '<div class="to-fb ' + (ok ? 'ok' : 'no') + '"><p class="to-vd">' + v + kHTML(q.a.length > 1 ? 'to.fb.ans2' : 'to.fb.ans', { a: keys.join(' / ') }) + '</p>' +
@@ -1261,18 +1290,18 @@ function makeTry(KIND){
     var b = B(S.blok), i = S.cur, id = S.ids[i], q = b.by[id], order = qOrder(id), a = S.ans[id];
     var chk = S.mode === 'latihan' && !!S.chk[id], st = stars(S.blok), starred = st.indexOf(id) >= 0;
     var qEl = $('#toQ', panel);
-    qEl.innerHTML = '<div class="to-qm"><span class="to-tag">' + esc(b.topics[q.tp]) + '</span>' + tagsHtml(b, q) + kHTML(q.t === 'tf' ? 'to.qt.tf' : 'to.qt.mc', null, 'span', 'to-tag dim') +
+    qEl.innerHTML = '<div class="to-qm"><span class="to-tag">' + esc(b.topics[q.tp]) + '</span>' + tagsHtml(b, q) + kHTML(q.t === 'tf' ? 'to.qt.tf' : q.t === 'sa' ? 'to.qt.sa' : 'to.qt.mc', null, 'span', 'to-tag dim') +
       '<span class="to-qa"><button class="to-ib sm' + (S.flag[id] ? ' on-f' : '') + '" type="button" data-act="flag" aria-pressed="' + (!!S.flag[id]) + '"' + kAttr('kt', 'to.run.flag.t') + '><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 21V4M6 4h10l-2 4 2 4H6"/></svg>' + kHTML('to.run.flag') + '</button>' +
       '<button class="to-ib sm' + (starred ? ' on-s' : '') + '" type="button" data-act="star" aria-pressed="' + starred + '"' + kAttr('kt', 'to.run.star.t') + '><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3.5l2.6 5.3 5.9.9-4.3 4.1 1 5.8L12 16.9l-5.2 2.7 1-5.8-4.3-4.1 5.9-.9z"/></svg>' + kHTML('to.run.star') + '</button></span></div>' +
       kHTML('to.run.no', { n: i + 1, total: S.ids.length }, 'p', 'lbl to-no') +
       '<h3 class="to-qt" id="toQt" tabindex="-1" data-focus>' + esc(q.q) + '</h3>' + figsHtml(S.blok, q, 'img') +
-      optsHtml(q, order, a, chk) +
+      (q.t === 'sa' ? saHtml(q, a, chk) : optsHtml(q, order, a, chk)) +
       '<div class="to-fbw" id="toFb">' + (chk ? fbHtml(q, order, a, false, S.blok) : '') + '</div>' +
       '<div class="to-pause" id="toPause" hidden>' + kHTML('to.pause.k', null, 'p', 'lbl') + kHTML('to.pause.t', null, 'p', 'to-pz-t') + '<button class="to-btn pri" type="button" data-act="unpause">' + kHTML('to.pause.go') + '</button></div>';
     $('#toCnt', panel).innerHTML = (i + 1) + '<small>/' + S.ids.length + '</small>';
     progSet(Object.keys(S.ans).length / S.ids.length);
     renderFoot(); navSync(); hydrate(qEl);
-    var kh = $('#toKeys', panel); if(kh) kh.innerHTML = (q.t === 'tf' ? '<kbd>B</kbd> / <kbd>S</kbd> ' : '<kbd>A</kbd>-<kbd>' + MCK[Math.min(order.length, MCK.length) - 1] + '</kbd> ') + kHTML('to.keys.pick') + ' · <kbd>Enter</kbd> ' + kHTML(S.mode === 'latihan' ? 'to.keys.chk' : 'to.keys.next') + ' · <kbd>←</kbd> <kbd>→</kbd> ' + kHTML('to.keys.move') + ' · <kbd>F</kbd> ' + kHTML('to.keys.flag');
+    var kh = $('#toKeys', panel); if(kh) kh.innerHTML = (q.t === 'tf' ? '<kbd>B</kbd> / <kbd>S</kbd> ' + kHTML('to.keys.pick') : q.t === 'sa' ? kHTML('to.keys.type') : '<kbd>A</kbd>-<kbd>' + MCK[Math.min(order.length, MCK.length) - 1] + '</kbd> ' + kHTML('to.keys.pick')) + ' · <kbd>Enter</kbd> ' + kHTML(S.mode === 'latihan' ? 'to.keys.chk' : 'to.keys.next') + ' · <kbd>←</kbd> <kbd>→</kbd> ' + kHTML('to.keys.move') + ' · <kbd>F</kbd> ' + kHTML('to.keys.flag');
     if(focus){ try{ $('#toQt', panel).focus({ preventScroll: true }); }catch(e){} }
     curReset(); bindCursor(panel);
   }
@@ -1347,18 +1376,84 @@ function makeTry(KIND){
     progSet(Object.keys(S.ans).length / S.ids.length);
     renderFoot(); navSync();
   }
+  // typing in the answer box: the text is the answer, an empty box is no answer
+  function saInput(e){
+    var id = S && S.ids[S.cur];
+    if(!id || (S.mode === 'latihan' && S.chk[id])) return;
+    var v = String(e.target.value || '').slice(0, 300);
+    if(v.trim()) S.ans[id] = { v: v }; else delete S.ans[id];
+    saveSess();
+    progSet(Object.keys(S.ans).length / S.ids.length);
+    var cb = $('#toFoot [data-act="check"]', panel); if(cb) cb.disabled = S.ans[id] == null;
+    navSync();
+  }
+  // Enter in the box checks (Latihan) or goes on, as Enter does elsewhere; Shift+Enter is a new line.
+  // Escape leaves the box for the question text (where the arrow keys and F work again) instead of
+  // leaving the run, and does nothing while the keyboard is still composing a word.
+  function saKey(e){
+    if(e.key === 'Escape'){
+      e.stopPropagation();
+      if(!e.isComposing){ e.preventDefault(); var qt = $('#toQt', panel); if(qt) qt.focus({ preventScroll: true }); }
+      return;
+    }
+    if(e.key !== 'Enter' || e.shiftKey || e.isComposing || e.keyCode === 229 || e.ctrlKey || e.metaKey || e.altKey || !S || paused) return;
+    e.preventDefault();
+    var id = S.ids[S.cur];
+    if(S.mode === 'latihan' && !S.chk[id]){ if(S.ans[id] != null) check(); }
+    else if(S.cur < S.ids.length - 1) nav(1); else askFinish();
+  }
+  // Counting a typed answer right (or taking that back) also corrects its count in the stats, as long
+  // as the stats still hold this attempt: ts is when it was counted (checked, or the run finished).
+  function selfStat(st, id, on, ts){
+    var r = st[id]; if(!r || r[3] !== ts) return false;
+    if(on && !r[2]){ r[1] = Math.max(0, r[1] - 1); r[2] = 1; return true; }
+    if(!on && r[2]){ r[1]++; r[2] = 0; return true; }
+    return false;
+  }
+  function selfMark(){
+    var b = B(S.blok), id = S.ids[S.cur], q = b.by[id], a = S.ans[id];
+    if(!q || q.t !== 'sa' || S.mode !== 'latihan' || !S.chk[id] || !a || saAuto(q, a)) return;
+    var on = a.s !== 1; if(on) a.s = 1; else delete a.s;
+    saveSess();
+    var st = stats(S.blok); if(selfStat(st, id, on, S.chk[id])) put('stat.' + S.blok, st);
+    $('.to-sa', panel).outerHTML = saHtml(q, a, true);
+    $('#toFb', panel).innerHTML = fbHtml(q, [], a, false, S.blok); hydrate($('#toFb', panel));
+    $('#toLive', panel).textContent = tx(on ? 'to.fb.self' : 'to.fb.sano');
+    navSync(); bindCursor(panel);
+    var bt = $('#toFb [data-act="self"]', panel); if(bt) bt.focus({ preventScroll: true });
+  }
+  // the same on the review screen, for any run in the history: the run's numbers change with it
+  function rselfMark(id){
+    var res = findRes(), b = res && B(res.blok), q = b && b.by[id], a = res && res.ans && res.ans[id];
+    if(!q || q.t !== 'sa' || !a || saAuto(q, a)) return;
+    var was = isOk(q, a), on = a.s !== 1; if(on) a.s = 1; else delete a.s;
+    if(isOk(q, a) !== was){
+      var d = on ? 1 : -1, t = res.byTp && res.byTp[q.tp];
+      res.benar += d; res.salah -= d; if(t) t[0] += d;
+      res.score = Math.round(res.benar / res.n * 1000) / 10;
+    }
+    var h = hist(res.blok); for(var k = 0; k < h.length; k++){ if(h[k].id === res.id){ h[k] = res; put('hist.' + res.blok, h); break; } }
+    if(LAST && LAST.id === res.id) LAST = res;
+    var st = stats(res.blok); if(selfStat(st, id, on, res.chk && res.chk[id] > 1 ? res.chk[id] : res.at)) put('stat.' + res.blok, st);
+    keepScroll(function(){ vReview(res); });
+    // the card may have left a filtered list (Salah, Benar): then focus goes to the heading
+    var bt = root.querySelector('[data-act="rself"][data-id="' + id + '"]') || root.querySelector('.to-h'); if(bt) bt.focus({ preventScroll: true });
+    say(tx(on ? 'to.fb.self' : 'to.fb.sano'));
+  }
   function check(){
     var b = B(S.blok), id = S.ids[S.cur], q = b.by[id], a = S.ans[id];
     if(S.mode !== 'latihan' || a == null || S.chk[id]) return;
-    S.chk[id] = 1; saveSess();
-    var st = stats(S.blok), ok = isOk(q, a); bump(st, id, ok, Date.now()); put('stat.' + S.blok, st);
+    // the time it was checked: a typed answer counted right later corrects the stats of this attempt
+    var now = Date.now(); S.chk[id] = now; saveSess();
+    var st = stats(S.blok), ok = isOk(q, a); bump(st, id, ok, now); put('stat.' + S.blok, st);
     var order = qOrder(id), focusWas = document.activeElement;
-    $('.to-opts', panel).outerHTML = optsHtml(q, order, a, true);
+    if(q.t === 'sa') $('.to-sa', panel).outerHTML = saHtml(q, a, true);
+    else $('.to-opts', panel).outerHTML = optsHtml(q, order, a, true);
     $('#toFb', panel).innerHTML = fbHtml(q, order, a, false, S.blok); hydrate($('#toFb', panel));
-    $('#toLive', panel).textContent = tx(ok ? 'to.fb.ok' : 'to.fb.no') + ' ' + tx('to.fb.ans', { a: q.a.map(function(o){ return q.o[o]; }).join(' / ') }) + '.' + (q.e ? ' ' + q.e : '');
+    $('#toLive', panel).textContent = tx(ok ? 'to.fb.ok' : q.t === 'sa' ? 'to.fb.sano' : 'to.fb.no') + ' ' + tx('to.fb.ans', { a: q.t === 'sa' ? q.a.join(' / ') : q.a.map(function(o){ return q.o[o]; }).join(' / ') }) + '.' + (q.e ? ' ' + q.e : '');
     renderFoot(); navSync();
     if(soundOn && AC){ try{ var t = AC.currentTime + 0.01; if(ok){ tone(t, 660, 990, 0.12, 0.05, 'sine'); tone(t + 0.1, 990, 990, 0.1, 0.035, 'sine'); } else tone(t, 220, 150, 0.22, 0.06, 'triangle'); }catch(e){} }
-    var nb = $('#toFoot .pri', panel); if(nb && focusWas && focusWas.closest && focusWas.closest('#toFoot, .to-opts')) nb.focus({ preventScroll: true });
+    var nb = $('#toFoot .pri', panel); if(nb && focusWas && focusWas.closest && focusWas.closest('#toFoot, .to-opts, .to-sa')) nb.focus({ preventScroll: true });
     var fb = $('#toFb', panel), r = fb.getBoundingClientRect(), foot = $('#toFoot', panel).getBoundingClientRect();
     if(r.bottom > foot.top - 8){ var d = Math.min(r.bottom - foot.top + 24, r.top - 120); if(d > 0) panel.scrollBy({ top: d, behavior: RM ? 'auto' : 'smooth' }); }
   }
@@ -1395,7 +1490,7 @@ function makeTry(KIND){
     put('stat.' + S.blok, st);
     var res = { id: S.id, blok: S.blok, mode: S.mode, at: now, n: S.ids.length, benar: r.benar, salah: r.salah, kosong: r.kosong,
       score: Math.round(r.benar / S.ids.length * 1000) / 10, used: Math.round(S.used), limit: S.limit, byTp: r.byTp,
-      ids: S.ids, perm: S.perm, ans: S.ans, flag: S.flag, label: S.label, auto: !!auto };
+      ids: S.ids, perm: S.perm, ans: S.ans, flag: S.flag, chk: S.chk, label: S.label, auto: !!auto };
     var h = hist(S.blok); h.unshift(res); if(h.length > 25) h.length = 25; put('hist.' + S.blok, h);
     del('sess.' + S.blok); S = null; LAST = res;
     if(auto) toast(tx('to.toast.auto'));
@@ -1458,10 +1553,14 @@ function makeTry(KIND){
       '<h2 class="to-h" tabindex="-1" data-focus>' + kHTML('to.rev') + '</h2>' + kHTML('to.rev.s', { score: fmtScore(res.score), ok: res.benar, n: res.n }, 'p', 'to-rv-s') + '</div>' +
       '<div class="to-chips to-rf">' + fl + '</div>' +
       (show2.length ? '<ol class="to-rl">' + show2.map(function(x){
-        var order = (res.perm && res.perm[x.id]) || x.q.o.map(function(o, k){ return k; });
+        var order = (res.perm && res.perm[x.id]) || (x.q.o || []).map(function(o, k){ return k; });
+        // a typed answer shows what was typed, and its feedback can count it right
+        var typed = x.q.t === 'sa' ? saText(x.a).trim() : '';
+        var body = x.q.t === 'sa' ? (typed ? kHTML('to.rev.typed', { a: typed }, 'p', 'to-sa-v ' + (x.ok ? 'ok' : 'no')) : '') + fbHtml(x.q, order, x.a, x.blank, res.blok, x.id)
+          : optsHtml(x.q, order, x.a, true, 'none') + fbHtml(x.q, order, x.a, x.blank, res.blok);
         return '<li class="to-rc ' + (x.blank ? 'blank' : x.ok ? 'ok' : 'no') + '"><div class="to-qm"><span class="to-tag">' + (x.k + 1) + '</span><span class="to-tag">' + esc(b.topics[x.q.tp]) + '</span>' + tagsHtml(b, x.q) +
           (x.fl ? kHTML('to.c.flag', null, 'span', 'to-tag amb') : '') + '<span class="to-qa"><button class="to-ib sm' + (sr[x.id] ? ' on-s' : '') + '" type="button" data-act="rstar" data-id="' + x.id + '" aria-pressed="' + !!sr[x.id] + '" aria-label="Simpan soal ' + (x.k + 1) + '"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3.5l2.6 5.3 5.9.9-4.3 4.1 1 5.8L12 16.9l-5.2 2.7 1-5.8-4.3-4.1 5.9-.9z"/></svg></button></span></div>' +
-          '<p class="to-qt sm">' + esc(x.q.q) + '</p>' + figsHtml(res.blok, x.q, 'img') + optsHtml(x.q, order, x.a, true, 'none') + fbHtml(x.q, order, x.a, x.blank, res.blok) + '</li>';
+          '<p class="to-qt sm">' + esc(x.q.q) + '</p>' + figsHtml(res.blok, x.q, 'img') + body + '</li>';
       }).join('') + '</ol>' : kHTML('to.rev.empty', null, 'p', 'to-empty')) +
       '<div class="to-acts"><button class="to-btn ghost" type="button" data-act="rback"><span>← ' + kHTML('ch.back') + '</span></button></div>' +
     '</div>';
@@ -1859,6 +1958,8 @@ function makeTry(KIND){
       case 'picre': var pim = $('img', t.closest('.to-fig')); if(pim){ pim.removeAttribute('src'); loadPic(pim); } break;
       case 'pick': pick(+t.getAttribute('data-o')); break;
       case 'check': check(); break;
+      case 'self': selfMark(); break;
+      case 'rself': rselfMark(t.getAttribute('data-id')); break;
       case 'prev': nav(-1); break;
       case 'flag': flag(); break;
       case 'star': starToggle(S.blok, S.ids[S.cur], t); break;
@@ -1900,7 +2001,7 @@ function makeTry(KIND){
     if(paused){ if(e.key === 'Enter' || e.key === ' '){ e.preventDefault(); setPause(false); } return; }
     var q = B(S.blok).by[S.ids[S.cur]], order = qOrder(S.ids[S.cur]), k = e.key, d = -1;
     if(q.t === 'tf'){ if(k === '1' || k === 'b' || k === 'B') d = 0; else if(k === '2' || k === 's' || k === 'S') d = 1; }
-    else { var n = '12345'.indexOf(k); if(n < 0) n = 'abcde'.indexOf(k.toLowerCase()); if(k.length === 1 && n >= 0 && n < order.length) d = n; }
+    else if(q.t !== 'sa'){ var n = '12345'.indexOf(k); if(n < 0) n = 'abcde'.indexOf(k.toLowerCase()); if(k.length === 1 && n >= 0 && n < order.length) d = n; }
     if(d >= 0 && !navIsOpen){ e.preventDefault(); pick(order[d]); var bt = $$('.to-o', panel)[d]; if(bt) bt.focus({ preventScroll: true }); return; }
     if(k === 'ArrowRight' || k === 'j'){ if(!navIsOpen){ e.preventDefault(); nav(1); } return; }
     if(k === 'ArrowLeft' || k === 'k'){ if(!navIsOpen){ e.preventDefault(); nav(-1); } return; }
