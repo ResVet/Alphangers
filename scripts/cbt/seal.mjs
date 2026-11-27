@@ -8,7 +8,9 @@
 //                      gives the bank a Her Dini mode). A question is "mc" or "tf" (options
 //                      in "o", the right ones by index in "a") or "sa", answered by typing:
 //                      no "o", and "a" lists the keys as text (src/lib/answer.js compares
-//                      them). Other files there (working files, notes) are skipped.
+//                      them). An "mc" question with "ma": 1 asks for every right option: the
+//                      student picks all the options in "a" (two or more), and only those.
+//                      Other files there (working files, notes) are skipped.
 //   img/...            those pictures
 //   secret.txt         the master secret, unless CBT_SECRET is set
 // It checks everything first and writes nothing if anything is wrong. Then it writes:
@@ -197,7 +199,7 @@ function checkBank(file) {
   b.q.forEach((q, i) => {
     const w = `${where} q[${i}]${typeof q?.id === 'string' ? ` (${q.id})` : ''}`;
     if (!isObj(q)) return bad(w, 'not an object');
-    onlyKeys(q, ['id', 't', 'tp', 'tg', 'q', 'o', 'a', 'e', 'n', 'ns', 'img', 'ei', 'src'], w);
+    onlyKeys(q, ['id', 't', 'tp', 'tg', 'q', 'o', 'a', 'ma', 'e', 'n', 'ns', 'img', 'ei', 'src'], w);
     if (typeof q.id !== 'string' || !/^[A-Za-z0-9_-]{1,40}$/.test(q.id)) bad(w, 'id must be letters, digits, _ or -');
     else if (ids.has(q.id)) bad(w, 'an id already used in this bank');
     ids.add(q.id);
@@ -211,6 +213,7 @@ function checkBank(file) {
       // typed: the keys are text, and each must say something once compared (answerForm)
       if (q.o !== undefined) bad(w, 'an sa question has no options (o)');
       if (q.ns !== undefined) bad(w, 'an sa question has no options to keep in order (ns)');
+      if (q.ma !== undefined) bad(w, 'an sa question has no options to pick (ma)');
       if (!Array.isArray(q.a) || !q.a.length || q.a.length > 10) bad(w, 'a must list 1 to 10 keys as text');
       else {
         q.a.forEach((k, j) => {
@@ -231,6 +234,12 @@ function checkBank(file) {
         bad(w, 'a must list the right options by index, each once');
       }
       if (q.ns !== undefined && q.ns !== 1 && q.ns !== true) bad(w, 'ns must be 1');
+      // ma: the student has to pick every option in a, and only those
+      if (q.ma !== undefined) {
+        if (q.ma !== 1 && q.ma !== true) bad(w, 'ma must be 1');
+        else if (q.t !== 'mc') bad(w, 'only an mc question can ask for every right option (ma)');
+        else if (Array.isArray(q.a) && q.a.length < 2) bad(w, 'an ma question has two or more right options in a');
+      }
     }
     text(q.e, w, 'e', { max: 10000, optional: true });
     text(q.n, w, 'n', { max: 5000, optional: true });

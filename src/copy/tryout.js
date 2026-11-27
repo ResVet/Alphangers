@@ -107,6 +107,8 @@ registerCopy('to', GROUP_LABELS.to, {
   'to.run.star': 'Simpan',
   'to.run.star.t': 'Simpan ke daftar ditandai',
   'to.run.no': 'Soal {n} dari {total}',
+  // a question that asks for every right option (ma in the bank): above its options
+  'to.ma.hint': 'Pilih semua jawaban yang benar.',
   'to.run.check': 'Cek jawaban',
   'to.run.finish': 'Selesai',
   'to.run.next': 'Soal berikutnya',
@@ -368,6 +370,7 @@ registerLabels({
   'to.run.star': 'Layar soal: tombol simpan soal',
   'to.run.star.t': 'Tombol simpan soal: keterangan saat disorot',
   'to.run.no': 'Layar soal: nomor soal',
+  'to.ma.hint': 'Soal pilih semua: petunjuk di atas pilihan',
   'to.run.check': 'Layar soal: tombol cek jawaban',
   'to.run.finish': 'Layar soal: tombol selesai (soal terakhir)',
   'to.run.next': 'Layar soal: tombol soal berikutnya',

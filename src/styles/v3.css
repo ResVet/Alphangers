@@ -660,6 +660,12 @@ html.fine .to-o:not([aria-disabled="true"]):hover{border-color:rgba(134,242,94,.
 .to-mk{flex:none;font-size:17px;line-height:30px;font-weight:700}
 .to-o.ok .to-mk{color:var(--grx)}
 .to-o.no .to-mk{color:var(--red)}
+/* a question that asks for every right option: a line saying so, square letter boxes like
+   checkboxes, and once checked, a right option that was left out drawn dashed */
+.to-ma{margin:0 0 12px;font-size:14px;font-weight:600;line-height:1.45;color:var(--amb)}
+.to-opts.ma .to-k{border-radius:8px}
+.to-o.ok.miss{border-style:dashed;background:rgba(63,174,42,.06)}
+.to-o.ok.miss .to-k{background:none;color:var(--grx)}
 /* a typed-answer question: the box, then the feedback's "count it right" line */
 .to-sa{display:grid;gap:8px}
 .to-sa-l{font-family:var(--mono);font-size:10px;letter-spacing:.2em;text-transform:uppercase;color:var(--mut)}

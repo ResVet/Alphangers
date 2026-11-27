@@ -103,8 +103,9 @@ for (const [w, h] of [[390, 844], [1280, 800]]) {
     const s = await open({ w, h });
     // home: counts from the manifest, the new marker and the credit, nothing from Google yet
     const cards = await s.ev(() => [...document.querySelectorAll('.to-blk.on')].map((b) => ({ id: b.dataset.b, m: b.querySelector('.to-bm').textContent, nb: !!b.querySelector('.to-nb'), by: b.querySelector('.to-bby')?.textContent || '' })));
-    assert.deepEqual(cards.map((c) => c.id), ['b2', 'b3']);
+    assert.deepEqual(cards.map((c) => c.id), ['b2', 'b3', 'b4']);
     assert.match(cards[0].m, /^6 soal · 3 topik/);
+    assert.match(cards[2].m, /^3 soal · 2 topik/);
     assert.deepEqual([cards[1].nb, cards[1].by], [true, 'Disusun Batu Alphangers']);
     assert.match(await s.ev(() => document.getElementById('toAcct').textContent), /Khusus anak Alpha/);
     assert.equal(await s.ev(() => document.querySelector('.to-blk.off .to-bs').textContent), 'Soalnya belum masuk');
@@ -587,6 +588,166 @@ for (const [w, h] of [[390, 844], [1280, 800]]) {
     await s.page.goBack();
     await s.page.waitForSelector('#toScore');
     assert.equal(await s.ev(() => document.getElementById('toScore').textContent), '66,7', 'the result has the new score');
+    await done(s);
+  });
+}
+
+for (const [w, h] of [[390, 844], [1280, 800]]) {
+  test(`questions that ask for every right option: ticks, part of the answer, Simulasi and the review (${w}x${h})`, async () => {
+    const s = await open({ cbt: 'ok', w, h, ready: '.to-blk.on[data-b="b4"]' });
+    await s.page.click('.to-blk.on[data-b="b4"]');
+    await gate(s, 'masuk');
+    await s.page.click('[data-act="gin"]');
+    await s.page.waitForSelector('.to-start', { timeout: 10000 });
+    const verdict = () => s.ev(() => document.querySelector('.to-fb .to-vd').textContent);
+    // each option: its role, whether it is ticked, and how it is drawn
+    const opts = () => s.ev(() => [...document.querySelectorAll('#toQ .to-o')].map((b) => [b.getAttribute('role'), b.getAttribute('aria-checked'), b.className.replace(/^to-o ?/, '')]));
+    const ticked = async () => (await opts()).map((o) => o[1] === 'true');
+    const saved = (id) => s.ev((k) => JSON.parse(localStorage.getItem('alpha.to.v1.sess.b4')).ans[k], id);
+    const stat = (id) => s.ev((k) => JSON.parse(localStorage.getItem('alpha.to.v1.stat.b4') || '{}')[k], id);
+    const checkOff = () => s.ev(() => document.querySelector('#toFoot [data-act="check"]').disabled);
+
+    // in a fixed order, options too
+    await s.page.click('[data-act="sq"]');
+    await s.page.click('[data-act="so"]');
+    await s.page.click('.to-start');
+    await s.page.waitForSelector('#toQ .to-ma');
+
+    // checkboxes, with a line above them that says to pick every right one
+    assert.equal(await s.ev(() => document.querySelector('#toQ .to-ma').textContent), 'Pilih semua jawaban yang benar.');
+    assert.equal(await s.ev(() => document.querySelector('#toQ .to-ma').dataset.k), 'to.ma.hint');
+    assert.deepEqual(await s.ev(() => { const g = document.querySelector('#toQ .to-opts'); return [g.getAttribute('role'), g.getAttribute('aria-label'), g.classList.contains('ma')]; }),
+      ['group', 'Pilihan jawaban, pilih semua yang benar', true]);
+    assert.deepEqual(await opts(), Array(5).fill(['checkbox', 'false', '']));
+    assert.deepEqual(await s.ev(() => [...document.querySelectorAll('#toQ .to-o')].map((b) => b.tabIndex)), [0, 0, 0, 0, 0], 'every box in the tab order');
+    assert.equal(await checkOff(), true);
+    // a tap ticks, another takes it out again; with nothing ticked the question has no answer
+    await s.page.click('.to-o[data-o="0"]');
+    await s.page.click('.to-o[data-o="2"]');
+    assert.deepEqual(await ticked(), [true, false, true, false, false]);
+    assert.deepEqual(await saved('h01'), [0, 2]);
+    assert.equal(await checkOff(), false);
+    await s.page.click('.to-o[data-o="2"]');
+    await s.page.click('.to-o[data-o="0"]');
+    assert.deepEqual(await ticked(), [false, false, false, false, false]);
+    assert.equal(await saved('h01'), undefined, 'nothing ticked is no answer');
+    assert.equal(await checkOff(), true);
+    assert.equal(await s.ev(() => document.querySelector('#toGrid .to-gi').classList.contains('a')), false);
+    // one tick is kept when the run is left and taken up again
+    await s.page.click('.to-o[data-o="0"]');
+    await s.page.click('#toBack');
+    await s.page.waitForSelector('.to-resume');
+    assert.match(await s.ev(() => document.querySelector('.to-rs-m').textContent), /^1 dijawab/);
+    await s.page.click('[data-act="resume"]');
+    await s.page.waitForSelector('#toQ .to-ma');
+    assert.deepEqual(await ticked(), [true, false, false, false, false]);
+    assert.ok(await fits(s), 'checkboxes fit');
+    await axe(s, 'question with checkboxes');
+    await shot(s, 'ma-run');
+
+    // one of the two right options is not the answer; the one left out is drawn dashed
+    await s.page.click('#toFoot [data-act="check"]');
+    await s.page.waitForSelector('.to-fb.no');
+    assert.equal(await verdict(), 'Belum tepat. Jawaban: A. Vitamin A · D. Vitamin D');
+    assert.deepEqual((await opts()).map((o) => o[2]), ['pick ok', 'dim', 'dim', 'ok miss', 'dim']);
+    assert.match(await s.ev(() => document.getElementById('toLive').textContent), /^Belum tepat\. Jawaban: Vitamin A, Vitamin D\./);
+    assert.match(await s.ev(() => document.querySelector('.to-fb .to-nt').textContent), /Ada dua jawaban benar di sini\./);
+    assert.deepEqual((await stat('h01')).slice(0, 3), [1, 1, 0]);
+    // checked, the boxes no longer change (marked aria-disabled, so the tap has to be forced)
+    await s.page.click('.to-o[data-o="3"]', { force: true });
+    assert.deepEqual(await ticked(), [true, false, false, false, false]);
+    await axe(s, 'checked, part of the answer');
+    await shot(s, 'ma-part');
+
+    // three right options; the letter keys tick and untick, the arrows only move, Space ticks
+    await s.page.click('#toFoot [data-act="next"]');
+    await s.page.waitForFunction(() => /habis dibagi 3/.test(document.getElementById('toQt').textContent));
+    if (w >= 900) {
+      assert.match(await s.ev(() => document.getElementById('toKeys').textContent), /^A-E pilih · Enter cek/);
+      for (const k of ['a', 'c', 'b', 'e']) await s.page.keyboard.press(k);
+      assert.deepEqual(await ticked(), [true, true, true, false, true]);
+      // a letter held down ticks once: the repeats of a held key change nothing
+      for (let r = 0; r < 4; r++) await s.page.keyboard.down('d');
+      await s.page.keyboard.up('d');
+      assert.deepEqual(await ticked(), [true, true, true, true, true], 'a held key ticks once');
+      await s.page.keyboard.press('d');
+      assert.deepEqual(await ticked(), [true, true, true, false, true]);
+      await s.page.keyboard.press('b');
+      assert.deepEqual(await ticked(), [true, false, true, false, true]);
+      assert.equal(await s.ev(() => document.activeElement.getAttribute('data-o')), '1');
+      await s.page.keyboard.press('ArrowDown');
+      assert.equal(await s.ev(() => document.activeElement.getAttribute('data-o')), '2');
+      assert.deepEqual(await ticked(), [true, false, true, false, true], 'the arrows tick nothing');
+      await s.page.keyboard.press('Space');
+      assert.deepEqual(await ticked(), [true, false, false, false, true]);
+      await s.page.keyboard.press('Space');
+      await s.page.keyboard.press('Enter');
+    } else {
+      for (const o of [0, 2, 4]) await s.page.click(`.to-o[data-o="${o}"]`);
+      await s.page.click('#toFoot [data-act="check"]');
+    }
+    await s.page.waitForSelector('.to-fb.ok');
+    assert.equal(await verdict(), 'Benar. Jawaban: A. 9 · C. 12 · E. 21');
+    assert.deepEqual((await opts()).map((o) => o[2]), ['pick ok', 'dim', 'pick ok', 'dim', 'pick ok']);
+
+    // an ordinary question after them: radio buttons under a JPEG picture, no line above them
+    await s.page.click('#toFoot [data-act="next"]');
+    await picOk(s, '#toQ .to-fig img');
+    assert.equal(await s.ev(() => document.querySelector('#toQ .to-fig img').naturalWidth), 640);
+    assert.equal(await s.ev(() => !!document.querySelector('#toQ .to-ma')), false);
+    assert.deepEqual(await s.ev(() => [document.querySelector('#toQ .to-opts').getAttribute('role'), ...[...document.querySelectorAll('#toQ .to-o')].map((b) => b.getAttribute('role'))]), ['radiogroup', 'radio', 'radio', 'radio', 'radio']);
+    await s.page.click('.to-o[data-o="2"]');
+    await s.page.click('#toFoot [data-act="check"]');
+    await s.page.waitForSelector('.to-fb.ok');
+    await s.page.click('#toFoot [data-act="finish"]');
+    await s.page.click('.to-dlg [data-dok]');
+    await s.page.waitForSelector('#toScore');
+    assert.equal(await s.ev(() => document.getElementById('toScore').textContent), '66,7');
+
+    // Simulasi: both right options on the first, two of three on the second, the last left empty
+    await s.page.click('[data-act="again"]');
+    await s.page.waitForSelector('.to-start');
+    await s.page.click('[data-act="mode"][data-v="ujian"]');
+    await s.page.click('.to-start');
+    await s.page.waitForSelector('#toQ .to-ma');
+    await s.page.click('.to-o[data-o="3"]');
+    await s.page.click('.to-o[data-o="0"]');
+    await s.page.click('#toFoot [data-act="next"]');
+    await s.page.waitForFunction(() => document.getElementById('toCnt').textContent === '2/3');
+    await s.page.click('.to-o[data-o="0"]');
+    await s.page.click('.to-o[data-o="2"]');
+    assert.equal(await s.ev(() => !!document.querySelector('.to-fb')), false, 'no feedback in Simulasi');
+    await s.page.click('#toFoot [data-act="next"]');
+    await s.page.waitForFunction(() => document.getElementById('toCnt').textContent === '3/3');
+    await s.page.click('#toFoot [data-act="finish"]');
+    await s.page.click('.to-dlg [data-dok]');
+    await s.page.waitForSelector('#toScore');
+    assert.equal(await s.ev(() => document.getElementById('toScore').textContent), '33,3');
+    const run = await s.ev(() => JSON.parse(localStorage.getItem('alpha.to.v1.hist.b4'))[0]);
+    assert.deepEqual([run.mode, run.benar, run.salah, run.kosong, run.ans.h01, run.ans.h02], ['ujian', 1, 1, 1, [3, 0], [0, 2]]);
+    assert.deepEqual((await stat('h01')).slice(0, 3), [2, 1, 1]);
+
+    // the review: the line again, what was ticked, the right option left out drawn dashed
+    await s.page.click('[data-act="review"]');
+    await s.page.waitForSelector('.to-review');
+    await s.page.click('[data-act="rf"][data-v="all"]');
+    const cards = await s.ev(() => [...document.querySelectorAll('.to-rc')].map((li) => [
+      li.className.replace('to-rc ', ''), !!li.querySelector('.to-ma'), [...li.querySelectorAll('.to-o')].map((o) => o.className.replace(/^to-o ?/, '')),
+      li.querySelector('.to-vd').textContent]));
+    assert.deepEqual(cards, [
+      ['ok', true, ['ok', 'dim', 'dim', 'ok', 'dim'], 'Benar. Jawaban: A. Vitamin A · D. Vitamin D'],
+      ['no', true, ['ok', 'dim', 'ok', 'dim', 'ok miss'], 'Belum tepat. Jawaban: A. 9 · C. 12 · E. 21'],
+      ['blank', false, ['dim', 'dim', 'ok', 'dim'], 'Kosong. Jawaban: C. Aparatus Golgi'],
+    ]);
+    assert.deepEqual(await s.ev(() => [...document.querySelectorAll('.to-rc')[1].querySelectorAll('.to-o .sr')].map((e) => e.textContent)),
+      [' (jawabanmu, benar)', '', ' (jawabanmu, benar)', '', ' (jawaban benar)']);
+    assert.ok(await fits(s), 'review fits');
+    await axe(s, 'review of questions with checkboxes');
+    await shot(s, 'ma-review');
+    // the ones to practise again are the two not answered right
+    await s.page.goBack();
+    await s.page.waitForSelector('#toScore');
+    assert.match(await s.ev(() => document.querySelector('[data-act="redo"]').textContent), /2 soal yang salah/);
     await done(s);
   });
 }

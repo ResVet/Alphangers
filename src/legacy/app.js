@@ -808,8 +808,12 @@ function makeTry(KIND){
   function shuffle(a){ for(var i = a.length - 1; i > 0; i--){ var j = Math.floor(Math.random() * (i + 1)), t = a[i]; a[i] = a[j]; a[j] = t; } return a; }
   // An answer is the index of the option picked, or for a typed-answer question ("sa") { v: the text
   // typed, s: 1 once the student counted it right themselves }. A typed text that matches a key is
-  // right on its own (src/lib/answer.js).
-  function isOk(q, a){ return a != null && (q.t === 'sa' ? (a.s === 1 || saAuto(q, a)) : q.a.indexOf(a) >= 0); }
+  // right on its own (src/lib/answer.js). A question that asks for every right option (ma) takes
+  // the list of options picked, and it is right only when that is exactly the options in a.
+  function isOk(q, a){ return a != null && (q.t === 'sa' ? (a.s === 1 || saAuto(q, a)) : q.ma ? maOk(q, a) : q.a.indexOf(a) >= 0); }
+  function maOk(q, a){ return Array.isArray(a) && a.length === q.a.length && q.a.every(function(o){ return a.indexOf(o) >= 0; }); }
+  // whether option o is among the ones picked
+  function picked(q, a, o){ return q.ma ? Array.isArray(a) && a.indexOf(o) >= 0 : a === o; }
   function saAuto(q, a){ return !!(a && answerOk(q.a, a.v)); }
   function saText(a){ return a && typeof a.v === 'string' ? a.v : ''; }
   function fmtT(sec){
@@ -1244,19 +1248,22 @@ function makeTry(KIND){
   }
   function qOrder(id){ var q = B(S.blok).by[id]; return S.perm[id] || (q.o || []).map(function(x, k){ return k; }); }
   function keyOf(q, d){ return q.t === 'tf' ? TFK[d] : MCK[d]; }
+  // The options: radio buttons, or checkboxes on a question that asks for every right option (ma).
+  // There, once checked, a right option the student left out is drawn dashed ("miss").
   function optsHtml(q, order, chosen, reveal, name){
-    if(name === 'none') return '<ul class="to-opts' + (q.t === 'tf' ? ' tf' : '') + '" aria-label="Pilihan jawaban">' + order.map(function(o, d){
-      var ok = q.a.indexOf(o) >= 0, pick = chosen === o, cls = 'to-o' + (ok ? ' ok' : pick ? ' no' : ' dim');
+    var ma = !!q.ma, cls0 = 'to-opts' + (q.t === 'tf' ? ' tf' : '') + (ma ? ' ma' : '');
+    if(name === 'none') return '<ul class="' + cls0 + '" aria-label="Pilihan jawaban">' + order.map(function(o, d){
+      var ok = q.a.indexOf(o) >= 0, pick = picked(q, chosen, o), cls = 'to-o' + (ok ? ' ok' + (ma && !pick && chosen != null ? ' miss' : '') : pick ? ' no' : ' dim');
       var sr = ok && pick ? ' (jawabanmu, benar)' : ok ? ' (jawaban benar)' : pick ? ' (jawabanmu)' : '';
       return '<li class="' + cls + '"><span class="to-k" aria-hidden="true">' + keyOf(q, d) + '</span><span class="to-ot">' + esc(q.o[o]) + '<span class="sr">' + sr + '</span></span>' +
         (ok ? '<span class="to-mk" aria-hidden="true">✓</span>' : pick ? '<span class="to-mk" aria-hidden="true">✕</span>' : '') + '</li>';
     }).join('') + '</ul>';
-    return '<div class="to-opts' + (q.t === 'tf' ? ' tf' : '') + '" role="radiogroup" aria-label="Pilihan jawaban">' + order.map(function(o, d){
-      var cls = 'to-o', pick = chosen === o, mark = '';
+    return '<div class="' + cls0 + '" role="' + (ma ? 'group' : 'radiogroup') + '" aria-label="' + (ma ? 'Pilihan jawaban, pilih semua yang benar' : 'Pilihan jawaban') + '">' + order.map(function(o, d){
+      var cls = 'to-o', pick = picked(q, chosen, o), mark = '';
       if(pick) cls += ' pick';
-      if(reveal){ if(q.a.indexOf(o) >= 0){ cls += ' ok'; mark = '✓'; } else if(pick){ cls += ' no'; mark = '✕'; } else cls += ' dim'; }
-      return '<button class="' + cls + '" type="button" role="radio" aria-checked="' + (pick ? 'true' : 'false') + '"' + (reveal ? ' aria-disabled="true"' : '') +
-        ' tabindex="' + ((pick || (chosen == null && d === 0)) ? '0' : '-1') + '" data-act="' + (name || 'pick') + '" data-o="' + o + '">' +
+      if(reveal){ if(q.a.indexOf(o) >= 0){ cls += ' ok' + (ma && !pick ? ' miss' : ''); mark = '✓'; } else if(pick){ cls += ' no'; mark = '✕'; } else cls += ' dim'; }
+      return '<button class="' + cls + '" type="button" role="' + (ma ? 'checkbox' : 'radio') + '" aria-checked="' + (pick ? 'true' : 'false') + '"' + (reveal ? ' aria-disabled="true"' : '') +
+        ' tabindex="' + ((ma || pick || (chosen == null && d === 0)) ? '0' : '-1') + '" data-act="' + (name || 'pick') + '" data-o="' + o + '">' +
         '<span class="to-k" aria-hidden="true">' + keyOf(q, d) + '</span><span class="to-ot">' + esc(q.o[o]) + '</span>' + (mark ? '<span class="to-mk" aria-hidden="true">' + mark + '</span>' : '') + '</button>';
     }).join('') + '</div>';
   }
@@ -1279,11 +1286,16 @@ function makeTry(KIND){
   }
   function fbHtml(q, order, chosen, blank, bid, rid){
     if(q.t === 'sa') return fbSa(q, chosen, blank, bid, rid);
-    var ok = isOk(q, chosen), keys = q.a.map(function(o){ var d = order.indexOf(o); return (q.t === 'tf' ? '' : keyOf(q, d) + '. ') + q.o[o]; });
+    // more than one key: any one of them counts, or on a question that asks for every right option
+    // (ma) they are the answer together, named in the order they show
+    var ka = q.ma ? q.a.slice().sort(function(x, y){ return order.indexOf(x) - order.indexOf(y); }) : q.a;
+    var ok = isOk(q, chosen), keys = ka.map(function(o){ var d = order.indexOf(o); return (q.t === 'tf' ? '' : keyOf(q, d) + '. ') + q.o[o]; });
     var v = kHTML(blank ? 'to.fb.blank' : (ok ? 'to.fb.ok' : 'to.fb.no'), null, 'b') + ' ';
-    return '<div class="to-fb ' + (ok ? 'ok' : 'no') + '"><p class="to-vd">' + v + kHTML(q.a.length > 1 ? 'to.fb.ans2' : 'to.fb.ans', { a: keys.join(' / ') }) + '</p>' +
+    return '<div class="to-fb ' + (ok ? 'ok' : 'no') + '"><p class="to-vd">' + v + kHTML(q.a.length > 1 && !q.ma ? 'to.fb.ans2' : 'to.fb.ans', { a: keys.join(q.ma ? ' · ' : ' / ') }) + '</p>' +
       (q.e ? '<p class="to-ex">' + esc(q.e) + '</p>' : '') + figsHtml(bid, q, 'ei') + (q.n ? '<p class="to-nt">' + kHTML('to.fb.note') + esc(q.n) + '</p>' : '') + '</div>';
   }
+  // the line above the options of a question that asks for every right option
+  function maHint(q){ return q.ma ? kHTML('to.ma.hint', null, 'p', 'to-ma') : ''; }
   // a question's own tags, such as Soal Herdini, named as its bank names them
   function tagsHtml(b, q){ return q.tg.map(function(k){ return '<span class="to-tag' + (k === HD ? ' hd' : '') + '">' + esc(b.tags[k]) + '</span>'; }).join(''); }
   function renderQ(focus){
@@ -1294,7 +1306,7 @@ function makeTry(KIND){
       '<span class="to-qa"><button class="to-ib sm' + (S.flag[id] ? ' on-f' : '') + '" type="button" data-act="flag" aria-pressed="' + (!!S.flag[id]) + '"' + kAttr('kt', 'to.run.flag.t') + '><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 21V4M6 4h10l-2 4 2 4H6"/></svg>' + kHTML('to.run.flag') + '</button>' +
       '<button class="to-ib sm' + (starred ? ' on-s' : '') + '" type="button" data-act="star" aria-pressed="' + starred + '"' + kAttr('kt', 'to.run.star.t') + '><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3.5l2.6 5.3 5.9.9-4.3 4.1 1 5.8L12 16.9l-5.2 2.7 1-5.8-4.3-4.1 5.9-.9z"/></svg>' + kHTML('to.run.star') + '</button></span></div>' +
       kHTML('to.run.no', { n: i + 1, total: S.ids.length }, 'p', 'lbl to-no') +
-      '<h3 class="to-qt" id="toQt" tabindex="-1" data-focus>' + esc(q.q) + '</h3>' + figsHtml(S.blok, q, 'img') +
+      '<h3 class="to-qt" id="toQt" tabindex="-1" data-focus>' + esc(q.q) + '</h3>' + figsHtml(S.blok, q, 'img') + maHint(q) +
       (q.t === 'sa' ? saHtml(q, a, chk) : optsHtml(q, order, a, chk)) +
       '<div class="to-fbw" id="toFb">' + (chk ? fbHtml(q, order, a, false, S.blok) : '') + '</div>' +
       '<div class="to-pause" id="toPause" hidden>' + kHTML('to.pause.k', null, 'p', 'lbl') + kHTML('to.pause.t', null, 'p', 'to-pz-t') + '<button class="to-btn pri" type="button" data-act="unpause">' + kHTML('to.pause.go') + '</button></div>';
@@ -1368,11 +1380,18 @@ function makeTry(KIND){
     if(top < 60 || top > window.innerHeight * 0.4) panel.scrollTop = 0;
   }
   function pick(o){
-    var id = S.ids[S.cur];
+    var id = S.ids[S.cur], q = B(S.blok).by[id];
     if(S.mode === 'latihan' && S.chk[id]) return;
-    S.ans[id] = o; saveSess();
+    if(q.ma){
+      // every right option has to be picked: a tap adds the option, or takes it out again, and
+      // taking out the last one leaves the question unanswered
+      var l = Array.isArray(S.ans[id]) ? S.ans[id].slice() : [], k = l.indexOf(o);
+      if(k >= 0) l.splice(k, 1); else l.push(o);
+      if(l.length) S.ans[id] = l; else delete S.ans[id];
+    } else S.ans[id] = o;
+    saveSess();
     var btns = $$('.to-o', panel);
-    btns.forEach(function(bn){ var on = +bn.getAttribute('data-o') === o; bn.classList.toggle('pick', on); bn.setAttribute('aria-checked', on ? 'true' : 'false'); bn.tabIndex = on ? 0 : -1; });
+    btns.forEach(function(bn){ var on = picked(q, S.ans[id], +bn.getAttribute('data-o')); bn.classList.toggle('pick', on); bn.setAttribute('aria-checked', on ? 'true' : 'false'); if(!q.ma) bn.tabIndex = on ? 0 : -1; });
     progSet(Object.keys(S.ans).length / S.ids.length);
     renderFoot(); navSync();
   }
@@ -1450,7 +1469,7 @@ function makeTry(KIND){
     if(q.t === 'sa') $('.to-sa', panel).outerHTML = saHtml(q, a, true);
     else $('.to-opts', panel).outerHTML = optsHtml(q, order, a, true);
     $('#toFb', panel).innerHTML = fbHtml(q, order, a, false, S.blok); hydrate($('#toFb', panel));
-    $('#toLive', panel).textContent = tx(ok ? 'to.fb.ok' : q.t === 'sa' ? 'to.fb.sano' : 'to.fb.no') + ' ' + tx('to.fb.ans', { a: q.t === 'sa' ? q.a.join(' / ') : q.a.map(function(o){ return q.o[o]; }).join(' / ') }) + '.' + (q.e ? ' ' + q.e : '');
+    $('#toLive', panel).textContent = tx(ok ? 'to.fb.ok' : q.t === 'sa' ? 'to.fb.sano' : 'to.fb.no') + ' ' + tx('to.fb.ans', { a: q.t === 'sa' ? q.a.join(' / ') : q.a.map(function(o){ return q.o[o]; }).join(q.ma ? ', ' : ' / ') }) + '.' + (q.e ? ' ' + q.e : '');
     renderFoot(); navSync();
     if(soundOn && AC){ try{ var t = AC.currentTime + 0.01; if(ok){ tone(t, 660, 990, 0.12, 0.05, 'sine'); tone(t + 0.1, 990, 990, 0.1, 0.035, 'sine'); } else tone(t, 220, 150, 0.22, 0.06, 'triangle'); }catch(e){} }
     var nb = $('#toFoot .pri', panel); if(nb && focusWas && focusWas.closest && focusWas.closest('#toFoot, .to-opts, .to-sa')) nb.focus({ preventScroll: true });
@@ -1557,7 +1576,7 @@ function makeTry(KIND){
         // a typed answer shows what was typed, and its feedback can count it right
         var typed = x.q.t === 'sa' ? saText(x.a).trim() : '';
         var body = x.q.t === 'sa' ? (typed ? kHTML('to.rev.typed', { a: typed }, 'p', 'to-sa-v ' + (x.ok ? 'ok' : 'no')) : '') + fbHtml(x.q, order, x.a, x.blank, res.blok, x.id)
-          : optsHtml(x.q, order, x.a, true, 'none') + fbHtml(x.q, order, x.a, x.blank, res.blok);
+          : maHint(x.q) + optsHtml(x.q, order, x.a, true, 'none') + fbHtml(x.q, order, x.a, x.blank, res.blok);
         return '<li class="to-rc ' + (x.blank ? 'blank' : x.ok ? 'ok' : 'no') + '"><div class="to-qm"><span class="to-tag">' + (x.k + 1) + '</span><span class="to-tag">' + esc(b.topics[x.q.tp]) + '</span>' + tagsHtml(b, x.q) +
           (x.fl ? kHTML('to.c.flag', null, 'span', 'to-tag amb') : '') + '<span class="to-qa"><button class="to-ib sm' + (sr[x.id] ? ' on-s' : '') + '" type="button" data-act="rstar" data-id="' + x.id + '" aria-pressed="' + !!sr[x.id] + '" aria-label="Simpan soal ' + (x.k + 1) + '"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3.5l2.6 5.3 5.9.9-4.3 4.1 1 5.8L12 16.9l-5.2 2.7 1-5.8-4.3-4.1 5.9-.9z"/></svg></button></span></div>' +
           '<p class="to-qt sm">' + esc(x.q.q) + '</p>' + figsHtml(res.blok, x.q, 'img') + body + '</li>';
@@ -1993,7 +2012,10 @@ function makeTry(KIND){
     var o = e.target.closest && e.target.closest('.to-o'); if(!o || V.view !== 'run') return;
     if(e.key !== 'ArrowDown' && e.key !== 'ArrowUp') return;
     var list = $$('.to-o', o.parentNode), i = list.indexOf(o), n = list[(i + (e.key === 'ArrowDown' ? 1 : -1) + list.length) % list.length];
-    e.preventDefault(); n.focus(); if(!n.classList.contains('ok') && !n.classList.contains('no') && !n.classList.contains('dim')) pick(+n.getAttribute('data-o'));
+    // in a radio group the arrows pick as they move; checkboxes (a question that asks for every
+    // right option) only move, and Space or a letter key ticks them
+    e.preventDefault(); n.focus();
+    if(o.getAttribute('role') !== 'checkbox' && !n.classList.contains('ok') && !n.classList.contains('no') && !n.classList.contains('dim')) pick(+n.getAttribute('data-o'));
   }
   function onKey(e){
     if(!V.open || V.view !== 'run' || !S || dlgEl || zoomEl || !B(S.blok) || e.ctrlKey || e.metaKey || e.altKey) return;
@@ -2002,7 +2024,9 @@ function makeTry(KIND){
     var q = B(S.blok).by[S.ids[S.cur]], order = qOrder(S.ids[S.cur]), k = e.key, d = -1;
     if(q.t === 'tf'){ if(k === '1' || k === 'b' || k === 'B') d = 0; else if(k === '2' || k === 's' || k === 'S') d = 1; }
     else if(q.t !== 'sa'){ var n = '12345'.indexOf(k); if(n < 0) n = 'abcde'.indexOf(k.toLowerCase()); if(k.length === 1 && n >= 0 && n < order.length) d = n; }
-    if(d >= 0 && !navIsOpen){ e.preventDefault(); pick(order[d]); var bt = $$('.to-o', panel)[d]; if(bt) bt.focus({ preventScroll: true }); return; }
+    // a held letter key repeats; on checkboxes (ma) that would tick and untick by turns, so only
+    // the first press counts there
+    if(d >= 0 && !navIsOpen){ e.preventDefault(); if(e.repeat && q.ma) return; pick(order[d]); var bt = $$('.to-o', panel)[d]; if(bt) bt.focus({ preventScroll: true }); return; }
     if(k === 'ArrowRight' || k === 'j'){ if(!navIsOpen){ e.preventDefault(); nav(1); } return; }
     if(k === 'ArrowLeft' || k === 'k'){ if(!navIsOpen){ e.preventDefault(); nav(-1); } return; }
     if((k === 'f' || k === 'F') && !navIsOpen){ e.preventDefault(); flag(); return; }

@@ -1095,6 +1095,28 @@ test('the seal script takes questions answered by typing, with their keys as tex
   rmSync(out, { recursive: true });
 });
 
+test('the seal script keeps a question that asks for every right option', async () => {
+  const dir = privateDir((f) => {
+    f.b4 = {
+      id: 'b4', name: 'Blok 4', title: 'Struktur Jaringan dan Organ Tubuh Manusia I', sem: 'Semester 1',
+      topics: { gizi: 'Gizi' },
+      q: [
+        { id: 'h01', t: 'mc', tp: 'gizi', q: 'Vitamin yang larut dalam lemak adalah', o: ['Vitamin A', 'Vitamin B1', 'Vitamin C', 'Vitamin D', 'Vitamin B12'], a: [0, 3], ma: 1, e: 'A, D, E dan K.' },
+        { id: 'h02', t: 'mc', tp: 'gizi', q: 'Vitamin yang larut dalam air adalah', o: ['Vitamin A', 'Vitamin C', 'Vitamin K'], a: [1] },
+      ],
+    };
+  });
+  const out = mkdtempSync(join(tmpdir(), 'cbt-out-'));
+  const r = sealRun(dir, out);
+  assert.equal(r.code, 0, r.text);
+  const b4 = JSON.parse(readFileSync(join(out, 'src/data/cbt.json'), 'utf8')).banks.find((b) => b.id === 'b4');
+  const bank = await openJson(await derive(fromB64u(SECRET), LABEL.bankKey('b4', 1)), new Uint8Array(readFileSync(join(out, 'public', b4.file))), LABEL.bankAad('b4', 1));
+  assert.deepEqual([bank.q[0].a, bank.q[0].ma], [[0, 3], 1], 'every right option, and the flag that asks for all of them');
+  assert.equal('ma' in bank.q[1], false);
+  rmSync(dir, { recursive: true });
+  rmSync(out, { recursive: true });
+});
+
 test('the seal script refuses bad input and then writes nothing', () => {
   const q = (f, i = 0) => f.b3.q[i];
   // the first question as one answered by typing, with these keys
@@ -1119,6 +1141,10 @@ test('the seal script refuses bad input and then writes nothing', () => {
     'typed answer key over 300 characters': (f) => sa(f, ['x'.repeat(301)]),
     'eleven typed answer keys': (f) => sa(f, Array.from({ length: 11 }, (_, i) => 'kunci ' + i)),
     'typed answer kept in order': (f) => sa(f, ['Mitokondria'], { ns: 1 }),
+    'every right option asked for, one right option': (f) => (q(f).ma = 1),
+    'every right option asked for, flag not 1': (f) => (q(f, 1).ma = 2),
+    'every right option asked for on true/false': (f) => { const x = f.b2.q[1]; x.a = [0, 1]; x.ma = 1; },
+    'every right option asked for on a typed answer': (f) => sa(f, ['Mitokondria'], { ma: 1 }),
     'unknown kind of try out': (f) => (f.b3.kind = 'osce'),
     'unknown field': (f) => (q(f).jawaban = 'A'),
     'missing picture': (f) => (q(f).img[0].f = 'img/b3/none.webp'),

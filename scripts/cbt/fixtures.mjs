@@ -119,6 +119,24 @@ const b3 = {
   ],
 };
 
+// Blok 4: questions that ask for every right option ("ma": the student picks all the options in
+// "a", and only those), one with two right options and a note, one with three, then an ordinary
+// question under a JPEG picture.
+const jpeg = (svg) => sharp(Buffer.from(svg)).flatten({ background: '#f6f2ea' }).jpeg({ quality: 80 }).toBuffer();
+const b4 = {
+  id: 'b4', name: 'Blok 4', title: 'Struktur Jaringan dan Organ Tubuh Manusia I', sem: 'Semester 1',
+  topics: { gizi: 'Gizi', hit: 'Hitungan' },
+  q: [
+    { id: 'h01', t: 'mc', tp: 'gizi', q: 'Vitamin yang larut dalam lemak adalah…', o: ['Vitamin A', 'Vitamin B1', 'Vitamin C', 'Vitamin D', 'Vitamin B12'], a: [0, 3], ma: 1,
+      e: 'Vitamin A, D, E dan K larut dalam lemak. Vitamin B dan C larut dalam air.', n: 'Ada dua jawaban benar di sini.' },
+    { id: 'h02', t: 'mc', tp: 'hit', q: 'Bilangan yang habis dibagi 3 adalah…', o: ['9', '10', '12', '14', '21'], a: [0, 2, 4], ma: 1,
+      e: 'Jumlah angkanya habis dibagi 3: 9, lalu 1 + 2 dan 2 + 1.' },
+    { id: 'h03', t: 'mc', tp: 'gizi', q: 'Pada gambar sel berikut, bagian yang ditunjuk huruf C adalah…', o: ['Nukleus', 'Mitokondria', 'Aparatus Golgi', 'Lisosom'], a: [2],
+      img: [{ id: 'i01', svg: CELL, enc: jpeg, type: 'image/jpeg' }],
+      e: 'C menunjuk tumpukan kantong pipih yang melengkung. Itu aparatus Golgi.' },
+  ],
+};
+
 // OSPE Blok 3 (Try Out OSPE): a bank of the other kind, with a picture under the stem and
 // questions that come with the key only, no explanation.
 const o3 = {
@@ -191,7 +209,7 @@ async function sealBank(src, kv = 1) {
 
 await mkdir(OUT, { recursive: true });
 for (const f of await readdir(OUT)) if (f.endsWith('.bin')) await rm(join(OUT, f));
-const banks = [await sealBank(b2), await sealBank(b3), await sealBank(o3), await sealBank(o4)];
+const banks = [await sealBank(b2), await sealBank(b3), await sealBank(b4), await sealBank(o3), await sealBank(o4)];
 const manifest = { v: 1, note: 'Fake banks for tests and the mock build. Made by scripts/cbt/fixtures.mjs.', secret: SECRET, banks };
 await writeFile(join(OUT, 'manifest.json'), JSON.stringify(manifest, null, 2) + '\n');
 console.log(banks.map((b) => `${b.file} ${b.bytes} B, ${b.n} soal`).join('\n'));

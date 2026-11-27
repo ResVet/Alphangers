@@ -409,15 +409,15 @@ test('try out page: card texts, a hidden credit, notes typed in place, published
   // a card with no questions yet (an aria-disabled button, so Playwright needs force, and with
   // force it does not wait for the closing sheet to get out of the way)
   await page.waitForSelector('.ed-sheet', { state: 'detached' });
-  await page.click('.to-blk[data-b="b4"] .to-bs', { force: true });
+  await page.click('.to-blk[data-b="b1"] .to-bs', { force: true });
   assert.equal(await page.locator('.ed-bar-b:text-is("Buka")').count(), 0);
   await page.click('.ed-bar-b:has-text("Ubah teks")');
   await page.fill('.ed-sheet input[name=badge]', 'Desember');
   await submit(page);
-  await page.waitForFunction(() => document.querySelector('.to-blk[data-b="b4"] .to-bx').textContent === 'Desember');
+  await page.waitForFunction(() => document.querySelector('.to-blk[data-b="b1"] .to-bx').textContent === 'Desember');
   // a note typed in place
   await page.click('.to-note');
-  await page.keyboard.type('Soal Blok 4 menyusul, ya.');
+  await page.keyboard.type('Soal Blok 1 menyusul, ya.');
   await page.evaluate(() => document.activeElement.blur());
   await page.waitForFunction(() => !document.querySelector('.to-note').hasAttribute('data-empty'));
   // the header is the channel
@@ -431,7 +431,7 @@ test('try out page: card texts, a hidden credit, notes typed in place, published
     credits: [...document.querySelectorAll('.to-blk .to-bby')].filter((e) => e.offsetParent).map((e) => e.closest('.to-blk').dataset.b + ': ' + e.textContent),
     note: document.querySelector('.to-note').offsetParent ? document.querySelector('.to-note').textContent : null,
   }));
-  assert.deepEqual(await seen(), { credits: ['b2: Dibuat oleh Tim Batu'], note: 'Soal Blok 4 menyusul, ya.' });
+  assert.deepEqual(await seen(), { credits: ['b2: Dibuat oleh Tim Batu'], note: 'Soal Blok 1 menyusul, ya.' });
   // the blok page has the same texts, and its own note
   await page.click('.ed-seg:has-text("Edit")');
   await page.click('.to-blk[data-b="b3"] .to-bs');
@@ -455,8 +455,8 @@ test('try out page: card texts, a hidden credit, notes typed in place, published
   await page.waitForFunction(() => /tersimpan/i.test(document.querySelector('.ed-count').textContent));
   const t = await page.evaluate(() => JSON.parse(window.__alphaMock.docs.get('links').json).site.t);
   assert.deepEqual(
-    [t['to.b2.byk'], t['to.b2.by'], t['to.b3.by'], t['to.b4.badge'], t['to.note'], t['to.b3.note']],
-    ['Dibuat oleh', 'Tim Batu', '', 'Desember', 'Soal Blok 4 menyusul, ya.', 'Fokus ke topik genetika.']);
+    [t['to.b2.byk'], t['to.b2.by'], t['to.b3.by'], t['to.b1.badge'], t['to.note'], t['to.b3.note']],
+    ['Dibuat oleh', 'Tim Batu', '', 'Desember', 'Soal Blok 1 menyusul, ya.', 'Fokus ke topik genetika.']);
   assert.deepEqual(errors, []);
   await context.close();
 });
