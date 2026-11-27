@@ -150,7 +150,7 @@ for (const vp of VIEWPORTS) {
     await s.ev(() => { location.hash = 'tryout'; });
     await s.page.waitForFunction(() => !!document.querySelector('.to-blk.on') && !document.querySelector('#curtain.move'), null, { timeout: 20000 });
     const counts = await s.ev(() => [...document.querySelectorAll('.to-blk.on .to-bm')].map((e) => e.textContent));
-    assert.equal(counts.length, 2, 'Blok 2 and Blok 3');
+    assert.equal(counts.length, 3, 'Blok 2, Blok 3 and Blok 4');
     for (const c of counts) assert.match(c, /^\d+ soal · \d+ topik · Semester 1$/);
     await s.page.click('.to-blk.on[data-b="b3"]');
     await s.page.waitForSelector('.to-gate[data-gate="masuk"] [data-act="gin"]', { timeout: 10000 });
